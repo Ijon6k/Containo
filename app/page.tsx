@@ -1,5 +1,5 @@
-import MarinaApp from '@/components/MarinaApp';
+import ContainoApp from '@/components/ContainoApp';
 
 export default function Home() {
-  return <MarinaApp />;
+  return <ContainoApp />;
 }

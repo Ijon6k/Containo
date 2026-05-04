@@ -38,7 +38,7 @@ export default function AuthFlow({ isSetup, onSetupComplete, onLogin }: AuthFlow
           <div className="w-12 h-12 rounded-md bg-brand flex items-center justify-center mb-4 shadow-sm">
             <Anchor className="w-6 h-6 text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-text-main">Marina</h1>
+          <h1 className="text-2xl font-bold text-text-main">Containo</h1>
           <p className="text-text-sub text-sm mt-1 text-center">
             {isSetup ? 'Welcome back! Please sign in.' : 'Setup your administrator account to get started.'}
           </p>

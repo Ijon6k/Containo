@@ -8,7 +8,7 @@ const archivo = Archivo({
 });
 
 export const metadata: Metadata = {
-  title: "Marina | Docker Assistant",
+  title: "Containo | Docker Assistant",
   description: "Minimalist Docker management tool",
 };
 

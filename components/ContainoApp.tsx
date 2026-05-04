@@ -16,18 +16,18 @@ import AuthFlow from '@/components/AuthFlow';
 
 // Initial Mock Data
 const INITIAL_CONTAINERS: Container[] = [
-  { id: '1', name: 'marina-api', image: 'marina/backend:latest', status: 'running', ports: '8080:8080', logs: ['[INFO] Server started on port 8080', '[INFO] Connected to Database', '[DEBUG] Heartbeat sent'] },
-  { id: '2', name: 'marina-db', image: 'postgres:15-alpine', status: 'running', ports: '5432:5432', logs: ['[INFO] Database ready to accept connections', '[INFO] System started'] },
+  { id: '1', name: 'containo-api', image: 'containo/backend:latest', status: 'running', ports: '8080:8080', logs: ['[INFO] Server started on port 8080', '[INFO] Connected to Database', '[DEBUG] Heartbeat sent'] },
+  { id: '2', name: 'containo-db', image: 'postgres:15-alpine', status: 'running', ports: '5432:5432', logs: ['[INFO] Database ready to accept connections', '[INFO] System started'] },
   { id: '3', name: 'redis-cache', image: 'redis:latest', status: 'exited', ports: '6379:6379', logs: ['[INFO] Redis server v7.2.0', '[WARN] Connection closed'] },
   { id: '4', name: 'nginx-proxy', image: 'nginx:stable', status: 'running', ports: '80:80, 443:443', logs: ['[INFO] Configuration reloaded', '[INFO] Worker processes started'] },
 ];
 
 const INITIAL_VOLUMES: Volume[] = [
-  { id: 'v1', name: 'marina-db-data', size: '2.4 GB', lastBackup: '2024-05-01 12:00' },
+  { id: 'v1', name: 'containo-db-data', size: '2.4 GB', lastBackup: '2024-05-01 12:00' },
   { id: 'v2', name: 'redis-data', size: '150 MB', lastBackup: '2024-04-30 15:30' },
 ];
 
-export default function MarinaApp() {
+export default function ContainoApp() {
   // Auth State
   const [isSetup, setIsSetup] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -43,16 +43,16 @@ export default function MarinaApp() {
   
   // Persistence and Theme apply
   useEffect(() => {
-    const setup = localStorage.getItem('marina_setup');
+    const setup = localStorage.getItem('containo_setup');
     if (setup) setTimeout(() => setIsSetup(true), 0);
     
-    const savedTheme = localStorage.getItem('marina_theme') as 'light' | 'dark' | 'wholesome';
+    const savedTheme = localStorage.getItem('containo_theme') as 'light' | 'dark' | 'wholesome';
     if (savedTheme) setTheme(savedTheme);
   }, []);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('marina_theme', theme);
+    localStorage.setItem('containo_theme', theme);
   }, [theme]);
 
   const toggleTheme = () => {
@@ -77,7 +77,7 @@ export default function MarinaApp() {
         isSetup={isSetup} 
         onSetupComplete={() => {
           setIsSetup(true);
-          localStorage.setItem('marina_setup', 'true');
+          localStorage.setItem('containo_setup', 'true');
           addToast('Setup complete! Welcome.');
         }}
         onLogin={(pass) => {

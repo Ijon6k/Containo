@@ -160,9 +160,9 @@ export default function CreateContainerFlow({ isOpen, onClose, addToast }: Creat
                 </button>
                 <button 
                   onClick={() => setCreateMode('compose')}
-                  className="flex flex-col items-center justify-center p-6 gap-3 rounded-lg border border-ui-border bg-ui-bg hover:border-indigo-500 hover:bg-indigo-500/5 transition-all text-center group"
+                  className="flex flex-col items-center justify-center p-6 gap-3 rounded-lg border border-ui-border bg-ui-bg hover:border-accent hover:bg-accent/10 transition-all text-center group"
                 >
-                  <div className="p-3 rounded-full bg-ui-accent group-hover:bg-indigo-500/10 text-indigo-500">
+                  <div className="p-3 rounded-full bg-ui-accent group-hover:bg-accent/20 text-accent">
                     <Layers className="w-6 h-6" />
                   </div>
                   <div>
@@ -197,7 +197,7 @@ export default function CreateContainerFlow({ isOpen, onClose, addToast }: Creat
                     <ChevronRight className="w-5 h-5 rotate-180" />
                   </button>
                   <h3 className="text-lg font-bold text-text-main flex items-center gap-2">
-                    {createMode === 'simple' ? <Box className="w-5 h-5 text-brand" /> : <Layers className="w-5 h-5 text-indigo-500" />}
+                    {createMode === 'simple' ? <Box className="w-5 h-5 text-brand" /> : <Layers className="w-5 h-5 text-accent" />}
                     {createMode === 'simple' ? 'Deploy Simple Container' : 'Compose Stack Builder'}
                   </h3>
                 </div>
@@ -257,9 +257,9 @@ export default function CreateContainerFlow({ isOpen, onClose, addToast }: Creat
 
                   {createMode === 'compose' && (
                     <div className="space-y-6">
-                      <div className="p-4 rounded-lg bg-indigo-500/5 border border-indigo-500/20 mb-6 flex justify-between items-center">
+                      <div className="p-4 rounded-lg bg-accent/10 border border-accent/20 mb-6 flex justify-between items-center">
                         <div>
-                          <h4 className="text-sm font-semibold text-indigo-400 mb-1">Multi-Service Stack</h4>
+                          <h4 className="text-sm font-semibold text-accent mb-1">Multi-Service Stack</h4>
                           <p className="text-xs text-text-sub">Add multiple services to be deployed together via docker-compose.</p>
                         </div>
                         <button onClick={addComposeService} className="btn-secondary px-3 py-1.5 text-xs flex items-center gap-1">
@@ -269,7 +269,7 @@ export default function CreateContainerFlow({ isOpen, onClose, addToast }: Creat
 
                       <div className="space-y-6">
                         {composeServices.map((srv, index) => (
-                          <div key={srv.id} className="p-5 rounded-xl border border-ui-border bg-ui-accent/5 relative hover:border-indigo-500/30 transition-colors shadow-sm">
+                          <div key={srv.id} className="p-5 rounded-xl border border-ui-border bg-ui-accent/5 relative hover:border-accent/30 transition-colors shadow-sm">
                             <button 
                               onClick={() => removeComposeService(srv.id)}
                               className="absolute top-4 right-4 p-2 text-text-sub hover:text-rose-500 hover:bg-rose-500/10 rounded-lg transition-colors"
@@ -278,7 +278,7 @@ export default function CreateContainerFlow({ isOpen, onClose, addToast }: Creat
                               <Trash2 className="w-4 h-4" />
                             </button>
                             <h5 className="text-base font-bold text-text-main mb-5 flex items-center gap-2">
-                              <div className="p-2 bg-indigo-500/10 rounded-md text-indigo-500">
+                              <div className="p-2 bg-accent/20 rounded-md text-accent">
                                 <Box className="w-4 h-4" />
                               </div>
                               Service #{index + 1}
@@ -334,7 +334,7 @@ export default function CreateContainerFlow({ isOpen, onClose, addToast }: Creat
                     <div className="flex px-4 pt-4 gap-2 border-b border-zinc-800 overflow-x-auto custom-scrollbar items-center">
                       <button 
                         onClick={() => setComposePreviewTab('visualizer')}
-                        className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 whitespace-nowrap ${composePreviewTab === 'visualizer' ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-zinc-500 hover:text-zinc-300'}`}
+                        className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 whitespace-nowrap ${composePreviewTab === 'visualizer' ? 'border-accent text-accent' : 'border-transparent text-zinc-500 hover:text-zinc-300'}`}
                       >
                         <Network className="w-4 h-4" />
                         Stack Visualizer
@@ -384,7 +384,7 @@ export default function CreateContainerFlow({ isOpen, onClose, addToast }: Creat
                   <div className="flex-1 p-6 overflow-y-auto font-mono text-sm leading-relaxed custom-scrollbar">
                     {createMode === 'simple' ? (
                       <pre className="text-zinc-300 whitespace-pre-wrap font-mono text-sm">
-                        <span className="text-emerald-400">docker</span> <span className="text-indigo-400">run</span> -d \
+                        <span className="text-emerald-400">docker</span> <span className="text-accent">run</span> -d \
 {simpleData.name && `\n  --name ${simpleData.name} \\`}
 {simpleData.ports && `\n  -p ${simpleData.ports} \\`}
 {simpleData.restartPolicy !== 'no' && `\n  --restart ${simpleData.restartPolicy} \\`}
@@ -396,15 +396,15 @@ export default function CreateContainerFlow({ isOpen, onClose, addToast }: Creat
                     ) : (
                       composePreviewTab === 'visualizer' ? (
                         <div className="flex flex-col items-center justify-center min-h-[400px] h-full p-8 font-sans">
-                          <div className="px-6 py-3 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 font-bold flex items-center gap-3 mb-12 shadow-lg shadow-indigo-500/5">
+                          <div className="px-6 py-3 rounded-xl bg-accent/10 border border-accent/20 text-accent font-bold flex items-center gap-3 mb-12 shadow-lg shadow-accent/10">
                             <Network className="w-5 h-5" /> default_network
                           </div>
                           <div className="flex flex-wrap justify-center gap-8 relative w-full">
                             {/* Connecting lines container */}
                             {composeServices.length > 0 && (
                               <>
-                                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[80%] h-px bg-indigo-500/20 -mt-6" />
-                                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-px h-6 bg-indigo-500/20 -mt-6" />
+                                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[80%] h-px bg-accent/30 -mt-6" />
+                                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-px h-6 bg-accent/30 -mt-6" />
                               </>
                             )}
 
@@ -414,12 +414,12 @@ export default function CreateContainerFlow({ isOpen, onClose, addToast }: Creat
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: idx * 0.1 }}
                                 key={srv.id} 
-                                className="relative p-5 rounded-xl bg-ui-bg border border-ui-border flex flex-col items-center min-w-[160px] shadow-md group hover:border-indigo-500/50 transition-colors"
+                                className="relative p-5 rounded-xl bg-ui-bg border border-ui-border flex flex-col items-center min-w-[160px] shadow-md group hover:border-accent/50 transition-colors"
                               >
                                 {/* Line connecting upwards to the horizontal line */}
-                                <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-px h-6 bg-indigo-500/20 group-hover:bg-indigo-500/50 transition-colors" />
+                                <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-px h-6 bg-accent/30 group-hover:bg-accent/50 transition-colors" />
                                 
-                                <div className="w-12 h-12 rounded-full bg-ui-accent/50 flex items-center justify-center mb-3 text-zinc-400 group-hover:text-indigo-400 transition-colors">
+                                <div className="w-12 h-12 rounded-full bg-ui-accent/50 flex items-center justify-center mb-3 text-zinc-400 group-hover:text-accent transition-colors">
                                   <Box className="w-6 h-6" />
                                 </div>
                                 <div className="font-bold text-text-main text-sm text-center mb-1 max-w-[140px] truncate" title={srv.name}>{srv.name || 'unnamed'}</div>

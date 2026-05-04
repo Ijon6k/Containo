@@ -37,7 +37,7 @@ export default function Sidebar({ currentView, setCurrentView, onLogout, theme, 
         <div className="w-8 h-8 rounded-md bg-brand flex items-center justify-center">
           <Anchor className="w-5 h-5 text-white" />
         </div>
-        <h1 className="text-xl font-bold tracking-tight text-text-main">Marina</h1>
+        <h1 className="text-xl font-bold tracking-tight text-text-main">Containo</h1>
       </div>
 
       <nav className="flex-1 px-4 mt-4 space-y-1">

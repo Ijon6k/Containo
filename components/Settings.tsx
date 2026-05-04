@@ -111,7 +111,7 @@ export default function SettingsView({ addToast }: SettingsProps) {
               <div className="p-4 bg-ui-accent/30 rounded-md border border-ui-border flex items-start gap-3">
                  <Info className="w-4 h-4 text-indigo-500 mt-0.5" />
                  <p className="text-xs text-text-sub leading-relaxed">
-                    Once enabled, Marina will send real-time logs and status updates directly to your Telegram chat.
+                    Once enabled, Containo will send real-time logs and status updates directly to your Telegram chat.
                  </p>
               </div>
 
