@@ -1,6 +1,6 @@
 # Containo
 
-![Containo Hero](./hero.png)
+![Containo Hero](./public/docs/hero.png)
 
 A minimalist and modern Docker management dashboard designed to simplify container orchestration for developers of all levels. 
 
@@ -11,7 +11,7 @@ A minimalist and modern Docker management dashboard designed to simplify contain
 
 Containo aims to replace complex terminal commands and cluttered interfaces with a clean, intuitive, and highly responsive web dashboard. Built for individual developers and small teams, it provides a seamless way to manage, monitor, and deploy Docker environments without the steep learning curve.
 
-![Containo UI Mockups](./ui mockups.png)
+![Containo UI Mockups](./public/docs/uimockups.png)
 
 ## Core Features
 
