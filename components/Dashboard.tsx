@@ -18,7 +18,7 @@ import {
   HardDrive,
   RotateCcw
 } from 'lucide-react';
-import { Container } from '@/lib/types';
+import { Container, ContainerStats } from '@/lib/types';
 import CreateContainerFlow from './CreateContainerFlow';  
 
 interface DashboardProps {
@@ -32,6 +32,42 @@ export default function Dashboard({ containers, setContainers, addToast }: Dashb
   const [selectedContainer, setSelectedContainer] = useState<Container | null>(null);
   const [expandedStatsIds, setExpandedStatsIds] = useState<string[]>([]);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [realtimeStats, setRealtimeStats] = useState<Record<string, ContainerStats>>({});
+  const [liveLogs, setLiveLogs] = useState<string[]>([]);
+
+  React.useEffect(() => {
+    const eventSources: Record<string, EventSource> = {};
+
+    expandedStatsIds.forEach(id => {
+      const es = new EventSource(`/api/containers/${id}/stats`);
+      es.onmessage = (e) => {
+        try {
+          const data = JSON.parse(e.data);
+          setRealtimeStats(prev => ({ ...prev, [id]: data }));
+        } catch (err) {}
+      };
+      eventSources[id] = es;
+    });
+
+    return () => {
+      Object.values(eventSources).forEach(es => es.close());
+    };
+  }, [expandedStatsIds]);
+
+  React.useEffect(() => {
+    if (!selectedContainer) return;
+    setLiveLogs([]);
+    const es = new EventSource(`/api/containers/${selectedContainer.id}/logs`);
+    es.onmessage = (e) => {
+      try {
+        const data = JSON.parse(e.data);
+        setLiveLogs(prev => [...prev, data.log].slice(-100)); // keep last 100
+      } catch (err) {}
+    };
+    return () => {
+      es.close();
+    };
+  }, [selectedContainer]);
 
   const stats = [
     { label: 'Containers', value: containers.length, icon: Box, color: 'text-indigo-500' },
@@ -40,25 +76,43 @@ export default function Dashboard({ containers, setContainers, addToast }: Dashb
     { label: 'Disk', value: '1.2 GB', icon: HardDrive, color: 'text-blue-500' },
   ];
 
-  const toggleStatus = (id: string) => {
-    setContainers(prev => prev.map(c => {
-      if (c.id === id) {
-        const newStatus = c.status === 'running' ? 'exited' : 'running';
-        addToast(`${c.name} ${newStatus === 'running' ? 'started' : 'stopped'}`);
-        return { ...c, status: newStatus as 'running' | 'exited' };
+  const performAction = async (id: string, action: string, message: string, successMessage: string) => {
+    addToast(message);
+    try {
+      const res = await fetch(`/api/containers/${id}/action`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action }),
+      });
+      if (res.ok) {
+        addToast(successMessage);
+        if (action === 'start' || action === 'stop') {
+           setContainers(prev => prev.map(c => c.id === id ? { ...c, status: action === 'start' ? 'running' : 'exited' } : c));
+        } else if (action === 'delete') {
+           setContainers(prev => prev.filter(c => c.id !== id));
+        }
+      } else {
+        const errorData = await res.json();
+        addToast(`Failed to ${action}: ${errorData.error || 'Unknown error'}`, 'error');
       }
-      return c;
-    }));
+    } catch (e: any) {
+      addToast(`Error: ${e.message}`, 'error');
+    }
+  };
+
+  const toggleStatus = (id: string) => {
+    const c = containers.find(c => c.id === id);
+    if (!c) return;
+    const action = c.status === 'running' ? 'stop' : 'start';
+    performAction(id, action, `${action === 'start' ? 'Starting' : 'Stopping'} ${c.name}...`, `${c.name} ${action === 'start' ? 'started' : 'stopped'}`);
   };
 
   const deleteContainer = (id: string) => {
-    setContainers(prev => prev.filter(c => c.id !== id));
-    addToast('Container removed');
+    performAction(id, 'delete', 'Deleting container...', 'Container removed');
   };
 
   const restartContainer = (id: string, name: string) => {
-    addToast(`Restarting ${name}...`);
-    setTimeout(() => addToast(`${name} restarted successfully`), 1000);
+    performAction(id, 'restart', `Restarting ${name}...`, `${name} restarted successfully`);
   };
 
   const filteredContainers = containers.filter(c => 
@@ -202,46 +256,40 @@ export default function Dashboard({ containers, setContainers, addToast }: Dashb
                             className="overflow-hidden"
                           >
                             <div className="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                              {/* CPU Usage */}
-                              <div className="space-y-2">
-                                <div className="flex justify-between text-xs">
-                                  <span className="font-semibold text-text-sub flex items-center gap-1"><Cpu className="w-3 h-3" /> CPU Usage</span>
-                                  <span className="font-bold text-amber-500">12.4%</span>
-                                </div>
-                                <div className="h-1.5 w-full bg-ui-border rounded-full overflow-hidden">
-                                  <div className="h-full bg-amber-500 rounded-full" style={{ width: '12.4%' }} />
-                                </div>
-                              </div>
-                              {/* Memory Usage */}
-                              <div className="space-y-2">
-                                <div className="flex justify-between text-xs">
-                                  <span className="font-semibold text-text-sub flex items-center gap-1"><Layers className="w-3 h-3" /> Memory</span>
-                                  <span className="font-bold text-brand">245 MB / 1 GB</span>
-                                </div>
-                                <div className="h-1.5 w-full bg-ui-border rounded-full overflow-hidden">
-                                  <div className="h-full bg-brand rounded-full" style={{ width: '24.5%' }} />
-                                </div>
-                              </div>
-                              {/* Network I/O */}
-                              <div className="space-y-2">
-                                <div className="flex justify-between text-xs">
-                                  <span className="font-semibold text-text-sub flex items-center gap-1"><Activity className="w-3 h-3" /> Network I/O</span>
-                                  <span className="font-bold text-emerald-500">1.2 MB / 450 KB</span>
-                                </div>
-                                <div className="h-1.5 w-full bg-ui-border rounded-full overflow-hidden">
-                                  <div className="h-full bg-emerald-500 rounded-full" style={{ width: '40%' }} />
-                                </div>
-                              </div>
-                              {/* Block I/O */}
-                              <div className="space-y-2">
-                                <div className="flex justify-between text-xs">
-                                  <span className="font-semibold text-text-sub flex items-center gap-1"><HardDrive className="w-3 h-3" /> Block I/O</span>
-                                  <span className="font-bold text-indigo-500">12 MB / 0 B</span>
-                                </div>
-                                <div className="h-1.5 w-full bg-ui-border rounded-full overflow-hidden">
-                                  <div className="h-full bg-indigo-500 rounded-full" style={{ width: '15%' }} />
-                                </div>
-                              </div>
+                               {/* CPU Usage */}
+                               <div className="space-y-2">
+                                 <div className="flex justify-between text-xs">
+                                   <span className="font-semibold text-text-sub flex items-center gap-1"><Cpu className="w-3 h-3" /> CPU Usage</span>
+                                   <span className="font-bold text-amber-500">{realtimeStats[c.id]?.cpuPercentage || 0}%</span>
+                                 </div>
+                                 <div className="h-1.5 w-full bg-ui-border rounded-full overflow-hidden">
+                                   <div className="h-full bg-amber-500 rounded-full transition-all duration-500" style={{ width: `${Math.min(realtimeStats[c.id]?.cpuPercentage || 0, 100)}%` }} />
+                                 </div>
+                               </div>
+                               {/* Memory Usage */}
+                               <div className="space-y-2">
+                                 <div className="flex justify-between text-xs">
+                                   <span className="font-semibold text-text-sub flex items-center gap-1"><Layers className="w-3 h-3" /> Memory</span>
+                                   <span className="font-bold text-brand">{realtimeStats[c.id]?.memoryUsageMB || 0} MB / {realtimeStats[c.id]?.memoryLimitMB || 0} MB</span>
+                                 </div>
+                                 <div className="h-1.5 w-full bg-ui-border rounded-full overflow-hidden">
+                                   <div className="h-full bg-brand rounded-full transition-all duration-500" style={{ width: `${Math.min(realtimeStats[c.id]?.memoryPercentage || 0, 100)}%` }} />
+                                 </div>
+                               </div>
+                               {/* Network I/O */}
+                               <div className="space-y-2">
+                                 <div className="flex justify-between text-xs">
+                                   <span className="font-semibold text-text-sub flex items-center gap-1"><Activity className="w-3 h-3" /> Network I/O</span>
+                                   <span className="font-bold text-emerald-500">{realtimeStats[c.id]?.networkRxMB || 0} MB / {realtimeStats[c.id]?.networkTxMB || 0} MB</span>
+                                 </div>
+                               </div>
+                               {/* Block I/O */}
+                               <div className="space-y-2">
+                                 <div className="flex justify-between text-xs">
+                                   <span className="font-semibold text-text-sub flex items-center gap-1"><HardDrive className="w-3 h-3" /> Block I/O</span>
+                                   <span className="font-bold text-indigo-500">{realtimeStats[c.id]?.blockReadMB || 0} MB / {realtimeStats[c.id]?.blockWriteMB || 0} MB</span>
+                                 </div>
+                               </div>
                             </div>
                           </motion.div>
                         </td>
@@ -275,12 +323,16 @@ export default function Dashboard({ containers, setContainers, addToast }: Dashb
                 </button>
               </div>
               <div className="flex-1 bg-zinc-950 p-6 overflow-y-auto font-mono text-xs text-zinc-300 custom-scrollbar leading-relaxed">
-                {selectedContainer.logs.map((log, i) => (
-                  <div key={i} className="mb-1">
-                    <span className="text-zinc-600 mr-3">{i + 1}</span>
-                    {log}
-                  </div>
-                ))}
+                {liveLogs.length === 0 ? (
+                  <div className="text-zinc-500 italic">Waiting for logs...</div>
+                ) : (
+                  liveLogs.map((log, i) => (
+                    <div key={i} className="mb-1 whitespace-pre-wrap break-all">
+                      <span className="text-zinc-600 mr-3">{i + 1}</span>
+                      {log}
+                    </div>
+                  ))
+                )}
               </div>
             </motion.div>
           </div>

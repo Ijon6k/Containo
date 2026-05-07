@@ -14,18 +14,7 @@ import BackupRestore from '@/components/BackupRestore';
 import SettingsView from '@/components/Settings';
 import AuthFlow from '@/components/AuthFlow';
 
-// Initial Mock Data
-const INITIAL_CONTAINERS: Container[] = [
-  { id: '1', name: 'containo-api', image: 'containo/backend:latest', status: 'running', ports: '8080:8080', logs: ['[INFO] Server started on port 8080', '[INFO] Connected to Database', '[DEBUG] Heartbeat sent'] },
-  { id: '2', name: 'containo-db', image: 'postgres:15-alpine', status: 'running', ports: '5432:5432', logs: ['[INFO] Database ready to accept connections', '[INFO] System started'] },
-  { id: '3', name: 'redis-cache', image: 'redis:latest', status: 'exited', ports: '6379:6379', logs: ['[INFO] Redis server v7.2.0', '[WARN] Connection closed'] },
-  { id: '4', name: 'nginx-proxy', image: 'nginx:stable', status: 'running', ports: '80:80, 443:443', logs: ['[INFO] Configuration reloaded', '[INFO] Worker processes started'] },
-];
 
-const INITIAL_VOLUMES: Volume[] = [
-  { id: 'v1', name: 'containo-db-data', size: '2.4 GB', lastBackup: '2024-05-01 12:00' },
-  { id: 'v2', name: 'redis-data', size: '150 MB', lastBackup: '2024-04-30 15:30' },
-];
 
 export default function ContainoApp() {
   // Auth State
@@ -35,11 +24,39 @@ export default function ContainoApp() {
   // Theme State
   const [theme, setTheme] = useState<'light' | 'dark' | 'wholesome'>('light');
   
-  // App State
   const [currentView, setCurrentView] = useState<View>('dashboard');
-  const [containers, setContainers] = useState<Container[]>(INITIAL_CONTAINERS);
-  const [volumes] = useState<Volume[]>(INITIAL_VOLUMES);
+  const [containers, setContainers] = useState<Container[]>([]);
+  const [volumes, setVolumes] = useState<Volume[]>([]);
   const [toasts, setToasts] = useState<{ id: number; message: string; type: 'success' | 'error' }[]>([]);
+
+  const fetchContainers = async () => {
+    try {
+      const res = await fetch('/api/containers');
+      if (res.ok) setContainers(await res.json());
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const fetchVolumes = async () => {
+    try {
+      const res = await fetch('/api/volumes');
+      if (res.ok) setVolumes(await res.json());
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchContainers();
+      fetchVolumes();
+      const interval = setInterval(() => {
+        fetchContainers();
+      }, 5000);
+      return () => clearInterval(interval);
+    }
+  }, [isAuthenticated]);
   
   // Persistence and Theme apply
   useEffect(() => {
