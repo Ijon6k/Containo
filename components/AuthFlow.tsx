@@ -37,8 +37,12 @@ export default function AuthFlow({ type, onComplete }: AuthFlowProps) {
         className="w-full max-w-sm"
       >
         <div className="flex flex-col items-center mb-10">
-          <div className="w-14 h-14 rounded-lg bg-brand flex items-center justify-center mb-6 shadow-sm">
-            <Anchor className="w-7 h-7 text-white" />
+          <div className="w-14 h-14 flex items-center justify-center mb-6 overflow-hidden">
+            <img 
+              src="/logo/containologo.webp" 
+              alt="Containo Logo" 
+              className="w-full h-full object-contain"
+            />
           </div>
           <h1 className="text-3xl font-semibold text-text-main tracking-tight">Containo</h1>
           <p className="text-text-sub text-sm mt-2 text-center max-w-[280px] leading-relaxed">

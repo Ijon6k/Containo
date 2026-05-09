@@ -109,7 +109,7 @@ export default function Dashboard({ containers, setContainers, addToast, showCon
       <div className="flex justify-between items-end mb-10">
         <div>
           <h1 className="text-2xl font-semibold text-text-main tracking-tight">Containers</h1>
-          <p className="text-sm text-text-sub mt-1">Manage and monitor your active units.</p>
+          <p className="text-sm text-text-sub mt-1">Manage and monitor your Docker containers.</p>
         </div>
         <button 
           onClick={onNavigateToDeploy}
@@ -131,7 +131,7 @@ export default function Dashboard({ containers, setContainers, addToast, showCon
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-sub" />
             <input 
               type="text"
-              placeholder={viewMode === 'containers' ? "Filter modules..." : "Filter artifacts..."}
+              placeholder={viewMode === 'containers' ? "Search containers..." : "Search images..."}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full bg-ui-accent border border-ui-border rounded-md py-2 pl-10 pr-4 text-[10px] font-bold uppercase tracking-wider focus:outline-none focus:border-brand/50 transition-all text-text-main"
@@ -146,14 +146,14 @@ export default function Dashboard({ containers, setContainers, addToast, showCon
                  className={`flex items-center gap-2 px-4 py-1.5 rounded-sm text-[10px] uppercase font-black tracking-widest transition-all ${viewMode === 'containers' ? 'bg-brand text-white shadow-lg' : 'text-text-sub hover:text-text-main'}`}
                >
                  <Layers className="w-3.5 h-3.5" />
-                 Units
+                 Containers
                </button>
                <button 
                  onClick={() => setViewMode('images')}
                  className={`flex items-center gap-2 px-4 py-1.5 rounded-sm text-[10px] uppercase font-black tracking-widest transition-all ${viewMode === 'images' ? 'bg-brand text-white shadow-lg' : 'text-text-sub hover:text-text-main'}`}
                >
                  <Box className="w-3.5 h-3.5" />
-                 Artifacts
+                 Images
                </button>
             </div>
 
@@ -184,8 +184,8 @@ export default function Dashboard({ containers, setContainers, addToast, showCon
           <div className="card overflow-hidden border-white/5 bg-ui-bg rounded-md shadow-2xl">
             <div className="grid grid-cols-12 gap-4 px-6 py-3 border-b border-white/5 bg-white/[0.02]">
               <div className="col-span-2 text-xs font-semibold text-text-sub uppercase tracking-[0.15em]">Status</div>
-              <div className="col-span-3 text-xs font-semibold text-text-sub uppercase tracking-[0.15em]">Module Name</div>
-              <div className="col-span-4 text-xs font-semibold text-text-sub uppercase tracking-[0.15em]">Build Source</div>
+              <div className="col-span-3 text-xs font-semibold text-text-sub uppercase tracking-[0.15em]">Container Name</div>
+              <div className="col-span-4 text-xs font-semibold text-text-sub uppercase tracking-[0.15em]">Image</div>
               <div className="col-span-3 text-xs font-semibold text-text-sub uppercase tracking-[0.15em] text-right">Operations</div>
             </div>
             <div className="divide-y divide-ui-border">
@@ -248,7 +248,7 @@ export default function Dashboard({ containers, setContainers, addToast, showCon
                   <Activity className="w-8 h-8 text-brand animate-spin" />
                 </div>
               ) : filteredImages.length === 0 ? (
-                <div className="p-12 text-center text-text-sub font-mono text-[10px] uppercase tracking-widest italic">No artifacts stored.</div>
+                <div className="p-12 text-center text-text-sub font-mono text-[10px] uppercase tracking-widest italic">No images found.</div>
               ) : (
                 filteredImages.map((img) => (
                   <ImageCard 

@@ -8,8 +8,13 @@ const archivo = Archivo({
 });
 
 export const metadata: Metadata = {
-  title: "Containo | Docker Assistant",
-  description: "Minimalist Docker management tool",
+  title: "Containo — Simple Docker Manager",
+  description: "A simple and easy-to-use dashboard for beginners to manage Docker containers.",
+  icons: {
+    icon: "/logo/containologo.webp",
+    shortcut: "/logo/containologo.webp",
+    apple: "/logo/containologo.webp",
+  },
 };
 
 export default function RootLayout({

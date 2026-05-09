@@ -33,8 +33,12 @@ export default function Sidebar({ currentView, setCurrentView, onLogout, theme, 
   return (
     <aside className="w-64 h-screen flex flex-col bg-ui-bg border-r border-ui-border z-40 fixed left-0 top-0 transition-colors duration-300">
       <div className="p-6 flex items-center gap-3">
-        <div className="w-8 h-8 rounded-md bg-brand flex items-center justify-center">
-          <Anchor className="w-5 h-5 text-white" />
+        <div className="w-8 h-8 flex items-center justify-center overflow-hidden">
+          <img 
+            src="/logo/containologo.webp" 
+            alt="Containo Logo" 
+            className="w-full h-full object-contain"
+          />
         </div>
         <h1 className="text-xl font-bold tracking-tight text-text-main">Containo</h1>
       </div>
