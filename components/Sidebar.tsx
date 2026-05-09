@@ -32,7 +32,7 @@ export default function Sidebar({ currentView, setCurrentView, onLogout, theme, 
   ];
 
   return (
-    <aside className="w-64 h-screen flex flex-col bg-ui-bg border-r border-ui-border z-40">
+    <aside className="w-64 h-screen flex flex-col bg-[#0c0c0e] border-r border-white/5 z-40 fixed left-0 top-0">
       <div className="p-6 flex items-center gap-3">
         <div className="w-8 h-8 rounded-md bg-brand flex items-center justify-center">
           <Anchor className="w-5 h-5 text-white" />

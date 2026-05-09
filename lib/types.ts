@@ -18,6 +18,20 @@ export interface Volume {
   lastBackup: string;
 }
 
+export interface ServiceData {
+  id: string;
+  name: string;
+  image: string;
+  ports: string;
+  env: string;
+  volumes: string;
+  restartPolicy: string;
+  networkMode?: string;
+  pidMode?: string;
+  capAdd?: string[];
+  securityOpt?: string[];
+}
+
 export type View = 'dashboard' | 'maintenance' | 'backup' | 'settings';
 
 export interface ContainerStats {

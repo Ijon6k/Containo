@@ -17,10 +17,12 @@ import {
 } from 'lucide-react';
 
 interface SettingsProps {
+  theme: 'light' | 'dark' | 'wholesome';
+  toggleTheme: () => void;
   addToast: (msg: string, type?: 'success' | 'error') => void;
 }
 
-export default function SettingsView({ addToast }: SettingsProps) {
+export default function SettingsView({ theme, toggleTheme, addToast }: SettingsProps) {
   const [telegramToken, setTelegramToken] = useState('');
   const [chatId, setChatId] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -136,6 +138,26 @@ export default function SettingsView({ addToast }: SettingsProps) {
                 </button>
               </div>
             </form>
+          </div>
+
+          <div className="card p-6">
+             <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                   <div className="w-10 h-10 rounded-md bg-ui-accent flex items-center justify-center text-amber-500">
+                      <Smartphone className="w-5 h-5" />
+                   </div>
+                   <div>
+                      <h3 className="text-sm font-bold text-text-main tracking-tight">Appearance</h3>
+                      <p className="text-xs text-text-sub font-medium capitalize">Current theme: {theme}</p>
+                   </div>
+                </div>
+                <button 
+                  onClick={toggleTheme}
+                  className="px-4 py-2 bg-ui-accent hover:bg-ui-border text-text-main rounded-md text-[10px] font-bold uppercase tracking-widest transition-all"
+                >
+                   Switch Theme
+                </button>
+             </div>
           </div>
 
           <div className="card p-6 flex items-center justify-between opacity-70">
