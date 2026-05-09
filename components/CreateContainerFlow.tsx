@@ -38,16 +38,78 @@ interface ServiceData {
 export default function CreateContainerFlow({ isOpen, onClose, addToast }: CreateContainerFlowProps) {
   const [createMode, setCreateMode] = useState<CreateMode>('selection');
   const [composePreviewTab, setComposePreviewTab] = useState<'yaml' | 'cli' | 'visualizer'>('visualizer');
-  
-  // Simple Mode State
   const [simpleData, setSimpleData] = useState<ServiceData>({
     id: '1', name: '', image: '', ports: '', env: '', volumes: '', restartPolicy: 'unless-stopped'
   });
-
-  // Compose Mode State (Array of services)
   const [composeServices, setComposeServices] = useState<ServiceData[]>([
     { id: '1', name: 'web', image: 'nginx:alpine', ports: '8080:80', env: '', volumes: '', restartPolicy: 'always' }
   ]);
+
+  const [isCliMode, setIsCliMode] = useState(false);
+  const [cliCommand, setCliCommand] = useState('');
+  const [isDeploying, setIsDeploying] = useState(false);
+  const [deployLogs, setDeployLogs] = useState<string[]>([]);
+  const [pullProgress, setPullProgress] = useState<Record<string, any>>({});
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  // Helper Functions (Define before Use)
+  const generateDockerRun = (data: ServiceData) => {
+    let cmd = `docker run -d`;
+    if (data.name) cmd += ` --name ${data.name}`;
+    if (data.ports) cmd += ` -p ${data.ports}`;
+    if (data.restartPolicy && data.restartPolicy !== 'no') cmd += ` --restart ${data.restartPolicy}`;
+    
+    data.env.split('\n').filter(Boolean).forEach(e => {
+      cmd += ` -e ${e}`;
+    });
+    data.volumes.split('\n').filter(Boolean).forEach(v => {
+      cmd += ` -v ${v}`;
+    });
+    cmd += ` ${data.image || 'nginx:latest'}`;
+    return cmd;
+  };
+
+  const parseDockerRun = (cmd: string) => {
+    const data: ServiceData = {
+      id: '1', name: '', image: '', ports: '', env: '', volumes: '', restartPolicy: 'unless-stopped'
+    };
+    
+    // Split by whitespace and filter out empty strings
+    const parts = cmd.trim().split(/\s+/);
+    
+    for (let i = 0; i < parts.length; i++) {
+      const part = parts[i];
+      if (part === '--name' && parts[i+1]) data.name = parts[++i];
+      if (part === '-p' && parts[i+1]) data.ports = parts[++i];
+      if (part === '--restart' && parts[i+1]) data.restartPolicy = parts[++i];
+      if (part === '-e' && parts[i+1]) data.env += (data.env ? '\n' : '') + parts[++i];
+      if (part === '-v' && parts[i+1]) data.volumes += (data.volumes ? '\n' : '') + parts[++i];
+    }
+    
+    // The image is usually the last part that doesn't start with a hyphen
+    // We search from the end to be more accurate
+    for (let i = parts.length - 1; i >= 0; i--) {
+      const p = parts[i];
+      if (p && !p.startsWith('-') && p !== 'run' && p !== 'docker' && p !== '-d') {
+        data.image = p;
+        break;
+      }
+    }
+    
+    return data;
+  };
+
+  const handleCopy = (text: string) => {
+    navigator.clipboard.writeText(text);
+    addToast('Copied to clipboard!', 'success');
+  };
+
+  // Sync Form -> CLI
+  React.useEffect(() => {
+    if (!isCliMode) {
+      setCliCommand(generateDockerRun(simpleData));
+    }
+  }, [simpleData, isCliMode]);
 
   // Reset state when opening
   React.useEffect(() => {
@@ -58,25 +120,11 @@ export default function CreateContainerFlow({ isOpen, onClose, addToast }: Creat
 
   if (!isOpen) return null;
 
-  const handleCopy = (text: string) => {
-    navigator.clipboard.writeText(text);
-    addToast('Copied to clipboard!', 'success');
-  };
-
-  const generateDockerRun = () => {
-    let cmd = `docker run -d \\\n`;
-    if (simpleData.name) cmd += `  --name ${simpleData.name} \\\n`;
-    if (simpleData.ports) cmd += `  -p ${simpleData.ports} \\\n`;
-    if (simpleData.restartPolicy !== 'no') cmd += `  --restart ${simpleData.restartPolicy} \\\n`;
-    
-    simpleData.env.split('\n').filter(Boolean).forEach(e => {
-      cmd += `  -e ${e} \\\n`;
-    });
-    simpleData.volumes.split('\n').filter(Boolean).forEach(v => {
-      cmd += `  -v ${v} \\\n`;
-    });
-    cmd += `  ${simpleData.image || 'nginx:latest'}`;
-    return cmd;
+  // Sync CLI -> Form
+  const handleCliChange = (val: string) => {
+    setCliCommand(val);
+    const parsed = parseDockerRun(val);
+    setSimpleData(parsed);
   };
 
   const generateComposeYaml = () => {
@@ -123,7 +171,7 @@ export default function CreateContainerFlow({ isOpen, onClose, addToast }: Creat
     }
   };
 
-  const dockerRunCmd = generateDockerRun();
+  const dockerRunCmd = generateDockerRun(simpleData);
   const composeYaml = generateComposeYaml();
   const composeCliCmd = `docker-compose up -d`;
 
@@ -214,48 +262,76 @@ export default function CreateContainerFlow({ isOpen, onClose, addToast }: Creat
                   
                   {createMode === 'simple' && (
                     <div className="space-y-4">
-                      <div className="p-4 rounded-lg bg-brand/5 border border-brand/20 mb-6">
-                        <h4 className="text-sm font-semibold text-brand mb-1">Single Container Deployment</h4>
-                        <p className="text-xs text-text-sub">Define the parameters for a single isolated Docker container. This will generate a standard docker run command.</p>
-                      </div>
-                      <div>
-                        <label className="block text-xs font-semibold text-text-sub uppercase tracking-wider mb-2">Container Name</label>
-                        <input type="text" placeholder="e.g. my-nginx" value={simpleData.name} onChange={e => setSimpleData({...simpleData, name: e.target.value})} className="w-full input-field py-2 px-3 text-sm" />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-semibold text-text-sub uppercase tracking-wider mb-2">Image</label>
-                        <input type="text" placeholder="e.g. nginx:latest" value={simpleData.image} onChange={e => setSimpleData({...simpleData, image: e.target.value})} className="w-full input-field py-2 px-3 text-sm" />
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="p-4 rounded-lg bg-brand/5 border border-brand/20 mb-6 flex justify-between items-center">
                         <div>
-                          <label className="block text-xs font-semibold text-text-sub uppercase tracking-wider mb-2">Port Mapping</label>
-                          <input type="text" placeholder="8080:80" value={simpleData.ports} onChange={e => setSimpleData({...simpleData, ports: e.target.value})} className="w-full input-field py-2 px-3 text-sm" />
+                          <h4 className="text-sm font-semibold text-brand mb-1">Single Container Deployment</h4>
+                          <p className="text-xs text-text-sub">Define parameters or use the CLI editor for direct command input.</p>
                         </div>
-                        <div>
-                          <label className="block text-xs font-semibold text-text-sub uppercase tracking-wider mb-2">Restart Policy</label>
-                          <div className="relative">
-                            <select value={simpleData.restartPolicy} onChange={e => setSimpleData({...simpleData, restartPolicy: e.target.value})} className="w-full input-field py-2 px-3 text-sm bg-ui-bg appearance-none pr-10 cursor-pointer">
-                              <option value="always">Always Restart</option>
-                              <option value="unless-stopped">Unless Stopped</option>
-                              <option value="on-failure">On Failure</option>
-                              <option value="no">Never</option>
-                            </select>
-                            <ChevronDown className="w-4 h-4 text-text-sub absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                        <button 
+                          onClick={() => setIsCliMode(!isCliMode)}
+                          className={`px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-2 ${
+                            isCliMode ? 'bg-brand text-white' : 'bg-ui-accent text-text-sub hover:text-text-main'
+                          }`}
+                        >
+                          <TerminalIcon className="w-3.5 h-3.5" />
+                          CLI Mode: {isCliMode ? 'ON' : 'OFF'}
+                        </button>
+                      </div>
+
+                      {isCliMode ? (
+                        <div className="space-y-2">
+                          <label className="block text-xs font-semibold text-text-sub uppercase tracking-wider mb-2">Docker Run Command</label>
+                          <textarea 
+                            value={cliCommand}
+                            onChange={(e) => handleCliChange(e.target.value)}
+                            className="w-full input-field py-3 px-4 text-sm font-mono min-h-[200px] bg-zinc-950 border-zinc-800 focus:border-brand"
+                            placeholder="docker run -d --name my-app -p 80:80 nginx"
+                          />
+                          <p className="text-[10px] text-text-sub italic">Modifying this command will automatically sync with the form fields below.</p>
+                        </div>
+                      ) : (
+                        <>
+                          <div>
+                            <label className="block text-xs font-semibold text-text-sub uppercase tracking-wider mb-2">Container Name</label>
+                            <input type="text" placeholder="e.g. my-nginx" value={simpleData.name} onChange={e => setSimpleData({...simpleData, name: e.target.value})} className="w-full input-field py-2 px-3 text-sm" />
                           </div>
-                        </div>
-                      </div>
-                      <div>
-                        <label className="block text-xs font-semibold text-text-sub uppercase tracking-wider mb-2">Environment Variables (KEY=VALUE)</label>
-                        <textarea placeholder="NODE_ENV=production\nPORT=80" value={simpleData.env} onChange={e => setSimpleData({...simpleData, env: e.target.value})} className="w-full input-field py-2 px-3 text-sm min-h-[80px]" />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-semibold text-text-sub uppercase tracking-wider mb-2">Volumes (host:container)</label>
-                        <textarea placeholder="/host/path:/container/path" value={simpleData.volumes} onChange={e => setSimpleData({...simpleData, volumes: e.target.value})} className="w-full input-field py-2 px-3 text-sm min-h-[80px]" />
-                      </div>
+                          <div>
+                            <label className="block text-xs font-semibold text-text-sub uppercase tracking-wider mb-2">Image</label>
+                            <input type="text" placeholder="e.g. nginx:latest" value={simpleData.image} onChange={e => setSimpleData({...simpleData, image: e.target.value})} className="w-full input-field py-2 px-3 text-sm" />
+                          </div>
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <label className="block text-xs font-semibold text-text-sub uppercase tracking-wider mb-2">Port Mapping</label>
+                              <input type="text" placeholder="8080:80" value={simpleData.ports} onChange={e => setSimpleData({...simpleData, ports: e.target.value})} className="w-full input-field py-2 px-3 text-sm" />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-semibold text-text-sub uppercase tracking-wider mb-2">Restart Policy</label>
+                              <div className="relative">
+                                <select value={simpleData.restartPolicy} onChange={e => setSimpleData({...simpleData, restartPolicy: e.target.value})} className="w-full input-field py-2 px-3 text-sm bg-ui-bg appearance-none pr-10 cursor-pointer">
+                                  <option value="always">Always Restart</option>
+                                  <option value="unless-stopped">Unless Stopped</option>
+                                  <option value="on-failure">On Failure</option>
+                                  <option value="no">Never</option>
+                                </select>
+                                <ChevronDown className="w-4 h-4 text-text-sub absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                              </div>
+                            </div>
+                          </div>
+                          <div>
+                            <label className="block text-xs font-semibold text-text-sub uppercase tracking-wider mb-2">Environment Variables (KEY=VALUE)</label>
+                            <textarea placeholder="NODE_ENV=production\nPORT=80" value={simpleData.env} onChange={e => setSimpleData({...simpleData, env: e.target.value})} className="w-full input-field py-2 px-3 text-sm min-h-[80px]" />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-semibold text-text-sub uppercase tracking-wider mb-2">Volumes (host:container)</label>
+                            <textarea placeholder="/host/path:/container/path" value={simpleData.volumes} onChange={e => setSimpleData({...simpleData, volumes: e.target.value})} className="w-full input-field py-2 px-3 text-sm min-h-[80px]" />
+                          </div>
+                        </>
+                      )}
                     </div>
                   )}
 
                   {createMode === 'compose' && (
+// ... (rest of the file update)
                     <div className="space-y-6">
                       <div className="p-4 rounded-lg bg-accent/10 border border-accent/20 mb-6 flex justify-between items-center">
                         <div>
@@ -454,15 +530,134 @@ export default function CreateContainerFlow({ isOpen, onClose, addToast }: Creat
               <div className="p-4 border-t border-ui-border flex justify-end gap-3 bg-ui-bg">
                 <button onClick={onClose} className="btn-secondary px-6 py-2">Cancel</button>
                 <button 
-                  onClick={() => {
-                    addToast('Deployment started...', 'success');
-                    onClose();
+                  onClick={async () => {
+                    const data = createMode === 'simple' ? simpleData : composeServices[0];
+                    setIsDeploying(true);
+                    setDeployLogs(['Starting deployment...']);
+                    setPullProgress({});
+
+                    try {
+                      const res = await fetch('/api/containers/deploy', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                      });
+
+                      if (!res.body) throw new Error('No response body');
+                      const reader = res.body.getReader();
+                      const decoder = new TextDecoder();
+                      let buffer = '';
+
+                      while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
+                        
+                        buffer += decoder.decode(value, { stream: true });
+                        const lines = buffer.split('\n');
+                        buffer = lines.pop() || '';
+
+                        for (const line of lines) {
+                          if (!line) continue;
+                          const event = JSON.parse(line);
+                          
+                          if (event.type === 'pull' && event.id) {
+                            setPullProgress(prev => ({
+                              ...prev,
+                              [event.id]: {
+                                status: event.status,
+                                progress: event.progress,
+                                detail: event.progressDetail
+                              }
+                            }));
+                          } else if (event.message) {
+                            setDeployLogs(prev => [...prev, event.message]);
+                            if (event.status === 'success') {
+                              addToast('Deployment successful!', 'success');
+                              setTimeout(() => {
+                                setIsDeploying(false);
+                                onClose();
+                              }, 2000);
+                            }
+                            if (event.status === 'error') {
+                              addToast(event.message, 'error');
+                              setIsDeploying(false);
+                            }
+                          }
+                        }
+                      }
+                    } catch (e: any) {
+                      addToast(e.message || 'Deployment failed', 'error');
+                      setIsDeploying(false);
+                    }
                   }} 
-                  className="btn-primary px-6 py-2 flex items-center gap-2"
+                  disabled={isDeploying}
+                  className="btn-primary px-6 py-2 flex items-center gap-2 disabled:opacity-50"
                 >
-                  <Play className="w-4 h-4" />
-                  Deploy
+                  <Play className={`w-4 h-4 ${isDeploying ? 'animate-pulse' : ''}`} />
+                  {isDeploying ? 'Deploying...' : 'Deploy'}
                 </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Deployment Progress Modal */}
+      <AnimatePresence>
+        {isDeploying && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-zinc-950/80 backdrop-blur-md">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="card w-full max-w-2xl bg-zinc-900 border-zinc-800 shadow-2xl flex flex-col max-h-[80vh]"
+            >
+              <div className="p-6 border-b border-zinc-800 flex justify-between items-center">
+                <h3 className="text-lg font-bold text-white flex items-center gap-3">
+                  <TerminalIcon className="w-5 h-5 text-brand" />
+                  Deployment Progress
+                </h3>
+                <div className="flex items-center gap-2">
+                   <div className="w-2 h-2 rounded-full bg-brand animate-pulse" />
+                   <span className="text-[10px] font-bold text-brand uppercase tracking-widest">Active</span>
+                </div>
+              </div>
+              
+              <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
+                {/* Pull Layers */}
+                <div className="space-y-3">
+                  {Object.entries(pullProgress).map(([id, info]: [string, any]) => (
+                    <div key={id} className="space-y-1.5">
+                      <div className="flex justify-between text-[10px] font-mono text-zinc-400 uppercase tracking-tighter">
+                        <span>Layer {id}</span>
+                        <span>{info.status}</span>
+                      </div>
+                      <div className="w-full h-1 bg-zinc-800 rounded-full overflow-hidden">
+                        <motion.div 
+                          className={`h-full ${info.status.includes('Download') ? 'bg-brand' : 'bg-emerald-500'}`}
+                          initial={{ width: 0 }}
+                          animate={{ width: info.detail?.current ? `${(info.detail.current / info.detail.total) * 100}%` : '100%' }}
+                          transition={{ duration: 0.3 }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Logs */}
+                <div className="pt-4 border-t border-zinc-800 space-y-1">
+                  {deployLogs.map((log, i) => (
+                    <div key={i} className="font-mono text-xs text-zinc-300 flex items-start gap-2">
+                      <span className="text-zinc-600">[{new Date().toLocaleTimeString()}]</span>
+                      <span>{log}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="p-4 bg-zinc-950/50 flex justify-center border-t border-zinc-800">
+                 <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold">
+                    Containo Deployment Engine v1.0
+                 </p>
               </div>
             </motion.div>
           </div>

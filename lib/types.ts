@@ -11,6 +11,9 @@ export interface Volume {
   id: string;
   name: string;
   size: string;
+  driver: string;
+  mountpoint: string;
+  createdAt: string;
   lastBackup: string;
 }
 

@@ -18,21 +18,53 @@ interface MaintenanceProps {
   containers: Container[];
   setContainers: React.Dispatch<React.SetStateAction<Container[]>>;
   addToast: (msg: string, type?: 'success' | 'error') => void;
+  showConfirm: (title: string, message: string, onConfirm: () => void, type?: 'danger' | 'warning' | 'info') => void;
+  systemInfo: any;
+  fetchSystemInfo: () => Promise<void>;
 }
 
-export default function Maintenance({ containers, setContainers, addToast }: MaintenanceProps) {
+export default function Maintenance({ containers, setContainers, addToast, showConfirm, systemInfo, fetchSystemInfo }: MaintenanceProps) {
   const [isPruning, setIsPruning] = useState(false);
   const [autoHeal, setAutoHeal] = useState(true);
+  const [storageView, setStorageView] = useState<'bar' | 'donut'>('bar');
 
   const handlePrune = () => {
-    setIsPruning(true);
-    setTimeout(() => {
-      setIsPruning(false);
-      addToast('Unused images and volumes pruned');
-    }, 1500);
+    showConfirm(
+      'System Deep Prune',
+      'Are you sure? This will remove all unused containers, images, and networks. This action can free up disk space but deleted items cannot be recovered.',
+      async () => {
+        setIsPruning(true);
+        try {
+          const res = await fetch('/api/system', {
+            method: 'POST',
+            body: JSON.stringify({ action: 'prune' })
+          });
+          if (res.ok) {
+            addToast('System pruned successfully');
+            fetchSystemInfo();
+          } else {
+            addToast('Prune failed', 'error');
+          }
+        } catch (e) {
+          addToast('Prune failed', 'error');
+        } finally {
+          setIsPruning(false);
+        }
+      },
+      'danger'
+    );
   };
 
-  const healthScore = 94;
+  const healthScore = systemInfo?.healthScore ?? 0;
+
+  if (!systemInfo) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
+        <div className="w-12 h-12 border-4 border-brand border-t-transparent rounded-full animate-spin" />
+        <p className="text-text-sub text-sm font-medium animate-pulse">Gathering system metrics...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -69,7 +101,21 @@ export default function Maintenance({ containers, setContainers, addToast }: Mai
                <span className="absolute text-3xl font-bold text-text-main">{healthScore}%</span>
             </div>
             <h3 className="text-lg font-bold text-text-main">System Health</h3>
-            <p className="text-sm text-text-sub mt-1">Your infrastructure is performing optimally.</p>
+            <div className="w-full mt-6 space-y-3">
+               <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-widest">
+                  <span className="text-text-sub">System Stability (40%)</span>
+                  <span className="text-emerald-500">{systemInfo?.healthBreakdown?.stability || 0} pts</span>
+               </div>
+               <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-widest">
+                  <span className="text-text-sub">Storage Hygiene (30%)</span>
+                  <span className="text-indigo-500">{systemInfo?.healthBreakdown?.hygiene || 0} pts</span>
+               </div>
+               <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-widest">
+                  <span className="text-text-sub">Resource Density (30%)</span>
+                  <span className="text-amber-500">{systemInfo?.healthBreakdown?.resources || 0} pts</span>
+               </div>
+            </div>
+            <p className="text-[10px] text-text-sub mt-6 italic">Stability only penalizes unexpected crashes (non-zero exit codes).</p>
           </div>
 
           <div className="card p-6">
@@ -96,31 +142,116 @@ export default function Maintenance({ containers, setContainers, addToast }: Mai
 
         {/* Storage & Optimization */}
         <div className="lg:col-span-2 space-y-6">
-           <div className="card p-6">
-              <div className="flex items-center gap-3 mb-6">
-                 <div className="p-2 rounded-md bg-blue-50 dark:bg-blue-500/10 text-blue-500">
-                    <HardDrive className="w-5 h-5" />
+            <div className="card p-6">
+              <div className="flex items-center justify-between mb-6">
+                 <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-md bg-blue-50 dark:bg-blue-500/10 text-blue-500">
+                       <HardDrive className="w-5 h-5" />
+                    </div>
+                    <h3 className="text-lg font-bold text-text-main">Global Storage Analysis</h3>
                  </div>
-                 <h3 className="text-lg font-bold text-text-main">Storage Analysis</h3>
+                 <div className="flex items-center gap-2">
+                    <div className="flex bg-ui-accent rounded-md p-0.5">
+                       <button 
+                         onClick={() => setStorageView('bar')}
+                         className={`px-2 py-1 text-[10px] font-bold rounded-sm transition-all ${storageView === 'bar' ? 'bg-ui-bg shadow-sm text-brand' : 'text-text-sub'}`}
+                       >
+                          Bar
+                       </button>
+                       <button 
+                         onClick={() => setStorageView('donut')}
+                         className={`px-2 py-1 text-[10px] font-bold rounded-sm transition-all ${storageView === 'donut' ? 'bg-ui-bg shadow-sm text-brand' : 'text-text-sub'}`}
+                       >
+                          Donut
+                       </button>
+                    </div>
+                    <span className="text-[10px] font-bold text-text-sub ml-2">Total: {((systemInfo?.storage?.hostTotal || 0) / (1024**3)).toFixed(1)} GB</span>
+                 </div>
               </div>
               
-              <div className="space-y-6">
-                 <div>
-                    <div className="flex justify-between text-xs font-bold text-text-sub mb-2 uppercase tracking-wider">
-                       <span>Docker Images</span>
-                       <span>12.4 GB</span>
+              <div className="space-y-8">
+                 {storageView === 'bar' ? (
+                   <div className="space-y-3">
+                      <div className="w-full h-8 bg-ui-accent rounded-lg overflow-hidden flex shadow-inner">
+                         {/* OS / System */}
+                         <motion.div 
+                           title="System / OS"
+                           initial={{ width: 0 }}
+                           animate={{ width: `${((systemInfo?.storage?.systemBytes || 0) / (systemInfo?.storage?.hostTotal || 1)) * 100}%` }}
+                           className="h-full bg-slate-500 border-r border-white/10"
+                         />
+                         {/* Docker Data */}
+                         <motion.div 
+                           title="Docker Data"
+                           initial={{ width: 0 }}
+                           animate={{ width: `${((systemInfo?.storage?.dockerBytes || 0) / (systemInfo?.storage?.hostTotal || 1)) * 100}%` }}
+                           className="h-full bg-brand border-r border-white/10"
+                         />
+                         {/* Free Space */}
+                         <div className="flex-1 h-full bg-emerald-500/20" title="Free Space" />
+                      </div>
+                   </div>
+                 ) : (
+                   <div className="flex justify-center py-4">
+                      <div className="relative w-48 h-48">
+                         <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
+                            {/* Free Space Base */}
+                            <circle cx="50" cy="50" r="40" fill="none" stroke="currentColor" strokeWidth="12" className="text-emerald-500/20" />
+                            
+                            {/* OS / System */}
+                            {(() => {
+                               const osPct = ((systemInfo?.storage?.systemBytes || 0) / (systemInfo?.storage?.hostTotal || 1)) * 100;
+                               const dockerPct = ((systemInfo?.storage?.dockerBytes || 0) / (systemInfo?.storage?.hostTotal || 1)) * 100;
+                               return (
+                                 <>
+                                   <motion.circle 
+                                     cx="50" cy="50" r="40" fill="none" stroke="currentColor" strokeWidth="12"
+                                     strokeDasharray={`${osPct * 2.51} 251`}
+                                     initial={{ strokeDashoffset: 0 }}
+                                     className="text-slate-500"
+                                   />
+                                   <motion.circle 
+                                     cx="50" cy="50" r="40" fill="none" stroke="currentColor" strokeWidth="12"
+                                     strokeDasharray={`${dockerPct * 2.51} 251`}
+                                     strokeDashoffset={-osPct * 2.51}
+                                     initial={{ opacity: 0 }}
+                                     animate={{ opacity: 1 }}
+                                     className="text-brand"
+                                   />
+                                 </>
+                               );
+                            })()}
+                         </svg>
+                         <div className="absolute inset-0 flex flex-col items-center justify-center">
+                            <span className="text-[10px] font-bold text-text-sub uppercase tracking-tighter">Usage</span>
+                            <span className="text-xl font-bold text-text-main">{(((systemInfo?.storage?.hostUsed || 0) / (systemInfo?.storage?.hostTotal || 1)) * 100).toFixed(0)}%</span>
+                         </div>
+                      </div>
+                   </div>
+                 )}
+
+                 {/* Legend */}
+                 <div className="grid grid-cols-3 gap-4">
+                    <div className="flex items-center gap-2">
+                       <div className="w-3 h-3 rounded-sm bg-slate-500" />
+                       <div className="flex flex-col">
+                          <span className="text-[10px] font-bold text-text-sub uppercase tracking-tighter">System / OS</span>
+                          <span className="text-xs font-bold text-text-main">{((systemInfo?.storage?.systemBytes || 0) / (1024**3)).toFixed(1)} GB</span>
+                       </div>
                     </div>
-                    <div className="w-full h-2 bg-ui-accent rounded-full overflow-hidden">
-                       <div className="h-full bg-indigo-500 w-[65%]" />
+                    <div className="flex items-center gap-2">
+                       <div className="w-3 h-3 rounded-sm bg-brand" />
+                       <div className="flex flex-col">
+                          <span className="text-[10px] font-bold text-text-sub uppercase tracking-tighter">Docker Data</span>
+                          <span className="text-xs font-bold text-text-main">{((systemInfo?.storage?.dockerBytes || 0) / (1024**3)).toFixed(1)} GB</span>
+                       </div>
                     </div>
-                 </div>
-                 <div>
-                    <div className="flex justify-between text-xs font-bold text-text-sub mb-2 uppercase tracking-wider">
-                       <span>Volumes (Data)</span>
-                       <span>4.8 GB</span>
-                    </div>
-                    <div className="w-full h-2 bg-ui-accent rounded-full overflow-hidden">
-                       <div className="h-full bg-emerald-500 w-[25%]" />
+                    <div className="flex items-center gap-2">
+                       <div className="w-3 h-3 rounded-sm bg-emerald-500/30" />
+                       <div className="flex flex-col">
+                          <span className="text-[10px] font-bold text-text-sub uppercase tracking-tighter">Free Space</span>
+                          <span className="text-xs font-bold text-text-main">{((systemInfo?.storage?.hostFree || 0) / (1024**3)).toFixed(1)} GB</span>
+                       </div>
                     </div>
                  </div>
               </div>

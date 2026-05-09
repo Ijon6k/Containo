@@ -25,14 +25,24 @@ export default function SettingsView({ addToast }: SettingsProps) {
   const [chatId, setChatId] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
+  React.useEffect(() => {
+    const savedToken = localStorage.getItem('containo_tg_token');
+    const savedId = localStorage.getItem('containo_tg_id');
+    if (savedToken) setTelegramToken(savedToken);
+    if (savedId) setChatId(savedId);
+  }, []);
+
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     
+    localStorage.setItem('containo_tg_token', telegramToken);
+    localStorage.setItem('containo_tg_id', chatId);
+    
     setTimeout(() => {
       setIsLoading(false);
-      addToast('Settings updated successfully');
-    }, 800);
+      addToast('Settings updated and saved locally');
+    }, 500);
   };
 
   return (

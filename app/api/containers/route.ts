@@ -26,3 +26,50 @@ export async function GET() {
     return NextResponse.json({ error: 'Failed to list containers' }, { status: 500 });
   }
 }
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+    const { name, image, ports, env, volumes, restartPolicy } = body;
+
+    // Parse ports: "8080:80" -> { "80/tcp": [{ "HostPort": "8080" }] }
+    const portBindings: any = {};
+    const exposedPorts: any = {};
+    
+    if (ports) {
+      const [hostPort, containerPort] = ports.split(':');
+      const cPort = containerPort || hostPort;
+      const hPort = hostPort;
+      exposedPorts[`${cPort}/tcp`] = {};
+      portBindings[`${cPort}/tcp`] = [{ HostPort: hPort }];
+    }
+
+    // Parse env: "KEY=VALUE\nKEY2=VALUE2" -> ["KEY=VALUE", "KEY2=VALUE2"]
+    const envArray = env ? env.split('\n').filter(Boolean) : [];
+
+    // Parse volumes: "/host:/container" -> ["/host:/container"]
+    const volumeArray = volumes ? volumes.split('\n').filter(Boolean) : [];
+
+    const container = await docker.createContainer({
+      Image: image || 'nginx:latest',
+      name: name || undefined,
+      ExposedPorts: exposedPorts,
+      HostConfig: {
+        PortBindings: portBindings,
+        Binds: volumeArray,
+        RestartPolicy: { Name: restartPolicy || 'unless-stopped' }
+      },
+      Env: envArray,
+    });
+
+    await container.start();
+
+    return NextResponse.json({ 
+      success: true, 
+      id: container.id.substring(0, 12),
+      message: 'Container created and started' 
+    });
+  } catch (error: any) {
+    console.error('Failed to create container:', error);
+    return NextResponse.json({ error: error.message || 'Failed to create container' }, { status: 500 });
+  }
+}

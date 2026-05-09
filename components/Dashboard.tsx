@@ -16,7 +16,8 @@ import {
   Info,
   Layers,
   HardDrive,
-  RotateCcw
+  RotateCcw,
+  ExternalLink
 } from 'lucide-react';
 import { Container, ContainerStats } from '@/lib/types';
 import CreateContainerFlow from './CreateContainerFlow';  
@@ -25,9 +26,11 @@ interface DashboardProps {
   containers: Container[];
   setContainers: React.Dispatch<React.SetStateAction<Container[]>>;
   addToast: (msg: string, type?: 'success' | 'error') => void;
+  showConfirm: (title: string, message: string, onConfirm: () => void, type?: 'danger' | 'warning' | 'info') => void;
+  systemInfo: any;
 }
 
-export default function Dashboard({ containers, setContainers, addToast }: DashboardProps) {
+export default function Dashboard({ containers, setContainers, addToast, showConfirm, systemInfo }: DashboardProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedContainer, setSelectedContainer] = useState<Container | null>(null);
   const [expandedStatsIds, setExpandedStatsIds] = useState<string[]>([]);
@@ -70,10 +73,10 @@ export default function Dashboard({ containers, setContainers, addToast }: Dashb
   }, [selectedContainer]);
 
   const stats = [
-    { label: 'Containers', value: containers.length, icon: Box, color: 'text-indigo-500' },
-    { label: 'Running', value: containers.filter(c => c.status === 'running').length, icon: Play, color: 'text-emerald-500' },
-    { label: 'CPU Usage', value: '12%', icon: Cpu, color: 'text-amber-500' },
-    { label: 'Disk', value: '1.2 GB', icon: HardDrive, color: 'text-blue-500' },
+    { label: 'Containers', value: systemInfo?.containerStats?.total || containers.length, icon: Box, color: 'text-indigo-500' },
+    { label: 'Running', value: systemInfo?.containerStats?.running || containers.filter(c => c.status === 'running').length, icon: Play, color: 'text-emerald-500' },
+    { label: 'Health Score', value: `${systemInfo?.healthScore || 0}%`, icon: Cpu, color: 'text-amber-500' },
+    { label: 'Disk (Images)', value: `${systemInfo?.storage?.imagesGB || 0} GB`, icon: HardDrive, color: 'text-blue-500' },
   ];
 
   const performAction = async (id: string, action: string, message: string, successMessage: string) => {
@@ -107,8 +110,13 @@ export default function Dashboard({ containers, setContainers, addToast }: Dashb
     performAction(id, action, `${action === 'start' ? 'Starting' : 'Stopping'} ${c.name}...`, `${c.name} ${action === 'start' ? 'started' : 'stopped'}`);
   };
 
-  const deleteContainer = (id: string) => {
-    performAction(id, 'delete', 'Deleting container...', 'Container removed');
+  const deleteContainer = (id: string, name: string) => {
+    showConfirm(
+      'Delete Container',
+      `Are you sure you want to delete ${name}? This action cannot be undone and all non-persistent data will be lost.`,
+      () => performAction(id, 'delete', 'Deleting container...', 'Container removed'),
+      'danger'
+    );
   };
 
   const restartContainer = (id: string, name: string) => {
@@ -227,6 +235,23 @@ export default function Dashboard({ containers, setContainers, addToast }: Dashb
                         >
                           <RotateCcw className="w-4 h-4" />
                         </button>
+                        {c.status === 'running' && c.ports && (
+                          <button 
+                            onClick={() => {
+                              // Handle multiple ports if any (e.g., "8080:80, 8443:443")
+                              const portPairs = c.ports.split(',').map(p => p.trim());
+                              const firstPair = portPairs[0];
+                              const [hostPort, containerPort] = firstPair.split(':');
+                              
+                              const protocol = containerPort === '443' || hostPort === '443' ? 'https' : 'http';
+                              window.open(`${protocol}://localhost:${hostPort}`, '_blank');
+                            }}
+                            className="p-1.5 rounded-md hover:bg-emerald-50 dark:hover:bg-emerald-500/10 text-emerald-500 transition-colors"
+                            title="Open Web UI"
+                          >
+                            <ExternalLink className="w-4 h-4" />
+                          </button>
+                        )}
                         <button 
                           onClick={() => setSelectedContainer(c)}
                           className="p-1.5 rounded-md hover:bg-ui-accent text-text-sub hover:text-text-main transition-colors"
@@ -235,7 +260,7 @@ export default function Dashboard({ containers, setContainers, addToast }: Dashb
                           <TerminalIcon className="w-4 h-4" />
                         </button>
                         <button 
-                          onClick={() => deleteContainer(c.id)}
+                          onClick={() => deleteContainer(c.id, c.name)}
                           className="p-1.5 rounded-md hover:bg-rose-50 dark:hover:bg-rose-500/10 text-text-sub hover:text-rose-500 transition-colors"
                           title="Delete"
                         >

@@ -13,42 +13,128 @@ import {
   Shield,
   Search,
   HardDrive,
-  Info
+  Info,
+  Trash2,
+  Box
 } from 'lucide-react';
 import { Volume } from '@/lib/types';
 
 interface BackupRestoreProps {
   volumes: Volume[];
   addToast: (msg: string, type?: 'success' | 'error') => void;
+  showConfirm: (title: string, message: string, onConfirm: () => void, type?: 'danger' | 'warning' | 'info') => void;
+  fetchVolumes: () => Promise<void>;
 }
 
-export default function BackupRestore({ volumes, addToast }: BackupRestoreProps) {
+export default function BackupRestore({ volumes, addToast, showConfirm, fetchVolumes }: BackupRestoreProps) {
   const [isRestoring, setIsRestoring] = useState(false);
   const [restoreProgress, setRestoreProgress] = useState(0);
   const [restoreStep, setRestoreStep] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
-  const handleRestore = () => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    console.log("File selected for import:", file.name);
     setIsRestoring(true);
-    setRestoreStep('Uploading Bundle...');
+    setRestoreStep(`Uploading ${file.name}...`);
     
-    let prog = 0;
-    const interval = setInterval(() => {
-      prog += 5;
-      setRestoreProgress(prog);
+    const formData = new FormData();
+    formData.append('backup', file);
+    formData.append('action', 'import');
+
+    try {
+      const res = await fetch('/api/volumes', {
+        method: 'POST',
+        body: formData,
+      });
       
-      if (prog === 40) setRestoreStep('Verifying Integrity...');
-      if (prog === 70) setRestoreStep('Extracting Volumes...');
-      
-      if (prog >= 100) {
-        clearInterval(interval);
-        setTimeout(() => {
-          setIsRestoring(false);
-          setRestoreProgress(0);
-          addToast('Full system restore successful');
-        }, 500);
+      if (res.ok) {
+        let prog = 0;
+        const interval = setInterval(() => {
+          prog += 10;
+          setRestoreProgress(prog);
+          if (prog === 40) setRestoreStep('Extracting Volumes...');
+          if (prog === 80) setRestoreStep('Synchronizing Docker Engine...');
+          if (prog >= 100) {
+            clearInterval(interval);
+            setTimeout(() => {
+              setIsRestoring(false);
+              setRestoreProgress(0);
+              addToast('Full system restore successful');
+              fetchVolumes();
+            }, 500);
+          }
+        }, 100);
+      } else {
+        const error = await res.json();
+        addToast(error.error || 'Import failed', 'error');
+        setIsRestoring(false);
       }
-    }, 100);
+    } catch (e) {
+      addToast('Connection error during import', 'error');
+      setIsRestoring(false);
+    }
+    
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const handleRestoreClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    console.log("Triggering file picker...");
+    fileInputRef.current?.click();
+  };
+
+  const handleBackupAll = async () => {
+    addToast('Preparing system-wide backup bundle...');
+    try {
+      const res = await fetch('/api/volumes', {
+        method: 'POST',
+        body: JSON.stringify({ action: 'backup_all' })
+      });
+      
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `containo_full_backup_${new Date().toISOString().split('T')[0]}.tar`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        addToast('Backup downloaded successfully');
+      } else {
+        addToast('Backup failed', 'error');
+      }
+    } catch (e) {
+      addToast('Backup failed', 'error');
+    }
+  };
+
+  const handleBackupIndividual = async (name: string) => {
+    addToast(`Exporting ${name}...`);
+    try {
+      const res = await fetch(`/api/volumes/${name}`, { method: 'POST' });
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${name}_backup.tar`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        addToast(`${name} exported successfully`);
+      } else {
+        addToast('Export failed', 'error');
+      }
+    } catch (e) {
+      addToast('Export failed', 'error');
+    }
   };
 
   const filteredVolumes = volumes.filter(v => 
@@ -93,20 +179,56 @@ export default function BackupRestore({ volumes, addToast }: BackupRestoreProps)
                        </div>
                        <div>
                           <p className="text-sm font-semibold text-text-main">{vol.name}</p>
-                          <div className="flex items-center gap-4 mt-1">
+                          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1">
                              <span className="text-[10px] font-bold text-text-sub uppercase tracking-wider flex items-center gap-1">
                                 <HardDrive className="w-3 h-3" /> {vol.size}
                              </span>
                              <span className="text-[10px] font-bold text-text-sub uppercase tracking-wider flex items-center gap-1">
-                                <Clock className="w-3 h-3" /> {vol.lastBackup}
+                                <Box className="w-3 h-3" /> {vol.driver}
+                             </span>
+                             <span className="text-[10px] font-bold text-text-sub uppercase tracking-wider flex items-center gap-1">
+                                <Clock className="w-3 h-3" /> {vol.createdAt !== 'N/A' ? new Date(vol.createdAt).toLocaleDateString() : 'N/A'}
+                             </span>
+                             <span className="text-[10px] font-mono text-text-sub/60 truncate max-w-[200px] hidden sm:block" title={vol.mountpoint}>
+                                {vol.mountpoint}
                              </span>
                           </div>
                        </div>
                     </div>
                     
-                    <button className="p-2 hover:bg-ui-accent rounded-md text-text-sub hover:text-text-main transition-all">
-                       <ChevronRight className="w-4 h-4" />
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button 
+                        onClick={() => handleBackupIndividual(vol.name)}
+                        className="p-2 hover:bg-emerald-500/10 rounded-md text-text-sub hover:text-emerald-500 transition-all"
+                        title="Backup Volume"
+                      >
+                         <Download className="w-4 h-4" />
+                      </button>
+                      <button 
+                        onClick={async () => {
+                          if (confirm(`Delete volume ${vol.name}?`)) {
+                            try {
+                              const res = await fetch(`/api/volumes/${vol.name}`, { method: 'DELETE' });
+                              if (res.ok) {
+                                addToast('Volume deleted');
+                                fetchVolumes();
+                              } else {
+                                addToast('Delete failed', 'error');
+                              }
+                            } catch (e) {
+                              addToast('Delete failed', 'error');
+                            }
+                          }
+                        }}
+                        className="p-2 hover:bg-rose-500/10 rounded-md text-text-sub hover:text-rose-500 transition-all"
+                        title="Delete Volume"
+                      >
+                         <Trash2 className="w-4 h-4" />
+                      </button>
+                      <button className="p-2 hover:bg-ui-accent rounded-md text-text-sub hover:text-text-main transition-all">
+                         <ChevronRight className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -129,12 +251,22 @@ export default function BackupRestore({ volumes, addToast }: BackupRestoreProps)
               </h3>
               
               <div className="space-y-3">
-                 <button className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-ui-accent hover:bg-ui-border text-text-main rounded-md text-xs font-bold transition-all">
+                 <input 
+                   type="file" 
+                   ref={fileInputRef} 
+                   onChange={handleFileChange} 
+                   accept=".tar,.zip,.gz" 
+                   className="hidden" 
+                 />
+                 <button 
+                   onClick={handleBackupAll}
+                   className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-ui-accent hover:bg-ui-border text-text-main rounded-md text-xs font-bold transition-all"
+                 >
                     <Download className="w-4 h-4" />
-                    Download All
+                    Backup All
                  </button>
                  <button 
-                  onClick={handleRestore}
+                  onClick={handleRestoreClick}
                   disabled={isRestoring}
                   className="w-full flex items-center justify-center gap-2 px-4 py-2 btn-primary rounded-md text-xs font-bold transition-all disabled:opacity-50"
                  >
