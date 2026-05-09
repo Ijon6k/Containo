@@ -8,8 +8,12 @@ services:
       - "3000:3000"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - /:/host:ro
+    privileged: true
     environment:
       - NODE_ENV=production
+      - DOCKER_HOST=unix:///var/run/docker.sock
+    user: root
     restart: unless-stopped
 
 networks:

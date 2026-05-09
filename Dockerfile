@@ -1,5 +1,5 @@
 # Stage 1: Dependencies
-FROM node:20-alpine AS deps
+FROM node:22-alpine AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
@@ -10,11 +10,14 @@ RUN corepack enable && corepack prepare pnpm@latest --activate
 COPY pnpm-lock.yaml ./
 COPY package.json ./
 
-# Install dependencies
-RUN pnpm install --frozen-lockfile
+# Install dependencies without running scripts (Secure & Fast)
+RUN pnpm install --frozen-lockfile --ignore-scripts
+
+# Explicitly rebuild only the trusted/required dependencies
+RUN pnpm rebuild sharp cpu-features protobufjs ssh2 unrs-resolver
 
 # Stage 2: Builder
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
 WORKDIR /app
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
@@ -26,14 +29,17 @@ ENV NEXT_TELEMETRY_DISABLED 1
 RUN pnpm build
 
 # Stage 3: Runner
-FROM node:20-alpine AS runner
+FROM node:22-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV production
 ENV NEXT_TELEMETRY_DISABLED 1
 
+RUN apk add --no-cache libc6-compat
+
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
+RUN adduser nextjs root
 
 COPY --from=builder /app/public ./public
 

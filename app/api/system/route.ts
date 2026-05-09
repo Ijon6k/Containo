@@ -33,11 +33,21 @@ export async function GET() {
 
     // Host Disk
     const { execSync } = require('child_process');
+    const fs = require('fs');
     let hostDisk = { total: 1, free: 0, used: 0 };
     try {
-      const dfOutput = execSync('df -B1 / --output=size,avail,used').toString().split('\n')[1].trim().split(/\s+/);
-      hostDisk = { total: parseInt(dfOutput[0]), free: parseInt(dfOutput[1]), used: parseInt(dfOutput[2]) };
-    } catch (e) {}
+      // Check if /host exists (running in Docker with root mount), else use /
+      const targetPath = fs.existsSync('/host') ? '/host' : '/';
+      const stats = fs.statfsSync(targetPath);
+      
+      hostDisk = { 
+        total: Number(stats.blocks) * stats.bsize, 
+        free: Number(stats.bavail) * stats.bsize, 
+        used: (Number(stats.blocks) - Number(stats.bfree)) * stats.bsize 
+      };
+    } catch (e) {
+      console.error('Failed to get host disk info:', e);
+    }
 
     const imageSize = df.Images?.reduce((acc: number, img: any) => acc + (img.Size || 0), 0) || 0;
     const volumeSize = df.Volumes?.reduce((acc: number, vol: any) => acc + (vol.UsageData?.Size || 0), 0) || 0;
