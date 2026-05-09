@@ -4,7 +4,7 @@ import { Container, Volume, View } from '@/lib/types';
 export const useAppState = () => {
   const [isSetup, setIsSetup] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [theme, setTheme] = useState<'light' | 'dark' | 'wholesome'>('light');
+  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
   const [currentView, setCurrentView] = useState<View>('dashboard');
   const [containers, setContainers] = useState<Container[]>([]);
   const [volumes, setVolumes] = useState<Volume[]>([]);
@@ -45,7 +45,7 @@ export const useAppState = () => {
       const interval = setInterval(() => {
         fetchContainers();
         fetchSystemInfo();
-      }, 5000);
+      }, 1000);
       return () => clearInterval(interval);
     }
   }, [isAuthenticated, fetchContainers, fetchVolumes, fetchSystemInfo]);
@@ -53,21 +53,19 @@ export const useAppState = () => {
   useEffect(() => {
     const setup = localStorage.getItem('containo_setup');
     if (setup) setTimeout(() => setIsSetup(true), 0);
-    
-    const savedTheme = localStorage.getItem('containo_theme') as 'light' | 'dark' | 'wholesome';
+
+    const savedTheme = localStorage.getItem('containo_theme') as 'light' | 'dark';
     if (savedTheme) setTheme(savedTheme);
   }, []);
 
   useEffect(() => {
+    document.documentElement.className = theme;
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('containo_theme', theme);
   }, [theme]);
 
   const toggleTheme = () => {
-    setTheme(prev => {
-      const next = prev === 'light' ? 'dark' : prev === 'dark' ? 'wholesome' : 'light';
-      return next;
-    });
+    setTheme(prev => prev === 'light' ? 'dark' : 'light');
   };
 
   return {

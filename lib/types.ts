@@ -6,6 +6,7 @@ export interface Container {
   ports: string;
   logs: string[];
   networkMode?: string;
+  exposedPorts?: number[];
 }
 
 export interface Volume {
@@ -30,9 +31,10 @@ export interface ServiceData {
   pidMode?: string;
   capAdd?: string[];
   securityOpt?: string[];
+  privileged?: boolean;
 }
 
-export type View = 'dashboard' | 'maintenance' | 'backup' | 'settings';
+export type View = 'dashboard' | 'maintenance' | 'backup' | 'settings' | 'deploy';
 
 export interface ContainerStats {
   id: string;

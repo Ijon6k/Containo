@@ -12,17 +12,17 @@ export async function POST(req: NextRequest) {
         const send = (msg: any) => controller.enqueue(encoder.encode(JSON.stringify(msg) + '\n'));
 
         try {
-          send({ status: 'info', message: `Checking image: ${image}` });
-          
+          send({ type: 'create', message: `🔍 Initializing protocol for image: ${image}` });
+
           // Pull image with progress
+          send({ type: 'create', message: `📥 Pulling image layers from registry...` });
           const pullStream = await docker.pull(image);
-          
+
           await new Promise((resolve, reject) => {
-            docker.modem.followProgress(pullStream, 
+            docker.modem.followProgress(pullStream,
               (err, res) => err ? reject(err) : resolve(res),
               (event) => {
-                // Map Docker events to our UI format
-                send({ 
+                send({
                   type: 'pull',
                   id: event.id,
                   status: event.status,
@@ -33,8 +33,8 @@ export async function POST(req: NextRequest) {
             );
           });
 
-          send({ status: 'info', message: 'Image pulled successfully' });
-          send({ status: 'info', message: 'Creating container...' });
+          send({ type: 'create', message: '✅ Image layers synchronized.' });
+          send({ type: 'create', message: '⚙️ Configuring container environment...' });
 
           // Format ports safely (Support multi-port)
           const portBindings: any = {};
@@ -52,37 +52,37 @@ export async function POST(req: NextRequest) {
             });
           }
 
-          console.log('Creating container with data:', {
-            Image: image,
-            ExposedPorts: exposedPorts,
-            Binds: data.volumes
-          });
+          // Handle advanced flags
+          const hostConfig: any = {
+            PortBindings: portBindings,
+            RestartPolicy: { Name: data.restartPolicy || 'unless-stopped' },
+            Binds: data.volumes?.split('\n').filter(Boolean).map((v: string) => v) || [],
+            Privileged: data.privileged || false,
+          };
+
+          if (data.networkMode) hostConfig.NetworkMode = data.networkMode;
+          if (data.pidMode) hostConfig.PidMode = data.pidMode;
+          if (data.capAdd && Array.isArray(data.capAdd) && data.capAdd.length > 0) hostConfig.CapAdd = data.capAdd;
+          if (data.securityOpt && Array.isArray(data.securityOpt) && data.securityOpt.length > 0) hostConfig.SecurityOpt = data.securityOpt;
+
+          send({ type: 'create', message: ` Creating unit: ${data.name || 'anonymous-module'}` });
 
           const container = await docker.createContainer({
             Image: image,
             name: data.name || undefined,
             ExposedPorts: exposedPorts,
-            HostConfig: {
-              PortBindings: portBindings,
-              RestartPolicy: { Name: data.restartPolicy || 'unless-stopped' },
-              Binds: data.volumes?.split('\n').filter(Boolean).map((v: string) => v) || [],
-              NetworkMode: data.networkMode || undefined,
-              PidMode: data.pidMode || undefined,
-              CapAdd: data.capAdd || undefined,
-              SecurityOpt: data.securityOpt || undefined,
-            },
+            HostConfig: hostConfig,
             Env: data.env?.split('\n').filter(Boolean) || []
           });
 
-          send({ status: 'info', message: 'Container created' });
-          send({ status: 'info', message: 'Starting container...' });
-          
+          send({ type: 'create', message: ' Container unit created. Initializing start sequence...' });
+
           await container.start();
-          
-          send({ status: 'success', message: 'Deployment complete!', containerId: container.id });
+
+          send({ type: 'success', message: ' Deployment complete! Unit is now operational.' });
           controller.close();
         } catch (error: any) {
-          send({ status: 'error', message: error.message });
+          send({ type: 'error', message: ` Deployment failed: ${error.message}` });
           controller.close();
         }
       }

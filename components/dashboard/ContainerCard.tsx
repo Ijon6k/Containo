@@ -32,11 +32,11 @@ export const ContainerCard = ({
   onOpenWebUI
 }: ContainerCardProps) => {
   return (
-    <div className={`transition-all ${isExpanded ? 'bg-white/[0.02]' : 'hover:bg-white/[0.01]'}`}>
-      <div className="grid grid-cols-12 gap-4 px-6 py-4 items-center group border-b border-white/[0.05]">
+    <div className={`transition-all ${isExpanded ? 'bg-ui-accent/30' : 'hover:bg-ui-accent/10'}`}>
+      <div className="grid grid-cols-12 gap-4 px-6 py-4 items-center group border-b border-ui-border">
         {/* Status Column */}
         <div className="col-span-2">
-          <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${
+          <span className={`px-2 py-0.5 rounded-sm text-[10px] font-black uppercase border tracking-widest ${
             c.status === 'running' 
               ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' 
               : 'bg-rose-500/10 text-rose-500 border-rose-500/20'
@@ -47,43 +47,43 @@ export const ContainerCard = ({
 
         {/* Name Column */}
         <div className="col-span-3 min-w-0">
-          <h3 className="text-sm font-bold text-text-main truncate">{c.name}</h3>
+          <h3 className="text-sm font-semibold text-text-main truncate group-hover:text-brand transition-colors uppercase tracking-tight">{c.name}</h3>
         </div>
 
         {/* Image Column */}
         <div className="col-span-4 min-w-0">
-          <p className="text-[10px] text-text-sub font-mono uppercase truncate">{c.image}</p>
+          <p className="text-sm text-text-sub font-mono truncate opacity-60 group-hover:opacity-100 transition-opacity">{c.image}</p>
         </div>
 
         {/* Actions Column */}
-        <div className="col-span-3 flex items-center justify-end gap-1">
+        <div className="col-span-3 flex items-center justify-end gap-1.5 opacity-60 group-hover:opacity-100 transition-opacity">
           <button 
             onClick={onToggleExpand}
-            className={`p-1.5 rounded-md transition-colors ${
+            className={`p-2 rounded-md transition-all ${
               isExpanded
-                ? 'bg-brand text-white dark:bg-brand/20 dark:text-brand'
+                ? 'bg-brand text-white shadow-sm'
                 : 'hover:bg-ui-accent text-text-sub hover:text-brand'
             }`}
-            title="Monitoring Stats"
+            title="Telemetry"
           >
             <Activity className="w-4 h-4" />
           </button>
           
           <button 
             onClick={() => onToggleStatus(c.id)}
-            className={`p-1.5 rounded-md transition-colors ${
+            className={`p-2 rounded-md transition-colors ${
               c.status === 'running' 
-                ? 'hover:bg-amber-50 dark:hover:bg-amber-500/10 text-text-sub hover:text-amber-500' 
-                : 'hover:bg-emerald-50 dark:hover:bg-emerald-500/10 text-text-sub hover:text-emerald-500'
+                ? 'hover:bg-amber-500/10 text-text-sub hover:text-amber-500' 
+                : 'hover:bg-emerald-500/10 text-text-sub hover:text-emerald-500'
             }`}
-            title={c.status === 'running' ? 'Stop' : 'Start'}
+            title={c.status === 'running' ? 'Shutdown' : 'Initialize'}
           >
             {c.status === 'running' ? <Square className="w-4 h-4" /> : <Play className="w-4 h-4" />}
           </button>
 
           <button 
             onClick={() => onRestart(c.id, c.name)}
-            className="p-1.5 rounded-md hover:bg-ui-accent text-text-sub hover:text-indigo-500 transition-colors"
+            className="p-2 rounded-md hover:bg-ui-accent text-text-sub hover:text-brand transition-colors"
             title="Restart"
           >
             <RotateCcw className="w-4 h-4" />
@@ -92,8 +92,8 @@ export const ContainerCard = ({
           {c.status === 'running' && (
             <button 
               onClick={() => onOpenWebUI(c)}
-              className="p-1.5 rounded-md hover:bg-emerald-50 dark:hover:bg-emerald-500/10 text-emerald-500 transition-colors"
-              title="Open Web UI"
+              className="p-2 rounded-md hover:bg-emerald-500/10 text-emerald-500 transition-colors"
+              title="Web Access"
             >
               <ExternalLink className="w-4 h-4" />
             </button>
@@ -101,7 +101,7 @@ export const ContainerCard = ({
 
           <button 
             onClick={() => onOpenLogs(c)}
-            className="p-1.5 rounded-md hover:bg-ui-accent text-text-sub hover:text-text-main transition-colors"
+            className="p-2 rounded-md hover:bg-ui-accent text-text-sub hover:text-text-main transition-colors"
             title="Logs"
           >
             <TerminalIcon className="w-4 h-4" />
@@ -109,8 +109,8 @@ export const ContainerCard = ({
 
           <button 
             onClick={() => onDelete(c)}
-            className="p-1.5 rounded-md hover:bg-rose-50 dark:hover:bg-rose-500/10 text-text-sub hover:text-rose-500 transition-colors"
-            title="Delete"
+            className="p-2 rounded-md hover:bg-rose-500/10 text-text-sub hover:text-rose-500 transition-colors"
+            title="Decommission"
           >
             <Trash2 className="w-4 h-4" />
           </button>

@@ -10,10 +10,10 @@ interface StatsPanelProps {
 export const StatsPanel = ({ stats }: StatsPanelProps) => {
   if (!stats) {
     return (
-      <div className="bg-black/20 p-4 sm:p-6 border-t border-white/5 flex justify-center">
-        <div className="flex items-center gap-2 text-text-sub text-xs animate-pulse">
-          <Activity className="w-4 h-4" />
-          Waiting for metrics...
+      <div className="bg-ui-accent p-6 border-t border-b border-ui-border flex justify-center shadow-inner mb-4 mx-2 rounded-b-xl">
+        <div className="flex items-center gap-3 text-text-sub text-sm font-semibold uppercase tracking-widest animate-pulse">
+          <Activity className="w-4 h-4 text-brand" />
+          Synchronizing Metrics...
         </div>
       </div>
     );
@@ -31,30 +31,38 @@ export const StatsPanel = ({ stats }: StatsPanelProps) => {
       initial={{ height: 0, opacity: 0 }}
       animate={{ height: 'auto', opacity: 1 }}
       exit={{ height: 0, opacity: 0 }}
-      className="bg-black/20 border-t border-white/5 overflow-hidden"
+      className="bg-ui-accent/50 border-t-2 border-brand/20 border-b border-ui-border overflow-hidden shadow-inner relative z-0 mb-4 rounded-b-xl mx-2"
     >
-      <div className="p-4 sm:p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 divide-x divide-ui-border">
         {items.map((item, i) => (
-          <div key={i} className="space-y-2">
-            <div className="flex items-center justify-between text-[10px] font-bold text-text-sub uppercase tracking-widest">
-              <div className="flex items-center gap-1.5">
-                <item.icon className={`w-3 h-3 ${item.color}`} />
+          <div key={i} className="p-5 space-y-4 group border-b sm:border-b-0 border-ui-border/50">
+            <div className="flex items-center justify-between text-xs font-semibold text-text-sub uppercase tracking-wider group-hover:text-text-main transition-colors">
+              <div className="flex items-center gap-3">
+                <div className={`p-2 rounded bg-ui-bg border border-ui-border group-hover:${item.color.replace('text', 'bg')}/10 transition-colors`}>
+                  <item.icon className={`w-4 h-4 ${item.color}`} />
+                </div>
                 {item.label}
               </div>
-              <span className="text-text-main">{item.value}</span>
+              <span className="text-sm font-mono font-bold text-text-main">{item.value}</span>
             </div>
-            {item.bar > 0 && (
-              <div className="w-full h-1 bg-ui-accent rounded-full overflow-hidden">
+            
+            {item.bar > 0 ? (
+              <div className="w-full h-1.5 bg-ui-bg rounded-full overflow-hidden border border-ui-border/50 p-0.5">
                 <motion.div 
                   initial={{ width: 0 }}
                   animate={{ width: `${Math.min(100, item.bar)}%` }}
-                  className={`h-full ${item.color.replace('text', 'bg')}`}
+                  transition={{ duration: 1, ease: "easeOut" }}
+                  className={`h-full rounded-full ${item.color.replace('text', 'bg')}`}
                 />
               </div>
+            ) : (
+              <div className="w-full h-1 bg-ui-border/50 rounded-full" />
             )}
           </div>
         ))}
       </div>
+      {/* Active Sidebar Indicator */}
+      <div className="absolute left-0 top-0 bottom-0 w-1 bg-brand" />
     </motion.div>
   );
 };

@@ -25,7 +25,7 @@ export const useNotifications = () => {
   });
 
   const addToast = useCallback((message: string, type: 'success' | 'error' = 'success') => {
-    const id = Date.now();
+    const id = Date.now() + Math.random();
     setToasts(prev => [...prev, { id, message, type }]);
     setTimeout(() => {
       setToasts(prev => prev.filter(t => t.id !== id));

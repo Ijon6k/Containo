@@ -8,6 +8,7 @@ import Maintenance from '@/components/Maintenance';
 import BackupRestore from '@/components/BackupRestore';
 import SettingsView from '@/components/Settings';
 import AuthFlow from '@/components/AuthFlow';
+import CreateContainerFlow from '@/components/CreateContainerFlow';
 
 // Modular UI Components
 import { ToastContainer } from './ui/ToastContainer';
@@ -54,6 +55,14 @@ export default function ContainoApp() {
             addToast={addToast} 
             showConfirm={showConfirm}
             systemInfo={systemInfo}
+            onNavigateToDeploy={() => setCurrentView('deploy')}
+          />
+        );
+      case 'deploy':
+        return (
+          <CreateContainerFlow 
+            addToast={addToast} 
+            onBack={() => setCurrentView('dashboard')}
           />
         );
       case 'maintenance':
@@ -99,7 +108,7 @@ export default function ContainoApp() {
         toggleTheme={toggleTheme}
       />
       
-      <main className="flex-1 lg:ml-64 p-4 md:p-10 min-h-screen overflow-y-auto bg-[#09090b]">
+      <main className="flex-1 lg:ml-64 p-4 md:p-10 min-h-screen overflow-y-auto bg-background">
         <div className="max-w-[1400px] mx-auto w-full">
           <AnimatePresence mode="wait">
             <div key={currentView}>

@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Terminal as TerminalIcon, CheckCircle2 } from 'lucide-react';
+import { Terminal as TerminalIcon, CheckCircle2, Loader2, ChevronRight } from 'lucide-react';
 
 interface DeploymentLogsProps {
   logs: string[];
@@ -18,74 +18,108 @@ export const DeploymentLogs = ({ logs, pullProgress, onClose, isComplete }: Depl
     }
   }, [logs]);
 
+  // Filter out pull events from main logs to keep it clean if they are shown in progress bars
+  const displayLogs = logs.filter(log => !log.includes('[PULL]'));
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-md bg-brand/10 text-brand animate-pulse">
-            <TerminalIcon className="w-5 h-5" />
+    <div className="space-y-10 max-w-4xl mx-auto">
+      <div className="flex items-center justify-between border-b border-white/5 pb-6">
+        <div className="flex items-center gap-4">
+          <div className={`p-3 rounded-md bg-white/5 ${!isComplete ? 'text-brand animate-pulse' : 'text-emerald-500'}`}>
+            {isComplete ? <CheckCircle2 className="w-6 h-6" /> : <Loader2 className="w-6 h-6 animate-spin" />}
           </div>
           <div>
-            <h3 className="text-lg font-bold text-text-main">Deployment in Progress</h3>
-            <p className="text-xs text-text-sub">Streaming real-time Docker engine events...</p>
+            <h3 className="text-xl font-semibold text-text-main">
+              {isComplete ? 'Deployment Finished' : 'Synchronizing Unit'}
+            </h3>
+            <p className="text-sm text-text-sub">
+              {isComplete ? 'All layers verified and container started.' : 'Downloading and verifying container layers...'}
+            </p>
           </div>
         </div>
-        {isComplete && (
-          <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="flex items-center gap-2 text-emerald-500 font-bold text-sm">
-            <CheckCircle2 className="w-5 h-5" />
-            Complete
+      </div>
+
+      {/* Visual Pull Progress */}
+      <AnimatePresence>
+        {Object.keys(pullProgress).length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="grid grid-cols-1 md:grid-cols-2 gap-4"
+          >
+            {Object.entries(pullProgress).map(([id, info]) => {
+              const progress = info.progressDetail?.total
+                ? (info.progressDetail.current / info.progressDetail.total) * 100
+                : info.status === 'Download complete' || info.status === 'Pull complete' ? 100 : 0;
+
+              return (
+                <div key={id} className="bg-white/5 p-4 rounded-md border border-white/5">
+                  <div className="flex justify-between items-center mb-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 rounded-full bg-brand" />
+                      <span className="text-xs font-mono text-text-sub uppercase tracking-wider">{id}</span>
+                    </div>
+                    <span className="text-[10px] font-semibold text-text-sub uppercase tracking-widest px-2 py-0.5 bg-white/5 rounded">
+                      {info.status}
+                    </span>
+                  </div>
+
+                  <div className="relative h-1.5 bg-white/5 rounded-full overflow-hidden">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${progress}%` }}
+                      className={`absolute top-0 left-0 h-full transition-all duration-500 ${progress === 100 ? 'bg-emerald-500' : 'bg-brand'}`}
+                    />
+                  </div>
+                </div>
+              );
+            })}
           </motion.div>
         )}
-      </div>
+      </AnimatePresence>
 
-      {/* Pull Progress Bars */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {Object.entries(pullProgress).map(([id, info]) => (
-          <div key={id} className="bg-ui-accent/50 p-3 rounded-lg border border-ui-border">
-            <div className="flex justify-between text-[10px] font-bold text-text-sub mb-2 uppercase tracking-widest">
-              <span className="truncate max-w-[100px]">{id}</span>
-              <span>{info.status}</span>
-            </div>
-            {info.progressDetail?.total && (
-              <div className="w-full h-1.5 bg-ui-accent rounded-full overflow-hidden">
-                <motion.div 
-                  initial={{ width: 0 }}
-                  animate={{ width: `${(info.progressDetail.current / info.progressDetail.total) * 100}%` }}
-                  className="h-full bg-brand"
-                />
-              </div>
-            )}
+      {/* Clean Activity Feed */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2 text-xs font-semibold text-text-sub uppercase tracking-[0.2em] mb-4">
+          <ChevronRight className="w-4 h-4" />
+          Activity Feed
+        </div>
+        <div
+          ref={scrollRef}
+          className="bg-black/40 border border-white/5 rounded-md p-6 h-64 overflow-y-auto font-mono text-sm custom-scrollbar shadow-inner"
+        >
+          <div className="space-y-3">
+            {displayLogs.map((log, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, x: -5 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="flex gap-4 group"
+              >
+                <span className="text-text-sub opacity-20 select-none">{String(i + 1).padStart(2, '0')}</span>
+                <span className={`${log.includes('[ERROR]') ? 'text-rose-400' : log.includes('[SUCCESS]') ? 'text-emerald-400' : 'text-text-sub'}`}>
+                  {log.replace(/\[.*?\]\s*/, '')}
+                </span>
+              </motion.div>
+            ))}
           </div>
-        ))}
-      </div>
-
-      {/* Terminal Logs */}
-      <div 
-        ref={scrollRef}
-        className="bg-zinc-950 rounded-lg p-4 h-64 overflow-y-auto font-mono text-xs border border-white/5 shadow-inner"
-      >
-        <AnimatePresence mode="popLayout">
-          {logs.map((log, i) => (
-            <motion.div 
-              key={i}
-              initial={{ opacity: 0, x: -5 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="py-1 text-zinc-400 border-b border-white/5 last:border-0"
-            >
-              <span className="text-zinc-600 mr-2">[{new Date().toLocaleTimeString()}]</span>
-              {log}
-            </motion.div>
-          ))}
-        </AnimatePresence>
+        </div>
       </div>
 
       {isComplete && (
-        <button 
-          onClick={onClose} 
-          className="w-full bg-brand hover:bg-brand/90 text-white px-6 py-2 rounded-md font-bold shadow-sm transition-all active:scale-95"
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="pt-6"
         >
-          Back to Dashboard
-        </button>
+          <button
+            onClick={onClose}
+            className="w-full bg-white/10 hover:bg-white/20 text-text-main py-4 rounded-md font-semibold transition-all flex items-center justify-center gap-2 border border-white/10"
+          >
+            Return to Infrastructure
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </motion.div>
       )}
     </div>
   );

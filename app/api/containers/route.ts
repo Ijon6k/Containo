@@ -15,6 +15,8 @@ export async function GET() {
         ports = 'Host Mode';
       }
 
+      const exposedPorts = c.Ports ? c.Ports.map((p: any) => p.PrivatePort) : [];
+
       return {
         id: c.Id.substring(0, 12),
         name: c.Names[0].replace(/^\//, ''),
@@ -23,6 +25,7 @@ export async function GET() {
         ports,
         logs: [],
         networkMode,
+        exposedPorts: Array.from(new Set(exposedPorts)) as number[],
       };
     });
 

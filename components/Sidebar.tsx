@@ -10,8 +10,7 @@ import {
   LogOut,
   Anchor,
   Sun,
-  Moon,
-  Sparkles
+  Moon
 } from 'lucide-react';
 import { View } from '@/lib/types';
 
@@ -19,7 +18,7 @@ interface SidebarProps {
   currentView: View;
   setCurrentView: (view: View) => void;
   onLogout: () => void;
-  theme: 'light' | 'dark' | 'wholesome';
+  theme: 'light' | 'dark';
   toggleTheme: () => void;
 }
 
@@ -32,7 +31,7 @@ export default function Sidebar({ currentView, setCurrentView, onLogout, theme, 
   ];
 
   return (
-    <aside className="w-64 h-screen flex flex-col bg-[#0c0c0e] border-r border-white/5 z-40 fixed left-0 top-0">
+    <aside className="w-64 h-screen flex flex-col bg-ui-bg border-r border-ui-border z-40 fixed left-0 top-0 transition-colors duration-300">
       <div className="p-6 flex items-center gap-3">
         <div className="w-8 h-8 rounded-md bg-brand flex items-center justify-center">
           <Anchor className="w-5 h-5 text-white" />
@@ -49,7 +48,7 @@ export default function Sidebar({ currentView, setCurrentView, onLogout, theme, 
             <button
               key={item.id}
               onClick={() => setCurrentView(item.id as View)}
-              className={`w-full flex items-center gap-3 px-3 py-2 rounded-md transition-colors text-sm font-medium ${
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-md transition-all text-sm font-medium ${
                 isActive 
                   ? 'bg-brand text-white shadow-sm' 
                   : 'text-text-sub hover:bg-ui-accent hover:text-text-main'
@@ -65,14 +64,14 @@ export default function Sidebar({ currentView, setCurrentView, onLogout, theme, 
       <div className="p-4 space-y-2 border-t border-ui-border">
         <button 
           onClick={toggleTheme}
-          className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-text-sub hover:bg-ui-accent hover:text-text-main transition-colors"
+          className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-text-sub hover:bg-ui-accent hover:text-text-main transition-all"
         >
-          {theme === 'light' ? <Moon className="w-4 h-4" /> : theme === 'dark' ? <Sparkles className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
-          {theme === 'light' ? 'Dark Mode' : theme === 'dark' ? 'Wholesome Mode' : 'Light Mode'}
+          {theme === 'light' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+          {theme === 'light' ? 'Dark Mode' : 'Light Mode'}
         </button>
         <button 
           onClick={onLogout}
-          className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors"
+          className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-rose-500 hover:bg-rose-500/10 transition-all"
         >
           <LogOut className="w-4 h-4" />
           Log Out

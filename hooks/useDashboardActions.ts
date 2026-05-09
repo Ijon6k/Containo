@@ -66,11 +66,7 @@ export const useDashboardActions = ({
     if (url) {
       window.open(url, '_blank');
     } else {
-      const userInput = window.prompt(`Enter port for ${c.name}:`, '80');
-      if (userInput) {
-        const protocol = userInput === '443' || userInput === '9443' ? 'https' : 'http';
-        window.open(`${protocol}://localhost:${userInput}`, '_blank');
-      }
+      addToast(`Could not auto-detect web port for ${c.name}. Please check container logs.`, 'error');
     }
   };
 
