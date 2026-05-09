@@ -42,16 +42,16 @@ export const DeploymentLogs = ({ logs, pullProgress, onClose, isComplete }: Depl
       {/* Visual Pull Progress */}
       <AnimatePresence>
         {Object.keys(pullProgress).length > 0 && (
-          <motion.div
+          <motion.div 
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             className="grid grid-cols-1 md:grid-cols-2 gap-4"
           >
             {Object.entries(pullProgress).map(([id, info]) => {
-              const progress = info.progressDetail?.total
-                ? (info.progressDetail.current / info.progressDetail.total) * 100
+              const progress = info.progressDetail?.total 
+                ? (info.progressDetail.current / info.progressDetail.total) * 100 
                 : info.status === 'Download complete' || info.status === 'Pull complete' ? 100 : 0;
-
+              
               return (
                 <div key={id} className="bg-white/5 p-4 rounded-md border border-white/5">
                   <div className="flex justify-between items-center mb-3">
@@ -63,9 +63,9 @@ export const DeploymentLogs = ({ logs, pullProgress, onClose, isComplete }: Depl
                       {info.status}
                     </span>
                   </div>
-
+                  
                   <div className="relative h-1.5 bg-white/5 rounded-full overflow-hidden">
-                    <motion.div
+                    <motion.div 
                       initial={{ width: 0 }}
                       animate={{ width: `${progress}%` }}
                       className={`absolute top-0 left-0 h-full transition-all duration-500 ${progress === 100 ? 'bg-emerald-500' : 'bg-brand'}`}
@@ -84,13 +84,13 @@ export const DeploymentLogs = ({ logs, pullProgress, onClose, isComplete }: Depl
           <ChevronRight className="w-4 h-4" />
           Activity Feed
         </div>
-        <div
+        <div 
           ref={scrollRef}
           className="bg-black/40 border border-white/5 rounded-md p-6 h-64 overflow-y-auto font-mono text-sm custom-scrollbar shadow-inner"
         >
           <div className="space-y-3">
             {displayLogs.map((log, i) => (
-              <motion.div
+              <motion.div 
                 key={i}
                 initial={{ opacity: 0, x: -5 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -107,13 +107,13 @@ export const DeploymentLogs = ({ logs, pullProgress, onClose, isComplete }: Depl
       </div>
 
       {isComplete && (
-        <motion.div
+        <motion.div 
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           className="pt-6"
         >
-          <button
-            onClick={onClose}
+          <button 
+            onClick={onClose} 
             className="w-full bg-white/10 hover:bg-white/20 text-text-main py-4 rounded-md font-semibold transition-all flex items-center justify-center gap-2 border border-white/10"
           >
             Return to Infrastructure

@@ -20,7 +20,7 @@ export default function CreateContainerFlow({ addToast, onBack }: CreateContaine
   const [step, setStep] = useState<'mode' | 'form' | 'logs'>('mode');
   const [mode, setMode] = useState<'simple' | 'compose' | 'cli'>('simple');
   const [deploymentMode, setDeploymentMode] = useState<'form' | 'cli'>('form');
-
+  
   const [simpleData, setSimpleData] = useState<ServiceData>({
     id: '',
     name: '',
@@ -74,23 +74,23 @@ export default function CreateContainerFlow({ addToast, onBack }: CreateContaine
       {/* Page Header */}
       <div className="flex justify-between items-center mb-10 pb-6 border-b border-white/5">
         <div className="flex items-center gap-6">
-          <button
-            onClick={step === 'mode' ? onBack : () => setStep('mode')}
+          <button 
+            onClick={step === 'mode' ? onBack : () => setStep('mode')} 
             className="p-2 hover:bg-white/5 rounded-md transition-all text-text-sub hover:text-text-main"
           >
             <ChevronLeft className="w-6 h-6" />
           </button>
           <div>
-            <h1 className="text-xl font-semibold text-text-main">
-              {step === 'mode' ? 'New Deployment' : step === 'form' ? `Configure ${mode === 'compose' ? 'Stack' : 'Container'}` : 'Deployment Progress'}
-            </h1>
-            <p className="text-sm text-text-sub mt-1">
-              {step === 'mode' ? 'Select your preferred deployment method' : step === 'form' ? 'Provide container specifications' : 'Monitoring deployment stream'}
-            </p>
+             <h1 className="text-xl font-semibold text-text-main">
+                {step === 'mode' ? 'New Deployment' : step === 'form' ? `Configure ${mode === 'compose' ? 'Stack' : 'Container'}` : 'Deployment Progress'}
+             </h1>
+             <p className="text-sm text-text-sub mt-1">
+                {step === 'mode' ? 'Select your preferred deployment method' : step === 'form' ? 'Provide container specifications' : 'Monitoring deployment stream'}
+             </p>
           </div>
         </div>
 
-        <button
+        <button 
           onClick={onBack}
           className="px-4 py-2 text-sm font-semibold text-text-sub hover:text-text-main transition-all"
         >
@@ -111,10 +111,10 @@ export default function CreateContainerFlow({ addToast, onBack }: CreateContaine
             {step === 'form' && (
               <motion.div key="form" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="h-full flex flex-col">
                 {(mode === 'simple' || mode === 'cli') && (
-                  <SimpleForm
-                    data={simpleData}
-                    onChange={setSimpleData}
-                    onDeploy={() => startDeployment()}
+                  <SimpleForm 
+                    data={simpleData} 
+                    onChange={setSimpleData} 
+                    onDeploy={() => startDeployment()} 
                     isDeploying={isDeploying}
                     cliCommand={cliCommand}
                     setCliCommand={setCliCommand}
@@ -123,7 +123,7 @@ export default function CreateContainerFlow({ addToast, onBack }: CreateContaine
                   />
                 )}
                 {mode === 'compose' && (
-                  <ComposeBuilder
+                  <ComposeBuilder 
                     onDeploy={startDeployment}
                     isDeploying={isDeploying}
                   />
@@ -133,11 +133,11 @@ export default function CreateContainerFlow({ addToast, onBack }: CreateContaine
 
             {step === 'logs' && (
               <motion.div key="logs" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-full">
-                <DeploymentLogs
-                  logs={deploymentLogs}
-                  isComplete={deploymentComplete}
+                <DeploymentLogs 
+                  logs={deploymentLogs} 
+                  isComplete={deploymentComplete} 
                   pullProgress={pullProgress}
-                  onClose={resetAndBack}
+                  onClose={resetAndBack} 
                 />
               </motion.div>
             )}
@@ -147,7 +147,7 @@ export default function CreateContainerFlow({ addToast, onBack }: CreateContaine
 
       {/* Simplified Footer */}
       <div className="mt-6 flex justify-end">
-        <span className="text-xs text-text-sub opacity-30 font-medium">Containo v2.4</span>
+         <span className="text-xs text-text-sub opacity-30 font-medium">Containo v2.4</span>
       </div>
     </div>
   );

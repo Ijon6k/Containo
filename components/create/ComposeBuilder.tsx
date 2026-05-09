@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Plus,
-  Trash2,
-  Box,
-  Network,
-  FileCode,
-  Terminal,
+import { 
+  Plus, 
+  Trash2, 
+  Box, 
+  Network, 
+  FileCode, 
+  Terminal, 
   Layers,
   Settings2
 } from 'lucide-react';
@@ -25,14 +25,14 @@ export const ComposeBuilder = ({ onDeploy, isDeploying }: ComposeBuilderProps) =
 
   const addService = () => {
     const newId = (services.length + 1).toString();
-    setServices([...services, {
-      id: newId,
-      name: `service-${newId}`,
-      image: '',
-      ports: '',
-      env: '',
-      volumes: '',
-      restartPolicy: 'no'
+    setServices([...services, { 
+      id: newId, 
+      name: `service-${newId}`, 
+      image: '', 
+      ports: '', 
+      env: '', 
+      volumes: '', 
+      restartPolicy: 'no' 
     }]);
   };
 
@@ -75,7 +75,7 @@ export const ComposeBuilder = ({ onDeploy, isDeploying }: ComposeBuilderProps) =
               <Layers className="w-5 h-5 text-brand" />
               Service Units
             </h3>
-            <button
+            <button 
               onClick={addService}
               className="text-sm font-semibold text-brand hover:text-brand/80 transition-all flex items-center gap-2 px-3 py-1.5 bg-brand/5 border border-brand/20 rounded-md"
             >
@@ -86,19 +86,19 @@ export const ComposeBuilder = ({ onDeploy, isDeploying }: ComposeBuilderProps) =
 
           <div className="space-y-4">
             {services.map((service) => (
-              <div
+              <div 
                 key={service.id}
                 className="bg-ui-bg border border-ui-border rounded-lg p-6 space-y-5 group hover:border-brand/30 transition-all shadow-sm"
               >
                 <div className="flex items-center justify-between">
-                  <input
+                  <input 
                     value={service.name}
                     onChange={(e) => updateService(service.id, 'name', e.target.value)}
                     className="bg-transparent border-none text-base font-semibold text-text-main focus:ring-0 p-0 w-full"
                     placeholder="service-name"
                   />
-                  <button
-                    onClick={() => removeService(service.id)}
+                  <button 
+                    onClick={() => removeService(service.id)} 
                     className="p-2 hover:bg-rose-500/10 rounded-md transition-all text-text-sub hover:text-rose-500"
                     title="Remove Service"
                   >
@@ -109,7 +109,7 @@ export const ComposeBuilder = ({ onDeploy, isDeploying }: ComposeBuilderProps) =
                 <div className="grid grid-cols-1 gap-5">
                   <div className="space-y-2">
                     <label className="text-xs font-bold text-text-sub uppercase tracking-wider">Container Image</label>
-                    <input
+                    <input 
                       placeholder="nginx:alpine"
                       value={service.image}
                       onChange={(e) => updateService(service.id, 'image', e.target.value)}
@@ -119,7 +119,7 @@ export const ComposeBuilder = ({ onDeploy, isDeploying }: ComposeBuilderProps) =
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <label className="text-xs font-bold text-text-sub uppercase tracking-wider">Exposed Ports</label>
-                      <input
+                      <input 
                         placeholder="80:80"
                         value={service.ports}
                         onChange={(e) => updateService(service.id, 'ports', e.target.value)}
@@ -128,7 +128,7 @@ export const ComposeBuilder = ({ onDeploy, isDeploying }: ComposeBuilderProps) =
                     </div>
                     <div className="space-y-2">
                       <label className="text-xs font-bold text-text-sub uppercase tracking-wider">Restart Policy</label>
-                      <select
+                      <select 
                         value={service.restartPolicy}
                         onChange={(e) => updateService(service.id, 'restartPolicy', e.target.value)}
                         className="w-full bg-ui-accent border border-ui-border rounded-md px-3 py-2.5 text-xs font-semibold text-text-main outline-none focus:border-brand/50 transition-colors"
@@ -157,8 +157,9 @@ export const ComposeBuilder = ({ onDeploy, isDeploying }: ComposeBuilderProps) =
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`flex-1 flex items-center justify-center gap-3 py-4 text-sm font-semibold transition-all ${activeTab === tab.id ? 'bg-ui-bg text-brand border-b-2 border-brand' : 'text-text-sub hover:bg-ui-accent'
-                  }`}
+                className={`flex-1 flex items-center justify-center gap-3 py-4 text-sm font-semibold transition-all ${
+                  activeTab === tab.id ? 'bg-ui-bg text-brand border-b-2 border-brand' : 'text-text-sub hover:bg-ui-accent'
+                }`}
               >
                 <tab.icon className="w-4 h-4" />
                 {tab.label}
@@ -169,8 +170,8 @@ export const ComposeBuilder = ({ onDeploy, isDeploying }: ComposeBuilderProps) =
           <div className="flex-1 p-8 relative overflow-hidden flex flex-col">
             <AnimatePresence mode="wait">
               {activeTab === 'visualizer' && (
-                <motion.div
-                  key="viz"
+                <motion.div 
+                  key="viz" 
                   initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                   className="h-full flex flex-col items-center justify-center space-y-12"
                 >
@@ -206,7 +207,7 @@ export const ComposeBuilder = ({ onDeploy, isDeploying }: ComposeBuilderProps) =
               {activeTab === 'cli' && (
                 <motion.div key="cli" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-full flex flex-col gap-6">
                   <div className="flex-1 bg-ui-accent/30 p-8 rounded-lg border border-ui-border flex flex-col">
-                    <textarea
+                    <textarea 
                       placeholder="Paste docker-compose.yml or docker run command here for analysis..."
                       className="flex-1 bg-transparent border-none outline-none resize-none font-mono text-sm text-text-main placeholder:text-text-sub/30 leading-relaxed"
                     />
@@ -229,7 +230,7 @@ export const ComposeBuilder = ({ onDeploy, isDeploying }: ComposeBuilderProps) =
             <p className="text-sm text-text-sub">{services.length} internal services defined in local registry.</p>
           </div>
         </div>
-        <button
+        <button 
           onClick={() => onDeploy(services)}
           disabled={isDeploying}
           className="bg-brand hover:bg-brand/90 text-white px-12 py-4 rounded-lg text-sm font-semibold transition-all shadow-md active:scale-95 disabled:opacity-50"

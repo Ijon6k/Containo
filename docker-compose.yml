@@ -1,0 +1,17 @@
+services:
+  containo:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: containo-app
+    ports:
+      - "3000:3000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped
+
+networks:
+  default:
+    name: containo-network
