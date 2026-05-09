@@ -235,16 +235,29 @@ export default function Dashboard({ containers, setContainers, addToast, showCon
                         >
                           <RotateCcw className="w-4 h-4" />
                         </button>
-                        {c.status === 'running' && c.ports && (
+                        {c.status === 'running' && (
                           <button 
                             onClick={() => {
-                              // Handle multiple ports if any (e.g., "8080:80, 8443:443")
-                              const portPairs = c.ports.split(',').map(p => p.trim());
-                              const firstPair = portPairs[0];
-                              const [hostPort, containerPort] = firstPair.split(':');
-                              
-                              const protocol = containerPort === '443' || hostPort === '443' ? 'https' : 'http';
-                              window.open(`${protocol}://localhost:${hostPort}`, '_blank');
+                              let hostPort = '';
+                              let containerPort = '';
+                              let protocol = 'http';
+
+                              if (c.ports && c.ports !== 'Host Mode' && c.ports !== 'N/A') {
+                                const portPairs = c.ports.split(',').map(p => p.trim());
+                                const firstPair = portPairs[0];
+                                [hostPort, containerPort] = firstPair.split(':');
+                              } else if (c.networkMode === 'host') {
+                                // Guess port for common apps in host mode
+                                if (c.image.includes('netdata')) hostPort = '19999';
+                                if (c.image.includes('pihole')) hostPort = '80';
+                              }
+
+                              if (hostPort && hostPort !== 'N/A') {
+                                protocol = containerPort === '443' || hostPort === '443' ? 'https' : 'http';
+                                window.open(`${protocol}://localhost:${hostPort}`, '_blank');
+                              } else {
+                                addToast('No web port detected for this container', 'error');
+                              }
                             }}
                             className="p-1.5 rounded-md hover:bg-emerald-50 dark:hover:bg-emerald-500/10 text-emerald-500 transition-colors"
                             title="Open Web UI"

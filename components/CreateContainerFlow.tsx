@@ -33,13 +33,18 @@ interface ServiceData {
   env: string;
   volumes: string;
   restartPolicy: string;
+  networkMode?: string;
+  pidMode?: string;
+  capAdd?: string[];
+  securityOpt?: string[];
 }
 
 export default function CreateContainerFlow({ isOpen, onClose, addToast }: CreateContainerFlowProps) {
   const [createMode, setCreateMode] = useState<CreateMode>('selection');
   const [composePreviewTab, setComposePreviewTab] = useState<'yaml' | 'cli' | 'visualizer'>('visualizer');
   const [simpleData, setSimpleData] = useState<ServiceData>({
-    id: '1', name: '', image: '', ports: '', env: '', volumes: '', restartPolicy: 'unless-stopped'
+    id: '1', name: '', image: '', ports: '', env: '', volumes: '', restartPolicy: 'unless-stopped',
+    capAdd: [], securityOpt: []
   });
   const [composeServices, setComposeServices] = useState<ServiceData[]>([
     { id: '1', name: 'web', image: 'nginx:alpine', ports: '8080:80', env: '', volumes: '', restartPolicy: 'always' }
@@ -71,26 +76,41 @@ export default function CreateContainerFlow({ isOpen, onClose, addToast }: Creat
 
   const parseDockerRun = (cmd: string) => {
     const data: ServiceData = {
-      id: '1', name: '', image: '', ports: '', env: '', volumes: '', restartPolicy: 'unless-stopped'
+      id: '1', name: '', image: '', ports: '', env: '', volumes: '', restartPolicy: 'unless-stopped',
+      capAdd: [], securityOpt: []
     };
     
-    // Split by whitespace and filter out empty strings
     const parts = cmd.trim().split(/\s+/);
-    
+    const portsArr: string[] = [];
+    const envArr: string[] = [];
+    const volArr: string[] = [];
+
     for (let i = 0; i < parts.length; i++) {
       const part = parts[i];
       if (part === '--name' && parts[i+1]) data.name = parts[++i];
-      if (part === '-p' && parts[i+1]) data.ports = parts[++i];
+      if (part === '-p' && parts[i+1]) portsArr.push(parts[++i]);
       if (part === '--restart' && parts[i+1]) data.restartPolicy = parts[++i];
-      if (part === '-e' && parts[i+1]) data.env += (data.env ? '\n' : '') + parts[++i];
-      if (part === '-v' && parts[i+1]) data.volumes += (data.volumes ? '\n' : '') + parts[++i];
+      if (part === '-e' && parts[i+1]) envArr.push(parts[++i]);
+      if (part === '-v' && parts[i+1]) volArr.push(parts[++i]);
+      
+      // Pro Flags
+      if (part === '--network' && parts[i+1]) data.networkMode = parts[++i];
+      if (part.startsWith('--network=')) data.networkMode = part.split('=')[1];
+      
+      if (part === '--pid' && parts[i+1]) data.pidMode = parts[++i];
+      if (part.startsWith('--pid=')) data.pidMode = part.split('=')[1];
+      
+      if (part === '--cap-add' && parts[i+1]) data.capAdd?.push(parts[++i]);
+      if (part === '--security-opt' && parts[i+1]) data.securityOpt?.push(parts[++i]);
     }
     
-    // The image is usually the last part that doesn't start with a hyphen
-    // We search from the end to be more accurate
+    data.ports = portsArr.join(', ');
+    data.env = envArr.join('\n');
+    data.volumes = volArr.join('\n');
+
     for (let i = parts.length - 1; i >= 0; i--) {
       const p = parts[i];
-      if (p && !p.startsWith('-') && p !== 'run' && p !== 'docker' && p !== '-d') {
+      if (p && !p.startsWith('-') && !['run', 'docker', '-d', 'exec', 'it'].includes(p)) {
         data.image = p;
         break;
       }

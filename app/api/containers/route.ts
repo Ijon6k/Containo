@@ -8,15 +8,21 @@ export async function GET() {
     
     const formattedContainers: Container[] = containers.map((c: any) => {
       // Get main port mapping if exists
-      const ports = c.Ports.map((p: any) => `${p.PublicPort || p.PrivatePort}:${p.PrivatePort}`).join(', ') || 'N/A';
+      let ports = c.Ports.map((p: any) => `${p.PublicPort || p.PrivatePort}:${p.PrivatePort}`).join(', ') || 'N/A';
       
+      const networkMode = c.HostConfig?.NetworkMode || 'default';
+      if (networkMode === 'host' && ports === 'N/A') {
+        ports = 'Host Mode';
+      }
+
       return {
         id: c.Id.substring(0, 12),
         name: c.Names[0].replace(/^\//, ''),
         image: c.Image,
         status: c.State === 'running' ? 'running' : 'exited',
         ports,
-        logs: [], // logs are fetched separately now
+        logs: [],
+        networkMode,
       };
     });
 

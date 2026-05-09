@@ -36,15 +36,20 @@ export async function POST(req: NextRequest) {
           send({ status: 'info', message: 'Image pulled successfully' });
           send({ status: 'info', message: 'Creating container...' });
 
-          // Format ports safely
+          // Format ports safely (Support multi-port)
           const portBindings: any = {};
           const exposedPorts: any = {};
-          if (data.ports && data.ports.includes(':')) {
-            const [host, container] = data.ports.split(':');
-            if (host && container) {
-              portBindings[`${container}/tcp`] = [{ HostPort: host }];
-              exposedPorts[`${container}/tcp`] = {};
-            }
+          if (data.ports) {
+            const pairs = data.ports.split(',').map((p: string) => p.trim());
+            pairs.forEach((pair: string) => {
+              if (pair.includes(':')) {
+                const [host, container] = pair.split(':');
+                if (host && container) {
+                  portBindings[`${container}/tcp`] = [{ HostPort: host }];
+                  exposedPorts[`${container}/tcp`] = {};
+                }
+              }
+            });
           }
 
           console.log('Creating container with data:', {
@@ -60,11 +65,11 @@ export async function POST(req: NextRequest) {
             HostConfig: {
               PortBindings: portBindings,
               RestartPolicy: { Name: data.restartPolicy || 'unless-stopped' },
-              Binds: data.volumes?.split('\n').filter(Boolean).map((v: string) => {
-                // Ensure volumes use absolute paths if they look like paths
-                if (v.startsWith('/') || v.startsWith('./')) return v;
-                return v; // Named volumes are also fine
-              }) || []
+              Binds: data.volumes?.split('\n').filter(Boolean).map((v: string) => v) || [],
+              NetworkMode: data.networkMode || undefined,
+              PidMode: data.pidMode || undefined,
+              CapAdd: data.capAdd || undefined,
+              SecurityOpt: data.securityOpt || undefined,
             },
             Env: data.env?.split('\n').filter(Boolean) || []
           });

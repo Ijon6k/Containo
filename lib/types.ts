@@ -5,6 +5,7 @@ export interface Container {
   status: 'running' | 'exited';
   ports: string;
   logs: string[];
+  networkMode?: string;
 }
 
 export interface Volume {
