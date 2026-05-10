@@ -47,10 +47,10 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const contentType = request.headers.get('content-type') || '';
-    let action, backupFile;
+    let action, backupFile, formData;
 
     if (contentType.includes('multipart/form-data')) {
-      const formData = await request.formData();
+      formData = await request.formData();
       action = formData.get('action');
       backupFile = formData.get('backup');
     } else {
@@ -70,16 +70,76 @@ export async function POST(request: Request) {
       });
     }
 
-    if (action === 'import') {
-      if (backupFile) {
-        console.log(`Received backup file for restoration: ${(backupFile as File).name}`);
-        // Here you would use a tool like 'tar-fs' or 'docker.putArchive' 
-        // to actually restore the files into a volume.
+    if (action === 'import' && formData) {
+      const targetVolume = formData.get('targetVolume') as string;
+      
+      if (backupFile && targetVolume) {
+        console.log(`Smart Restore initiated for volume: ${targetVolume}`);
+        
+        // 1. Find all containers using this volume
+        const allContainers = await docker.listContainers({ all: true });
+        const usingContainers = allContainers.filter(c => 
+          c.Mounts?.some(m => m.Name === targetVolume || m.Source.includes(targetVolume))
+        );
+
+        // 2. Stop running containers that use this volume
+        const originallyRunning = [];
+        for (const c of usingContainers) {
+          if (c.State === 'running') {
+            console.log(`Stopping container ${c.Id} to free up volume...`);
+            const container = docker.getContainer(c.Id);
+            await container.stop().catch(e => console.log(`Stop failed (maybe already stopping): ${e.message}`));
+            originallyRunning.push(c.Id);
+          }
+        }
+
+        try {
+          // 3. Ensure the helper image exists
+          try {
+            await docker.getImage('alpine:latest').inspect();
+          } catch (e) {
+            const pullStream = await docker.pull('alpine:latest');
+            await new Promise((resolve, reject) => {
+              docker.modem.followProgress(pullStream, (err, res) => err ? reject(err) : resolve(res));
+            });
+          }
+
+          // 4. Create and start the helper container
+          const helper = await docker.createContainer({
+            Image: 'alpine:latest',
+            Cmd: ['/bin/sh', '-c', 'sleep 10'],
+            Labels: { 'containo.internal': 'true' },
+            HostConfig: {
+              Binds: [`${targetVolume}:/volume_data`],
+            }
+          });
+          await helper.start();
+
+          try {
+            const buffer = Buffer.from(await (backupFile as File).arrayBuffer());
+            await helper.putArchive(buffer, { path: '/volume_data' });
+          } finally {
+            await helper.stop().catch(() => {});
+            await helper.remove({ force: true }).catch(() => {});
+          }
+
+          // 5. Restart containers that were originally running
+          for (const id of originallyRunning) {
+            console.log(`Restarting container ${id}...`);
+            await docker.getContainer(id).start().catch(e => console.error(`Restart failed for ${id}:`, e));
+          }
+
+          return NextResponse.json({ 
+            success: true, 
+            message: `Smart Restore to ${targetVolume} completed. ${originallyRunning.length} container(s) restarted.` 
+          });
+        } catch (error: any) {
+          console.error('Smart Restore failed:', error);
+          return NextResponse.json({ error: error.message || 'Restore failed' }, { status: 500 });
+        }
+      } else {
+        return NextResponse.json({ error: 'Missing backup file or target volume' }, { status: 400 });
       }
-      return NextResponse.json({ 
-        success: true, 
-        message: 'System restore completed successfully' 
-      });
     }
 
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });

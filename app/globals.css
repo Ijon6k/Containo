@@ -24,7 +24,7 @@
   --foreground: #09090b;
   
   --ui-bg: #ffffff;
-  --ui-border: #e4e4e7;
+  --ui-border: rgba(99, 102, 241, 0.2); /* Enhanced Pastel Purple */
   --ui-accent: #f4f4f5;
   
   --text-main: #09090b;
@@ -38,7 +38,7 @@
   --foreground: #fafafa;
   
   --ui-bg: #18181b;
-  --ui-border: #27272a;
+  --ui-border: rgba(99, 102, 241, 0.25); /* Stronger Glow Purple */
   --ui-accent: #27272a;
   
   --text-main: #fafafa;
@@ -52,6 +52,16 @@ body {
   -webkit-font-smoothing: antialiased;
   transition: background-color 0.2s ease, color 0.2s ease;
   min-height: 100vh;
+}
+
+button, 
+[role="button"],
+select,
+input[type="submit"],
+input[type="button"],
+input[type="checkbox"],
+input[type="radio"] {
+  cursor: pointer;
 }
 
 .card {

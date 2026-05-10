@@ -5,6 +5,7 @@ import { SettingsNav } from './settings/SettingsNav';
 import { TelegramAlerts } from './settings/TelegramAlerts';
 import { AppearanceCard } from './settings/AppearanceCard';
 import { DockerEngineCard } from './settings/DockerEngineCard';
+import { WIPWrapper } from '@/components/ui/WIPWrapper';
 
 interface SettingsProps {
   theme: 'light' | 'dark' | 'wholesome';
@@ -40,7 +41,9 @@ export default function SettingsView({ theme, toggleTheme, addToast }: SettingsP
 
         {/* Content */}
         <div className="lg:col-span-3 space-y-6">
-          <TelegramAlerts onSave={handleSaveTelegram} isLoading={isLoading} />
+          <WIPWrapper label="MVP WIP">
+            <TelegramAlerts onSave={handleSaveTelegram} isLoading={isLoading} />
+          </WIPWrapper>
           <AppearanceCard theme={theme} onToggleTheme={toggleTheme} />
           <DockerEngineCard />
         </div>

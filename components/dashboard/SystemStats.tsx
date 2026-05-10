@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Server, Package, HardDrive, Activity, Cpu, BarChart3, Maximize2, Layers, Zap } from 'lucide-react';
+import { Server, Package, HardDrive, Activity, Cpu, BarChart3, AlignLeft, Layers, Zap } from 'lucide-react';
 import { Container } from '@/lib/types';
 import { useMetricHistory } from '@/hooks/useMetricHistory';
 
@@ -62,20 +62,26 @@ export const SystemStats = ({ containers, systemInfo }: SystemStatsProps) => {
   const dockerPercent = (storage.dockerBytes / storage.hostTotal) * 100;
 
   return (
-    <div className="space-y-6 mb-10">
-      <div className="flex justify-end mb-[-16px] relative z-20">
-        <div className="flex bg-ui-bg rounded-md p-1.5 border border-ui-border shadow-sm">
+    <div className="space-y-4 mb-10">
+      <div className="flex justify-between items-center px-1">
+        <div className="flex items-center gap-2">
+           <div className="w-2 h-2 rounded-full bg-brand animate-pulse" />
+           <span className="text-[10px] font-bold text-text-sub uppercase tracking-widest">Real-time Metrics</span>
+        </div>
+        <div className="flex bg-ui-accent/50 rounded-lg p-1 border border-ui-border shadow-inner">
           <button 
             onClick={() => setViewMode('bar')}
-            className={`p-2 rounded-md transition-all ${viewMode === 'bar' ? 'bg-brand text-white shadow-sm' : 'text-text-sub hover:text-text-main'}`}
+            className={`p-1.5 rounded-md transition-all ${viewMode === 'bar' ? 'bg-brand text-white shadow-md' : 'text-text-sub hover:text-text-main'}`}
+            title="Horizontal Progress"
           >
-            <Maximize2 className="w-4 h-4" />
+            <AlignLeft className="w-3.5 h-3.5" />
           </button>
           <button 
             onClick={() => setViewMode('braille')}
-            className={`p-2 rounded-md transition-all ${viewMode === 'braille' ? 'bg-brand text-white shadow-sm' : 'text-text-sub hover:text-text-main'}`}
+            className={`p-1.5 rounded-md transition-all ${viewMode === 'braille' ? 'bg-brand text-white shadow-md' : 'text-text-sub hover:text-text-main'}`}
+            title="Vertical Bars"
           >
-            <BarChart3 className="w-4 h-4" />
+            <BarChart3 className="w-3.5 h-3.5" />
           </button>
         </div>
       </div>

@@ -7,6 +7,7 @@ import { HealthScoreCard } from './maintenance/HealthScoreCard';
 import { AutoHealToggle } from './maintenance/AutoHealToggle';
 import { StorageAnalysis } from './maintenance/StorageAnalysis';
 import { PruneAction } from './maintenance/PruneAction';
+import { WIPWrapper } from '@/components/ui/WIPWrapper';
 import { usePrune } from '@/hooks/usePrune';
 
 interface MaintenanceProps {
@@ -18,13 +19,13 @@ interface MaintenanceProps {
   fetchSystemInfo: () => Promise<void>;
 }
 
-export default function Maintenance({ 
-  containers, 
-  setContainers, 
-  addToast, 
-  showConfirm, 
-  systemInfo, 
-  fetchSystemInfo 
+export default function Maintenance({
+  containers,
+  setContainers,
+  addToast,
+  showConfirm,
+  systemInfo,
+  fetchSystemInfo
 }: MaintenanceProps) {
   const [autoHeal, setAutoHeal] = useState(true);
   const { isPruning, handlePrune } = usePrune({ addToast, showConfirm, fetchSystemInfo });
@@ -49,21 +50,25 @@ export default function Maintenance({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Health Card */}
         <div className="lg:col-span-1 space-y-6">
-          <HealthScoreCard systemInfo={systemInfo} />
-          <AutoHealToggle autoHeal={autoHeal} setAutoHeal={setAutoHeal} />
+          <WIPWrapper label="Coming Soon">
+            <HealthScoreCard systemInfo={systemInfo} />
+          </WIPWrapper>
+          <WIPWrapper label="Coming Soon">
+            <AutoHealToggle autoHeal={autoHeal} setAutoHeal={setAutoHeal} />
+          </WIPWrapper>
         </div>
 
         {/* Storage & Optimization */}
         <div className="lg:col-span-2 space-y-6">
-            <StorageAnalysis systemInfo={systemInfo} />
-            <PruneAction isPruning={isPruning} onPrune={handlePrune} />
+          <StorageAnalysis systemInfo={systemInfo} />
+          <PruneAction isPruning={isPruning} onPrune={handlePrune} />
 
-            <div className="p-4 bg-ui-accent/50 rounded-md border border-ui-border flex items-start gap-3">
-               <Info className="w-4 h-4 text-text-sub mt-0.5" />
-               <p className="text-xs text-text-sub leading-relaxed">
-                  Regular maintenance helps prevent performance degradation. It's recommended to prune your system at least once a month.
-               </p>
-            </div>
+          <div className="p-4 bg-ui-accent/50 rounded-md border border-ui-border flex items-start gap-3">
+            <Info className="w-4 h-4 text-text-sub mt-0.5" />
+            <p className="text-xs text-text-sub leading-relaxed">
+              Regular maintenance helps prevent performance degradation. It's recommended to prune your system at least once a month.
+            </p>
+          </div>
         </div>
       </div>
     </div>

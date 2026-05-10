@@ -6,7 +6,10 @@ export async function GET() {
   try {
     const containers = await docker.listContainers({ all: true });
     
-    const formattedContainers: Container[] = containers.map((c: any) => {
+    // Filter out internal helper containers
+    const visibleContainers = containers.filter((c: any) => c.Labels?.['containo.internal'] !== 'true');
+
+    const formattedContainers: Container[] = visibleContainers.map((c: any) => {
       // Get main port mapping if exists
       let ports = c.Ports.map((p: any) => `${p.PublicPort || p.PrivatePort}:${p.PrivatePort}`).join(', ') || 'N/A';
       

@@ -14,9 +14,14 @@ export function useBackupRestore({ addToast, fetchVolumes, fileInputRef }: UseBa
   const [restoreProgress, setRestoreProgress] = useState(0);
   const [restoreStep, setRestoreStep] = useState('');
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>, targetVolume?: string) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    if (!targetVolume) {
+      addToast('Please select a target volume/container first', 'error');
+      return;
+    }
 
     setIsRestoring(true);
     setRestoreStep(`Uploading ${file.name}...`);
@@ -24,6 +29,7 @@ export function useBackupRestore({ addToast, fetchVolumes, fileInputRef }: UseBa
     const formData = new FormData();
     formData.append('backup', file);
     formData.append('action', 'import');
+    formData.append('targetVolume', targetVolume);
 
     try {
       const res = await fetch('/api/volumes', {
@@ -32,22 +38,20 @@ export function useBackupRestore({ addToast, fetchVolumes, fileInputRef }: UseBa
       });
       
       if (res.ok) {
-        let prog = 0;
-        const interval = setInterval(() => {
-          prog += 10;
-          setRestoreProgress(prog);
-          if (prog === 40) setRestoreStep('Extracting Volumes...');
-          if (prog === 80) setRestoreStep('Synchronizing Docker Engine...');
-          if (prog >= 100) {
-            clearInterval(interval);
-            setTimeout(() => {
-              setIsRestoring(false);
-              setRestoreProgress(0);
-              addToast('Full system restore successful');
-              fetchVolumes();
-            }, 500);
-          }
-        }, 100);
+        setRestoreProgress(50);
+        setRestoreStep('Extracting data to volume...');
+        
+        setTimeout(() => {
+           setRestoreProgress(100);
+           setRestoreStep('Finalizing...');
+           
+           setTimeout(() => {
+             setIsRestoring(false);
+             setRestoreProgress(0);
+             addToast(`${targetVolume} restored successfully`);
+             fetchVolumes();
+           }, 1000);
+        }, 2000);
       } else {
         const error = await res.json();
         addToast(error.error || 'Import failed', 'error');

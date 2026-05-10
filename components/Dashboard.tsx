@@ -5,6 +5,7 @@ import { Plus } from 'lucide-react';
 import { Container } from '@/lib/types';
 import { SystemStats } from '@/components/dashboard/SystemStats';
 import { LogModal } from '@/components/dashboard/LogModal';
+import { InfoBox } from '@/components/ui/InfoBox';
 import { useDashboardActions } from '@/hooks/useDashboardActions';
 import { useImageActions } from '@/hooks/useImageActions';
 import { DashboardToolbar } from '@/components/dashboard/DashboardToolbar';
@@ -21,17 +22,17 @@ interface DashboardProps {
   onNavigateToDeploy: () => void;
 }
 
-export default function Dashboard({ 
-  containers, 
-  setContainers, 
-  addToast, 
-  showConfirm, 
-  systemInfo, 
-  onNavigateToDeploy 
+export default function Dashboard({
+  containers,
+  setContainers,
+  addToast,
+  showConfirm,
+  systemInfo,
+  onNavigateToDeploy
 }: DashboardProps) {
   const [viewMode, setViewMode] = useState<'containers' | 'images'>('containers');
   const [layoutMode, setLayoutMode] = useState<'list' | 'grid'>('list');
-  
+
   const {
     selectedContainer,
     setSelectedContainer,
@@ -61,12 +62,12 @@ export default function Dashboard({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-end mb-10">
+      <div className="flex justify-between items-end mb-4">
         <div>
           <h1 className="text-2xl font-semibold text-text-main tracking-tight">Containers</h1>
           <p className="text-sm text-text-sub mt-1">Manage and monitor your Docker containers.</p>
         </div>
-        <button 
+        <button
           onClick={onNavigateToDeploy}
           className="bg-brand hover:bg-brand/90 text-white px-5 py-2.5 rounded-md flex items-center gap-2 text-sm font-semibold transition-all active:scale-95 shadow-sm"
         >
@@ -75,11 +76,19 @@ export default function Dashboard({
         </button>
       </div>
 
+      {/* Welcome Info */}
+      <InfoBox title="Welcome to Containo" variant="info" className="mb-8">
+        We're here to make Docker management simple and stress-free. If you're new to this, just remember: 
+        <span className="text-text-main font-bold px-1">Containers</span> are where your apps live, and 
+        <span className="text-text-main font-bold px-1">Volumes</span> are where your data is safely kept. 
+        We handle the technical complexity so you can focus on what matters most—your creations.
+      </InfoBox>
+
       <SystemStats containers={containers} systemInfo={systemInfo} />
 
       {/* Main Content Area */}
       <div className="space-y-4">
-        <DashboardToolbar 
+        <DashboardToolbar
           viewMode={viewMode}
           setViewMode={setViewMode}
           layoutMode={layoutMode}
@@ -93,7 +102,7 @@ export default function Dashboard({
 
         {/* List Content */}
         {viewMode === 'containers' && layoutMode === 'list' && (
-          <ContainerListView 
+          <ContainerListView
             containers={filteredContainers}
             expandedStatsIds={expandedStatsIds}
             setExpandedStatsIds={setExpandedStatsIds}
@@ -107,7 +116,7 @@ export default function Dashboard({
         )}
 
         {viewMode === 'containers' && layoutMode === 'grid' && (
-          <ContainerGridView 
+          <ContainerGridView
             containers={filteredContainers}
             stats={stats}
             onToggleStatus={toggleStatus}
@@ -119,7 +128,7 @@ export default function Dashboard({
         )}
 
         {viewMode === 'images' && (
-          <ImageListView 
+          <ImageListView
             images={filteredImages}
             isLoading={isLoadingImages}
             selectedImages={selectedImages}
@@ -130,9 +139,9 @@ export default function Dashboard({
         )}
       </div>
 
-      <LogModal 
-        container={selectedContainer} 
-        onClose={() => setSelectedContainer(null)} 
+      <LogModal
+        container={selectedContainer}
+        onClose={() => setSelectedContainer(null)}
       />
     </div>
   );
