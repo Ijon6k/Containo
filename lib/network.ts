@@ -10,7 +10,7 @@ export const resolveContainerWebUrl = (c: Container) => {
     if (c.exposedPorts && c.exposedPorts.length > 0) {
       // Logic: Pick the most likely web port from exposed metadata
       // Netdata (19999), Portainer (9000), etc. will be in this list
-      const priorityPorts = [19999, 9000, 8123, 3000, 80, 8080, 443];
+      const priorityPorts = [19999, 9000, 8123, 3611, 3000, 80, 8080, 443];
       
       let bestPort = 0;
       for (const p of priorityPorts) {
@@ -31,7 +31,7 @@ export const resolveContainerWebUrl = (c: Container) => {
   const portPairs = c.ports.split(',').map(p => p.trim());
   
   if (portPairs.length > 0) {
-    const priorityPorts = ['19999', '9443', '9000', '443', '80', '8080', '3000', '3001', '8123', '32400', '8096'];
+    const priorityPorts = ['19999', '9443', '9000', '443', '80', '8080', '3611', '3000', '3001', '8123', '32400', '8096'];
     let bestPair = '';
     
     for (const p of priorityPorts) {

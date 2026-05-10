@@ -1,6 +1,8 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { 
   LayoutDashboard, 
@@ -12,22 +14,21 @@ import {
   Sun,
   Moon
 } from 'lucide-react';
-import { View } from '@/lib/types';
 
 interface SidebarProps {
-  currentView: View;
-  setCurrentView: (view: View) => void;
   onLogout: () => void;
   theme: 'light' | 'dark';
   toggleTheme: () => void;
 }
 
-export default function Sidebar({ currentView, setCurrentView, onLogout, theme, toggleTheme }: SidebarProps) {
+export default function Sidebar({ onLogout, theme, toggleTheme }: SidebarProps) {
+  const pathname = usePathname();
+
   const menuItems = [
-    { id: 'dashboard', label: 'Containers', icon: LayoutDashboard },
-    { id: 'maintenance', label: 'Maintenance', icon: ShieldCheck },
-    { id: 'backup', label: 'Backups', icon: Database },
-    { id: 'settings', label: 'Settings', icon: Settings },
+    { id: 'dashboard', label: 'Containers', icon: LayoutDashboard, href: '/dashboard' },
+    { id: 'maintenance', label: 'Maintenance', icon: ShieldCheck, href: '/maintenance' },
+    { id: 'backup', label: 'Backups', icon: Database, href: '/backups' },
+    { id: 'settings', label: 'Settings', icon: Settings, href: '/settings' },
   ];
 
   return (
@@ -45,13 +46,13 @@ export default function Sidebar({ currentView, setCurrentView, onLogout, theme, 
 
       <nav className="flex-1 px-4 mt-4 space-y-1">
         {menuItems.map((item) => {
-          const isActive = currentView === item.id;
+          const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
           const Icon = item.icon;
           
           return (
-            <button
+            <Link
               key={item.id}
-              onClick={() => setCurrentView(item.id as View)}
+              href={item.href}
               className={`w-full flex items-center gap-3 px-3 py-2 rounded-md transition-all text-sm font-medium ${
                 isActive 
                   ? 'bg-brand text-white shadow-sm' 
@@ -60,7 +61,7 @@ export default function Sidebar({ currentView, setCurrentView, onLogout, theme, 
             >
               <Icon className="w-4 h-4" />
               {item.label}
-            </button>
+            </Link>
           );
         })}
       </nav>

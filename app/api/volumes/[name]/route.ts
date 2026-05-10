@@ -35,11 +35,13 @@ export async function DELETE(
   try {
     const { name } = await params;
     const volume = docker.getVolume(name);
-    await volume.remove();
+    await volume.remove({ force: true });
     
     return NextResponse.json({ success: true, message: `Volume ${name} removed` });
   } catch (error: any) {
     console.error('Failed to remove volume:', error);
-    return NextResponse.json({ error: error.message || 'Failed to remove volume' }, { status: 500 });
+    const message = error.message || 'Failed to remove volume';
+    const status = error.statusCode === 409 ? 409 : 500;
+    return NextResponse.json({ error: message }, { status });
   }
 }

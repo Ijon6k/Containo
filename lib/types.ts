@@ -34,8 +34,6 @@ export interface ServiceData {
   privileged?: boolean;
 }
 
-export type View = 'dashboard' | 'maintenance' | 'backup' | 'settings' | 'deploy';
-
 export interface ContainerStats {
   id: string;
   cpuPercentage: number;
