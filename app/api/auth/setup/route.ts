@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import db from '@/lib/db';
 import { hashPassword } from '@/lib/auth';
+import fs from 'fs';
+import path from 'path';
 
 export async function GET() {
   const userCount = db.prepare('SELECT COUNT(*) as count FROM users').get() as { count: number };
@@ -17,12 +19,25 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Setup already completed' }, { status: 400 });
     }
 
-    if (!username || !password || password.length < 4) {
-      return NextResponse.json({ error: 'Invalid username or password' }, { status: 400 });
+    if (!username || username.trim().length < 3) {
+      return NextResponse.json({ error: 'Username must be at least 3 characters' }, { status: 400 });
+    }
+
+    if (!password || password.length < 6) {
+      return NextResponse.json({ error: 'Password must be at least 6 characters' }, { status: 400 });
+    }
+
+    if (password.includes(' ')) {
+      return NextResponse.json({ error: 'Password cannot contain spaces' }, { status: 400 });
     }
 
     const hashedPassword = await hashPassword(password);
     db.prepare('INSERT INTO users (username, password) VALUES (?, ?)').run(username, hashedPassword);
+    
+    // Create setup flag file for middleware
+    const flagPath = path.join(process.cwd(), 'data', '.setup_done');
+    fs.writeFileSync(flagPath, 'done');
+    fs.chmodSync(flagPath, 0o666);
 
     return NextResponse.json({ success: true });
   } catch (err) {

@@ -26,6 +26,15 @@ export default function SetupForm({ onComplete }: SetupFormProps) {
     endpoint: '/api/auth/setup',
     onSuccess: onComplete,
     validateBeforeSubmit: () => {
+      if (username.trim().length < 3) {
+        return 'Username must be at least 3 characters';
+      }
+      if (password.length < 6) {
+        return 'Password must be at least 6 characters';
+      }
+      if (password.includes(' ')) {
+        return 'Password cannot contain spaces';
+      }
       if (password !== confirmPassword) {
         return 'Passwords do not match';
       }

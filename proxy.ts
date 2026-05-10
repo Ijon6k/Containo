@@ -14,8 +14,24 @@ const PROTECTED_ROUTES = [
   '/deploy',
 ];
 
+import fs from 'fs';
+import path from 'path';
+
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // 0. Check if setup is completed
+  const flagPath = path.join(process.cwd(), 'data', '.setup_done');
+  const isSetupDone = fs.existsSync(flagPath);
+
+  if (!isSetupDone && pathname !== '/setup' && !pathname.startsWith('/api/auth/setup')) {
+    return NextResponse.redirect(new URL('/setup', request.url));
+  }
+
+  // If setup is already done, don't allow access to /setup
+  if (isSetupDone && pathname === '/setup') {
+    return NextResponse.redirect(new URL('/login', request.url));
+  }
 
   // 1. Check if it's a protected route
   const isProtected = PROTECTED_ROUTES.some(route => pathname.startsWith(route)) || pathname === '/';

@@ -7,18 +7,18 @@ export async function POST(request: Request) {
     const { username, password } = await request.json();
 
     if (!username || !password) {
-      return NextResponse.json({ error: 'Username and password required' }, { status: 400 });
+      return NextResponse.json({ error: 'Username and password are required' }, { status: 400 });
     }
 
     const user = db.prepare('SELECT * FROM users WHERE username = ?').get(username) as any;
 
     if (!user) {
-      return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
+      return NextResponse.json({ error: 'Invalid username or password' }, { status: 401 });
     }
 
     const isValid = await comparePassword(password, user.password);
     if (!isValid) {
-      return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
+      return NextResponse.json({ error: 'Invalid username or password' }, { status: 401 });
     }
 
     await createSession(user.id);
