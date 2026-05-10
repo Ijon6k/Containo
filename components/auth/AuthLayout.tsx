@@ -51,13 +51,7 @@ export default function AuthLayout({ title, subtitle, badge, children }: AuthLay
         className="w-full max-w-md relative z-10"
       >
         <div className="flex flex-col mb-10">
-          <div className="w-12 h-12 mb-6 overflow-hidden">
-            <img
-              src="/logo/containologo.webp"
-              alt="Containo"
-              className="w-full h-full object-contain"
-            />
-          </div>
+
           <motion.span
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
