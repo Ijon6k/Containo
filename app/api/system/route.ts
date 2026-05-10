@@ -117,7 +117,7 @@ export async function POST(request: Request) {
     if (action === 'prune') {
       const results = await Promise.all([
         docker.pruneContainers(),
-        docker.pruneImages({ filters: { dangling: { "true": true } } }),
+        docker.pruneImages(),
         docker.pruneVolumes(),
         docker.pruneNetworks()
       ]);

@@ -9,7 +9,8 @@ import {
   Layers,
   Activity,
   LayoutGrid,
-  List as ListIcon
+  List as ListIcon,
+  Trash2
 } from 'lucide-react';
 import { Container } from '@/lib/types';
 import CreateContainerFlow from './CreateContainerFlow';
@@ -35,6 +36,7 @@ export default function Dashboard({ containers, setContainers, addToast, showCon
   const [layoutMode, setLayoutMode] = useState<'list' | 'grid'>('list');
   const [images, setImages] = useState<any[]>([]);
   const [isLoadingImages, setIsLoadingImages] = useState(false);
+  const [selectedImages, setSelectedImages] = useState<string[]>([]);
   
   const {
     selectedContainer,
@@ -99,6 +101,37 @@ export default function Dashboard({ containers, setContainers, addToast, showCon
     }, force ? 'danger' : 'warning');
   };
 
+  const toggleImageSelection = (id: string) => {
+    setSelectedImages(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedImages.length === filteredImages.length) {
+      setSelectedImages([]);
+    } else {
+      setSelectedImages(filteredImages.map(img => img.repoTags?.[0] || img.fullId));
+    }
+  };
+
+  const bulkDeleteImages = () => {
+    if (selectedImages.length === 0) return;
+    showConfirm(
+      'Delete Selected Images',
+      `Are you sure you want to delete ${selectedImages.length} image(s)? This action cannot be undone.`,
+      async () => {
+        for (const id of selectedImages) {
+          try {
+            await fetch(`/api/images?id=${id}`, { method: 'DELETE' });
+          } catch (e) { /* continue */ }
+        }
+        addToast(`${selectedImages.length} image(s) deleted`);
+        setSelectedImages([]);
+        fetchImages();
+      },
+      'danger'
+    );
+  };
+
   const filteredImages = images.filter(img => 
     (img.repoTags?.[0] || '').toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -126,37 +159,7 @@ export default function Dashboard({ containers, setContainers, addToast, showCon
       <div className="space-y-4">
         {/* Controls Toolbar */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-ui-bg p-3 rounded-md border border-ui-border shadow-sm">
-          {/* Search */}
-          <div className="relative w-full sm:max-w-xs">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-sub" />
-            <input 
-              type="text"
-              placeholder={viewMode === 'containers' ? "Search containers..." : "Search images..."}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-ui-accent border border-ui-border rounded-md py-2 pl-10 pr-4 text-[10px] font-bold uppercase tracking-wider focus:outline-none focus:border-brand/50 transition-all text-text-main"
-            />
-          </div>
-
-          <div className="flex items-center gap-6">
-            {/* View Mode Toggle (Containers vs Images) */}
-            <div className="flex bg-ui-accent p-1 rounded-md border border-ui-border shadow-inner">
-               <button 
-                 onClick={() => setViewMode('containers')}
-                 className={`flex items-center gap-2 px-4 py-1.5 rounded-sm text-[10px] uppercase font-black tracking-widest transition-all ${viewMode === 'containers' ? 'bg-brand text-white shadow-lg' : 'text-text-sub hover:text-text-main'}`}
-               >
-                 <Layers className="w-3.5 h-3.5" />
-                 Containers
-               </button>
-               <button 
-                 onClick={() => setViewMode('images')}
-                 className={`flex items-center gap-2 px-4 py-1.5 rounded-sm text-[10px] uppercase font-black tracking-widest transition-all ${viewMode === 'images' ? 'bg-brand text-white shadow-lg' : 'text-text-sub hover:text-text-main'}`}
-               >
-                 <Box className="w-3.5 h-3.5" />
-                 Images
-               </button>
-            </div>
-
+          <div className="flex items-center gap-4">
             {/* Layout Toggle (List vs Grid) - Only for Containers */}
             {viewMode === 'containers' && (
               <div className="flex items-center gap-1 bg-white/5 p-1 rounded-md border border-white/5">
@@ -176,6 +179,49 @@ export default function Dashboard({ containers, setContainers, addToast, showCon
                 </button>
               </div>
             )}
+
+            {/* Bulk Delete Button for Images */}
+            {viewMode === 'images' && selectedImages.length > 0 && (
+              <button
+                onClick={bulkDeleteImages}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-rose-500 hover:bg-rose-600 text-white text-xs font-bold transition-colors"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                Delete ({selectedImages.length})
+              </button>
+            )}
+
+            {/* Search */}
+            <div className="relative w-full sm:max-w-xs">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-sub" />
+              <input 
+                type="text"
+                placeholder={viewMode === 'containers' ? "Search containers..." : "Search images..."}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-ui-accent border border-ui-border rounded-md py-2 pl-10 pr-4 text-xs font-medium tracking-wide focus:outline-none focus:border-brand/50 transition-all text-text-main"
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center gap-6">
+            {/* View Mode Toggle (Containers vs Images) */}
+            <div className="flex bg-ui-accent p-1 rounded-md border border-ui-border shadow-inner">
+               <button 
+                 onClick={() => { setViewMode('containers'); setSelectedImages([]); }}
+                 className={`flex items-center gap-2 px-4 py-1.5 rounded-sm text-xs font-bold tracking-wide transition-all ${viewMode === 'containers' ? 'bg-brand text-white shadow-lg' : 'text-text-sub hover:text-text-main'}`}
+               >
+                 <Layers className="w-3.5 h-3.5" />
+                 Containers
+               </button>
+               <button 
+                 onClick={() => setViewMode('images')}
+                 className={`flex items-center gap-2 px-4 py-1.5 rounded-sm text-xs font-bold tracking-wide transition-all ${viewMode === 'images' ? 'bg-brand text-white shadow-lg' : 'text-text-sub hover:text-text-main'}`}
+               >
+                 <Box className="w-3.5 h-3.5" />
+                 Images
+               </button>
+            </div>
           </div>
         </div>
 
@@ -183,10 +229,10 @@ export default function Dashboard({ containers, setContainers, addToast, showCon
         {viewMode === 'containers' && layoutMode === 'list' ? (
           <div className="card overflow-hidden border-white/5 bg-ui-bg rounded-md shadow-2xl">
             <div className="grid grid-cols-12 gap-4 px-6 py-3 border-b border-white/5 bg-white/[0.02]">
-              <div className="col-span-2 text-xs font-semibold text-text-sub uppercase tracking-[0.15em]">Status</div>
-              <div className="col-span-3 text-xs font-semibold text-text-sub uppercase tracking-[0.15em]">Container Name</div>
-              <div className="col-span-4 text-xs font-semibold text-text-sub uppercase tracking-[0.15em]">Image</div>
-              <div className="col-span-3 text-xs font-semibold text-text-sub uppercase tracking-[0.15em] text-right">Operations</div>
+              <div className="col-span-2 text-xs font-semibold text-text-sub uppercase tracking-wide">Status</div>
+              <div className="col-span-3 text-xs font-semibold text-text-sub uppercase tracking-wide">Container Name</div>
+              <div className="col-span-4 text-xs font-semibold text-text-sub uppercase tracking-wide">Image</div>
+              <div className="col-span-3 text-xs font-semibold text-text-sub uppercase tracking-wide text-right">Operations</div>
             </div>
             <div className="divide-y divide-ui-border">
               {filteredContainers.length === 0 ? (
@@ -236,11 +282,19 @@ export default function Dashboard({ containers, setContainers, addToast, showCon
         ) : (
           <div className="card overflow-hidden border-white/5 bg-ui-bg rounded-md shadow-2xl">
             <div className="grid grid-cols-12 gap-4 px-6 py-3 border-b border-white/5 bg-white/[0.02]">
-              <div className="col-span-5 text-xs font-semibold text-text-sub uppercase tracking-[0.15em]">Registry Tags</div>
-              <div className="col-span-2 text-xs font-semibold text-text-sub uppercase tracking-[0.15em]">Artifact ID</div>
-              <div className="col-span-2 text-xs font-semibold text-text-sub uppercase tracking-[0.15em]">Size</div>
-              <div className="col-span-2 text-xs font-semibold text-text-sub uppercase tracking-[0.15em]">Created</div>
-              <div className="col-span-1 text-xs font-semibold text-text-sub uppercase tracking-[0.15em] text-right">Ops</div>
+              <div className="col-span-1 flex items-center">
+                <input 
+                  type="checkbox" 
+                  checked={filteredImages.length > 0 && selectedImages.length === filteredImages.length}
+                  onChange={toggleSelectAll}
+                  className="w-4 h-4 rounded border-ui-border accent-brand cursor-pointer"
+                />
+              </div>
+              <div className="col-span-4 text-xs font-semibold text-text-sub uppercase tracking-wide">Registry Tags</div>
+              <div className="col-span-2 text-xs font-semibold text-text-sub uppercase tracking-wide">Artifact ID</div>
+              <div className="col-span-2 text-xs font-semibold text-text-sub uppercase tracking-wide">Size</div>
+              <div className="col-span-2 text-xs font-semibold text-text-sub uppercase tracking-wide">Created</div>
+              <div className="col-span-1 text-xs font-semibold text-text-sub uppercase tracking-wide text-right">Ops</div>
             </div>
             <div className="divide-y divide-ui-border">
               {isLoadingImages ? (
@@ -254,7 +308,9 @@ export default function Dashboard({ containers, setContainers, addToast, showCon
                   <ImageCard 
                     key={img.fullId} 
                     image={img} 
-                    onDelete={deleteImage} 
+                    onDelete={deleteImage}
+                    isSelected={selectedImages.includes(img.repoTags?.[0] || img.fullId)}
+                    onToggleSelect={() => toggleImageSelection(img.repoTags?.[0] || img.fullId)}
                   />
                 ))
               )}

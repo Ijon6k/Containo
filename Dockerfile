@@ -1,6 +1,7 @@
 # Stage 1: Dependencies
 FROM node:22-alpine AS deps
-RUN apk add --no-cache libc6-compat
+# Add build dependencies for native modules (better-sqlite3, sharp, etc.)
+RUN apk add --no-cache libc6-compat python3 make g++ sqlite-dev
 WORKDIR /app
 
 # Install pnpm
@@ -10,14 +11,14 @@ RUN corepack enable && corepack prepare pnpm@latest --activate
 COPY pnpm-lock.yaml ./
 COPY package.json ./
 
-# Install dependencies without running scripts (Secure & Fast)
+# Install deps without scripts, then rebuild native modules explicitly
 RUN pnpm install --frozen-lockfile --ignore-scripts
-
-# Explicitly rebuild only the trusted/required dependencies
-RUN pnpm rebuild sharp cpu-features protobufjs ssh2 unrs-resolver
+RUN pnpm rebuild better-sqlite3 sharp cpu-features protobufjs ssh2 unrs-resolver
 
 # Stage 2: Builder
 FROM node:22-alpine AS builder
+# Better-sqlite3 needs build tools during next build for some optimizations/checks
+RUN apk add --no-cache libc6-compat python3 make g++ sqlite-dev
 WORKDIR /app
 RUN corepack enable && corepack prepare pnpm@latest --activate
 

@@ -12,37 +12,16 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { toasts, confirmDialog, closeConfirm } = useNotify();
   const { theme, toggleTheme } = useTheme();
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
 
-  useEffect(() => {
-    const setup = localStorage.getItem('containo_setup');
-    if (!setup) {
-      router.replace('/setup');
-      return;
-    }
-
-    const auth = sessionStorage.getItem('containo_auth');
-    if (!auth) {
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
       router.replace('/login');
-      return;
+    } catch (err) {
+      console.error('Logout failed');
+      router.replace('/login');
     }
-
-    setIsAuthenticated(true);
-  }, [router]);
-
-  const handleLogout = () => {
-    sessionStorage.removeItem('containo_auth');
-    setIsAuthenticated(false);
-    router.replace('/login');
   };
-
-  if (isAuthenticated === null) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-ui-bg">
-        <div className="w-12 h-12 border-4 border-brand border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
 
   return (
     <div className="flex min-h-screen bg-ui-bg text-text-main transition-colors duration-300">

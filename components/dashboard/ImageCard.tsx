@@ -9,20 +9,32 @@ interface ImageCardProps {
     created: number;
   };
   onDelete: (id: string) => void;
+  isSelected?: boolean;
+  onToggleSelect?: () => void;
 }
 
-export const ImageCard = ({ image: img, onDelete }: ImageCardProps) => {
+export const ImageCard = ({ image: img, onDelete, isSelected = false, onToggleSelect }: ImageCardProps) => {
   const sizeGB = (img.size / (1024 ** 3)).toFixed(2);
   const date = new Date(img.created * 1000).toLocaleDateString();
 
   return (
-    <div className="hover:bg-white/[0.01] transition-all border-b border-white/[0.05]">
+    <div className={`hover:bg-white/[0.01] transition-all border-b border-white/[0.05] ${isSelected ? 'bg-brand/5' : ''}`}>
       <div className="grid grid-cols-12 gap-4 px-6 py-4 items-center group">
+        {/* Checkbox Column */}
+        <div className="col-span-1 flex items-center">
+          <input 
+            type="checkbox"
+            checked={isSelected}
+            onChange={onToggleSelect}
+            className="w-4 h-4 rounded border-ui-border accent-brand cursor-pointer"
+          />
+        </div>
+
         {/* Repo Tags Column */}
-        <div className="col-span-5 min-w-0">
+        <div className="col-span-4 min-w-0">
           <div className="flex items-center gap-2">
             <Box className="w-4 h-4 text-brand shrink-0" />
-            <h3 className="text-sm font-bold text-text-main truncate">
+            <h3 className="text-sm font-semibold text-text-main truncate">
               {img.repoTags[0]}
             </h3>
           </div>
@@ -33,7 +45,7 @@ export const ImageCard = ({ image: img, onDelete }: ImageCardProps) => {
 
         {/* ID Column */}
         <div className="col-span-2">
-          <p className="text-[10px] text-text-sub font-mono uppercase tracking-tighter">
+          <p className="text-xs text-text-sub font-mono tracking-tight">
             {img.id}
           </p>
         </div>
@@ -41,13 +53,13 @@ export const ImageCard = ({ image: img, onDelete }: ImageCardProps) => {
         {/* Size Column */}
         <div className="col-span-2 flex items-center gap-2">
            <HardDrive className="w-3 h-3 text-text-sub" />
-           <span className="text-xs font-bold text-text-main font-mono">{sizeGB} GB</span>
+           <span className="text-xs font-semibold text-text-main font-mono">{sizeGB} GB</span>
         </div>
 
         {/* Created Column */}
         <div className="col-span-2 flex items-center gap-2">
            <Calendar className="w-3 h-3 text-text-sub" />
-           <span className="text-xs font-bold text-text-main">{date}</span>
+           <span className="text-xs font-semibold text-text-main">{date}</span>
         </div>
 
         {/* Actions Column */}

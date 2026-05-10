@@ -2,6 +2,16 @@
   "name": "containo",
   "version": "0.1.0",
   "private": true,
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "better-sqlite3",
+      "cpu-features",
+      "protobufjs",
+      "sharp",
+      "ssh2",
+      "unrs-resolver"
+    ]
+  },
   "scripts": {
     "dev": "next dev -p 3611",
     "build": "next build",
@@ -9,9 +19,12 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "better-sqlite3": "^12.9.0",
     "clsx": "^2.1.1",
     "dockerode": "^5.0.0",
     "framer-motion": "^12.38.0",
+    "jose": "^6.2.3",
     "lucide-react": "^1.14.0",
     "next": "16.2.4",
     "react": "19.2.4",
@@ -22,6 +35,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/better-sqlite3": "^7.6.13",
     "@types/dockerode": "^4.0.1",
     "@types/node": "^20",
     "@types/react": "^19",
