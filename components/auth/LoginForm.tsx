@@ -1,0 +1,97 @@
+'use client';
+
+import React from 'react';
+import { motion } from 'framer-motion';
+import { Lock, User, ArrowRight, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { useAuthForm } from '@/hooks/useAuthForm';
+
+interface LoginFormProps {
+  onComplete: () => void;
+}
+
+export default function LoginForm({ onComplete }: LoginFormProps) {
+  const {
+    username,
+    setUsername,
+    password,
+    setPassword,
+    showPassword,
+    setShowPassword,
+    isLoading,
+    error,
+    handleSubmit,
+  } = useAuthForm({
+    endpoint: '/api/auth/login',
+    onSuccess: onComplete,
+  });
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-6">
+      {error && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-500 text-sm font-medium"
+        >
+          {error}
+        </motion.div>
+      )}
+
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <label className="text-sm font-semibold text-zinc-200">
+            Username
+          </label>
+          <div className="relative group">
+            <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 transition-colors text-zinc-500 group-focus-within:text-brand" />
+            <input
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              className="w-full py-4 pl-12 pr-4 text-base transition-all bg-transparent border rounded-xl focus:outline-none focus:ring-2 focus:ring-brand/20 border-zinc-800 text-white placeholder:text-zinc-600 focus:border-brand bg-black/20 backdrop-blur-sm"
+              placeholder="Enter username"
+              required
+            />
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-sm font-semibold text-zinc-200">
+            Password
+          </label>
+          <div className="relative group">
+            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 transition-colors text-zinc-500 group-focus-within:text-brand" />
+            <input
+              type={showPassword ? "text" : "password"}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full py-4 pl-12 pr-12 text-base transition-all bg-transparent border rounded-xl focus:outline-none focus:ring-2 focus:ring-brand/20 border-zinc-800 text-white placeholder:text-zinc-600 focus:border-brand bg-black/20 backdrop-blur-sm"
+              placeholder="Enter your password"
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-4 top-1/2 -translate-y-1/2 p-1 hover:text-brand transition-colors text-zinc-500"
+            >
+              {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <button
+        type="submit"
+        disabled={isLoading}
+        className={`w-full bg-brand hover:bg-brand/90 text-white py-4 rounded-xl flex items-center justify-center gap-2 text-base font-bold shadow-xl shadow-brand/20 transition-all active:scale-[0.98] ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
+      >
+        {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
+          <>
+            Authorize Access
+            <ArrowRight className="w-5 h-5" />
+          </>
+        )}
+      </button>
+    </form>
+  );
+}

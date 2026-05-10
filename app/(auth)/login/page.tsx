@@ -2,7 +2,8 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import AuthFlow from '@/components/AuthFlow';
+import AuthLayout from '@/components/auth/AuthLayout';
+import LoginForm from '@/components/auth/LoginForm';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -29,11 +30,16 @@ export default function LoginPage() {
   if (checking) return null;
 
   return (
-    <AuthFlow
-      type="login"
-      onComplete={() => {
-        router.push('/dashboard');
-      }}
-    />
+    <AuthLayout
+      badge="Welcome back"
+      title="Sign in to Containo"
+      subtitle="Access your container management dashboard."
+    >
+      <LoginForm
+        onComplete={() => {
+          router.push('/dashboard');
+        }}
+      />
+    </AuthLayout>
   );
 }
