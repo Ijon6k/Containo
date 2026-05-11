@@ -41,7 +41,7 @@ Follow these steps to get Containo running on your machine:
 ### 1. Clone the Repository
 First, clone the project to your local machine:
 ```bash
-git clone https://github.com/username/containo.git
+git clone https://github.com/Ijon6k/containo.git
 cd containo
 ```
 
