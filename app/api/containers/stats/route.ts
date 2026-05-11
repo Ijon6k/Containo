@@ -1,5 +1,5 @@
-import { docker } from '@/lib/docker';
-import { transformDockerStats } from '@/lib/statsTransformer';
+import { docker } from '@/lib/core/docker';
+import { transformDockerStats } from '@/lib/services/stats.service';
 
 export const dynamic = 'force-dynamic';
 

@@ -3,7 +3,7 @@
  * FUNCTION: Menangani aliran data log pull image ke client
  */
 
-import { docker } from '@/lib/docker';
+import { docker } from '@/lib/core/docker';
 
 export async function streamDeployment(imageData: any, responseStream: WritableStream) {
   const writer = responseStream.getWriter();

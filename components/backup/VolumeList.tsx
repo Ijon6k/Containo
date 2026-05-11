@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { Database, Search, Archive, HardDrive, Box, Clock, Download, Trash2, ChevronRight, Upload } from 'lucide-react';
 import { Volume } from '@/lib/types';
+import { formatDistanceToNow } from 'date-fns';
 
 interface VolumeListProps {
    volumes: Volume[];
@@ -54,7 +55,7 @@ export function VolumeList({ volumes, onBackupIndividual, onDeleteVolume, onRest
                               <Box className="w-3 h-3" /> {vol.driver}
                            </span>
                            <span className="text-[10px] font-bold text-text-sub uppercase tracking-wider flex items-center gap-1">
-                              <Clock className="w-3 h-3" /> {vol.createdAt !== 'N/A' ? new Date(vol.createdAt).toLocaleDateString() : 'N/A'}
+                              <Clock className="w-3 h-3" /> {vol.createdAt !== 'N/A' ? formatDistanceToNow(new Date(vol.createdAt), { addSuffix: true }) : 'N/A'}
                            </span>
                            <span className="text-[10px] font-mono text-text-sub/60 truncate max-w-[200px] hidden sm:block" title={vol.mountpoint}>
                               {vol.mountpoint}

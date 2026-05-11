@@ -1,4 +1,5 @@
 import React from 'react';
+import { cva } from 'class-variance-authority';
 import { 
   ExternalLink, 
   RotateCcw, 
@@ -21,6 +22,21 @@ interface ContainerCardProps {
   onOpenWebUI: (container: Container) => void;
 }
 
+const statusBadge = cva(
+  "px-2 py-0.5 rounded-sm text-[10px] font-black uppercase border tracking-widest",
+  {
+    variants: {
+      status: {
+        running: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
+        exited: "bg-rose-500/10 text-rose-500 border-rose-500/20",
+      }
+    },
+    defaultVariants: {
+      status: "exited",
+    }
+  }
+);
+
 export const ContainerCard = ({ 
   container: c, 
   isExpanded, 
@@ -36,11 +52,7 @@ export const ContainerCard = ({
       <div className="grid grid-cols-12 gap-4 px-6 py-4 items-center group border-b border-ui-border">
         {/* Status Column */}
         <div className="col-span-2">
-          <span className={`px-2 py-0.5 rounded-sm text-[10px] font-black uppercase border tracking-widest ${
-            c.status === 'running' 
-              ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' 
-              : 'bg-rose-500/10 text-rose-500 border-rose-500/20'
-          }`}>
+          <span className={statusBadge({ status: c.status as 'running' | 'exited' })}>
             {c.status}
           </span>
         </div>

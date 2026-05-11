@@ -1,7 +1,7 @@
 import { SignJWT } from 'jose';
 import bcrypt from 'bcryptjs';
 import { cookies } from 'next/headers';
-import { getJwtSecret, verifySession } from './auth-utils';
+import { getJwtSecret, verifySession } from './utils';
 
 
 export async function hashPassword(password: string) {

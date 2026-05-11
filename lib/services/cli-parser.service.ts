@@ -1,4 +1,4 @@
-import { ServiceData } from './types';
+import { ServiceData } from '../types/index';
 
 /**
  * Ultra Robust Docker CLI Parser

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { verifySession } from './lib/auth-utils';
+import { verifySession } from './lib/auth/utils';
 
 
 const PROTECTED_ROUTES = [

@@ -2,7 +2,7 @@
  * Network and Port Utilities
  * Intelligent and dynamic port discovery for containers
  */
-import { Container } from './types';
+import { Container } from '../types/index';
 
 export const resolveContainerWebUrl = (c: Container) => {
   // 1. Handle Host Mode or Missing Bindings dynamically

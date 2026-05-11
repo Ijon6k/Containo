@@ -7,6 +7,9 @@ const nextConfig: NextConfig = {
     'ssh2',
     'better-sqlite3',
     'cpu-features',
+    'sharp',
+    'protobufjs',
+    'unrs-resolver',
   ],
 };
 

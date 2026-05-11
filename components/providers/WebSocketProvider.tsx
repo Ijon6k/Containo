@@ -1,11 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useRef, useState, useCallback } from 'react';
-
-interface WSMessage {
-  type: string;
-  payload: any;
-}
+import { io, Socket } from 'socket.io-client';
 
 interface WebSocketContextType {
   isConnected: boolean;
@@ -17,67 +13,58 @@ const WebSocketContext = createContext<WebSocketContextType | null>(null);
 
 export const WebSocketProvider = ({ children }: { children: React.ReactNode }) => {
   const [isConnected, setIsConnected] = useState(false);
-  const wsRef = useRef<WebSocket | null>(null);
-  const listenersRef = useRef<Map<string, Set<(payload: any) => void>>>(new Map());
+  const socketRef = useRef<Socket | null>(null);
 
   const connect = useCallback(() => {
-    if (wsRef.current?.readyState === WebSocket.OPEN) return;
+    if (socketRef.current?.connected) return;
 
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const host = window.location.host;
-    const ws = new WebSocket(`${protocol}//${host}/api/ws`);
+    const socket = io({
+      path: '/api/ws',
+      transports: ['websocket'], // force websocket for performance
+      reconnectionDelay: 3000,
+      reconnectionDelayMax: 10000,
+    });
 
-    ws.onopen = () => {
+    socket.on('connect', () => {
       setIsConnected(true);
-      console.log('WebSocket Connected');
-    };
+      console.log('Socket.io Connected');
+    });
 
-    ws.onmessage = (event) => {
-      try {
-        const { type, payload } = JSON.parse(event.data);
-        const callbacks = listenersRef.current.get(type);
-        if (callbacks) {
-          callbacks.forEach(cb => cb(payload));
-        }
-      } catch (e) {
-        console.error('WS Parse Error:', e);
-      }
-    };
-
-    ws.onclose = () => {
+    socket.on('disconnect', () => {
       setIsConnected(false);
-      setTimeout(connect, 3000);
-    };
+      console.log('Socket.io Disconnected');
+    });
 
-    wsRef.current = ws;
+    socket.on('connect_error', (err) => {
+      console.error('Socket.io Error:', err.message);
+    });
+
+    socketRef.current = socket;
   }, []);
 
   useEffect(() => {
     connect();
     return () => {
-      if (wsRef.current) {
-        wsRef.current.onclose = null;
-        wsRef.current.close();
+      if (socketRef.current) {
+        socketRef.current.disconnect();
       }
     };
   }, [connect]);
 
   const sendMessage = useCallback((type: string, payload: any) => {
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify({ type, payload }));
+    if (socketRef.current?.connected) {
+      socketRef.current.emit(type, payload);
     }
   }, []);
 
   const subscribe = useCallback((type: string, callback: (payload: any) => void) => {
-    if (!listenersRef.current.has(type)) {
-      listenersRef.current.set(type, new Set());
-    }
-    listenersRef.current.get(type)!.add(callback);
+    if (!socketRef.current) return () => {};
+
+    socketRef.current.on(type, callback);
 
     return () => {
-      const callbacks = listenersRef.current.get(type);
-      if (callbacks) {
-        callbacks.delete(callback);
+      if (socketRef.current) {
+        socketRef.current.off(type, callback);
       }
     };
   }, []);

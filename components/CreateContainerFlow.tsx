@@ -9,7 +9,7 @@ import { SimpleForm } from './create/SimpleForm';
 import { ComposeBuilder } from './create/ComposeBuilder';
 import { DeploymentLogs } from './create/DeploymentLogs';
 import { useDeployment } from '@/hooks/useDeployment';
-import { parseDockerCommand } from '@/lib/cli-parser';
+import { parseDockerCommand } from '@/lib/services/cli-parser.service';
 
 interface CreateContainerFlowProps {
   addToast: (msg: string, type?: 'success' | 'error') => void;
@@ -65,7 +65,7 @@ export default function CreateContainerFlow({ addToast, onBack }: CreateContaine
       const parsedData = parseDockerCommand(cliCommand);
       handleDeploy(parsedData);
     } else {
-      handleDeploy(simpleData);
+      handleDeploy(data);
     }
   };
 
@@ -112,9 +112,7 @@ export default function CreateContainerFlow({ addToast, onBack }: CreateContaine
               <motion.div key="form" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="h-full flex flex-col">
                 {(mode === 'simple' || mode === 'cli') && (
                   <SimpleForm 
-                    data={simpleData} 
-                    onChange={setSimpleData} 
-                    onDeploy={() => startDeployment()} 
+                    onDeploy={(data) => startDeployment(data)} 
                     isDeploying={isDeploying}
                     cliCommand={cliCommand}
                     setCliCommand={setCliCommand}

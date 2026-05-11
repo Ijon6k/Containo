@@ -4,7 +4,7 @@
  */
 
 import { execSync } from 'child_process';
-import { docker } from '@/lib/docker';
+import { docker } from '@/lib/core/docker';
 
 export async function getStorageStats() {
   // 1. Mendapatkan data kapasitas host via perintah shell (df)

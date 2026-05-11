@@ -22,10 +22,10 @@ try {
 
 
 import next from 'next';
-import { WebSocketServer } from 'ws';
-import { setupWebSocket } from './lib/ws-handler';
-import { getJwtSecret } from './lib/auth-utils';
-import { logger } from './lib/logger';
+import { Server as SocketIOServer } from 'socket.io';
+import { setupSocketIO } from './lib/ws/server';
+import { getJwtSecret } from './lib/auth/utils';
+import { logger } from './lib/core/logger';
 
 
 // Early security check & initialization
@@ -44,15 +44,14 @@ app.prepare().then(() => {
     handle(req, res, parsedUrl);
   });
 
-  const wss = new WebSocketServer({ server: httpServer, path: '/api/ws' });
-  setupWebSocket(wss);
+  const io = new SocketIOServer(httpServer, { path: '/api/ws' });
+  setupSocketIO(io);
 
   httpServer.listen(port, hostname, () => {
     logger.success('SERVER', `Started custom server on ${hostname}:${port}`);
-    logger.info('SERVER', `WebSocket server path: /api/ws`);
+    logger.info('SERVER', `Socket.io server path: /api/ws`);
   });
 }).catch((err) => {
   logger.error('SERVER', 'Error starting server', err);
   process.exit(1);
 });
-

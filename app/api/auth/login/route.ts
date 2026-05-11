@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import db from '@/lib/db';
-import { comparePassword, createSession } from '@/lib/auth';
+import { comparePassword, createSession } from '@/lib/auth/index';
 
 export async function POST(request: Request) {
   try {

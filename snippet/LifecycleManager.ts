@@ -3,7 +3,7 @@
  * FUNCTION: Mengelola status operasional kontainer
  */
 
-import { docker } from '@/lib/docker';
+import { docker } from '@/lib/core/docker';
 
 export const manageContainer = async (id: string, action: 'start' | 'stop' | 'restart' | 'remove') => {
   const container = docker.getContainer(id);

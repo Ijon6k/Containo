@@ -1,20 +1,16 @@
 import { useState } from 'react';
 import { Container } from '@/lib/types';
-import { toggleContainerStatus, restartContainerApi, deleteContainerApi } from '@/lib/actions';
-import { resolveContainerWebUrl } from '@/lib/network';
+import { resolveContainerWebUrl } from '@/lib/utils/network';
 import { useStats } from './useStats';
 import { useSearch } from './useSearch';
+import { useContainers } from './useContainers';
 
 interface UseDashboardActionsProps {
-  containers: Container[];
-  setContainers: React.Dispatch<React.SetStateAction<Container[]>>;
   addToast: (msg: string, type?: 'success' | 'error') => void;
   showConfirm: (title: string, message: string, onConfirm: () => void, type?: 'danger' | 'warning' | 'info') => void;
 }
 
 export const useDashboardActions = ({ 
-  containers, 
-  setContainers, 
   addToast, 
   showConfirm 
 }: UseDashboardActionsProps) => {
@@ -22,29 +18,34 @@ export const useDashboardActions = ({
   const [expandedStatsIds, setExpandedStatsIds] = useState<string[]>([]);
 
   // Atomic Logic Consumption
+  const { containers, startContainer, stopContainer, restartContainer: restartMutation, deleteContainer: deleteMutation } = useContainers();
   const { stats } = useStats(expandedStatsIds);
-  const { searchQuery, setSearchQuery, filteredContainers } = useSearch(containers);
+  const { searchQuery, setSearchQuery, filteredContainers } = useSearch(containers as Container[]);
 
   const toggleStatus = async (id: string) => {
     const container = containers.find(c => c.id === id);
     if (!container) return;
     
     try {
-      const newStatus = await toggleContainerStatus(id, container.status);
-      setContainers(prev => prev.map(c => c.id === id ? { ...c, status: newStatus } : c));
-      addToast(`Container ${newStatus === 'running' ? 'started' : 'stopped'} successfully`);
+      if (container.status === 'running') {
+        await stopContainer(id);
+        addToast(`Container stopped successfully`);
+      } else {
+        await startContainer(id);
+        addToast(`Container started successfully`);
+      }
     } catch (e: any) {
-      addToast(e.message, 'error');
+      addToast(e.message || 'Action failed', 'error');
     }
   };
 
   const restartContainer = async (id: string, name: string) => {
     showConfirm('Restart Container', `Are you sure you want to restart ${name}?`, async () => {
       try {
-        await restartContainerApi(id);
+        await restartMutation(id);
         addToast('Container restarted successfully');
       } catch (e: any) {
-        addToast(e.message, 'error');
+        addToast(e.message || 'Action failed', 'error');
       }
     });
   };
@@ -52,11 +53,10 @@ export const useDashboardActions = ({
   const deleteContainer = async (container: Container) => {
     showConfirm('Delete Container', `Are you sure you want to delete ${container.name}?`, async () => {
       try {
-        await deleteContainerApi(container.id);
-        setContainers(prev => prev.filter(c => c.id !== container.id));
+        await deleteMutation(container.id);
         addToast('Container deleted');
       } catch (e: any) {
-        addToast(e.message, 'error');
+        addToast(e.message || 'Action failed', 'error');
       }
     }, 'danger');
   };
@@ -71,6 +71,7 @@ export const useDashboardActions = ({
   };
 
   return {
+    containers,
     selectedContainer,
     setSelectedContainer,
     searchQuery,

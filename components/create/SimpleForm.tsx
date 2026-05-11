@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { 
   Settings2, 
   Cpu, 
@@ -9,14 +12,25 @@ import {
   Terminal, 
   ChevronDown, 
   ChevronUp,
-  Layout
+  Layout,
+  AlertCircle
 } from 'lucide-react';
 import { ServiceData } from '@/lib/types';
 
+const formSchema = z.object({
+  name: z.string().min(1, 'Container name is required').regex(/^[a-zA-Z0-9][a-zA-Z0-9_.-]+$/, 'Invalid container name format'),
+  image: z.string().min(1, 'Image is required'),
+  ports: z.string().optional(),
+  env: z.string().optional(),
+  cpu: z.string().optional(),
+  memory: z.string().optional(),
+  privileged: z.string().optional()
+});
+
+type FormValues = z.infer<typeof formSchema>;
+
 interface SimpleFormProps {
-  data: ServiceData;
-  onChange: (data: ServiceData) => void;
-  onDeploy: () => void;
+  onDeploy: (data: ServiceData) => void;
   isDeploying: boolean;
   cliCommand: string;
   setCliCommand: (cmd: string) => void;
@@ -25,8 +39,6 @@ interface SimpleFormProps {
 }
 
 export const SimpleForm = ({ 
-  data, 
-  onChange, 
   onDeploy, 
   isDeploying,
   cliCommand,
@@ -36,8 +48,31 @@ export const SimpleForm = ({
 }: SimpleFormProps) => {
   const [showAdvanced, setShowAdvanced] = useState(false);
 
-  const updateField = (field: keyof ServiceData, value: any) => {
-    onChange({ ...data, [field]: value });
+  const { register, handleSubmit, formState: { errors, isValid } } = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    mode: 'onChange',
+    defaultValues: {
+      name: '',
+      image: '',
+      ports: '',
+      env: '',
+      cpu: '',
+      memory: '',
+      privileged: 'false'
+    }
+  });
+
+  const onSubmit = (data: FormValues) => {
+    // Map FormValues to ServiceData if needed
+    onDeploy({
+      id: '',
+      name: data.name,
+      image: data.image,
+      ports: data.ports || '',
+      env: data.env || '',
+      volumes: '',
+      restartPolicy: 'unless-stopped'
+    });
   };
 
   return (
@@ -80,20 +115,28 @@ export const SimpleForm = ({
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-text-sub">Container Name</label>
                   <input 
+                    {...register('name')}
                     placeholder="app-name"
-                    value={data.name}
-                    onChange={(e) => updateField('name', e.target.value)}
-                    className="w-full bg-ui-accent border border-ui-border rounded-md px-4 py-3 text-sm text-text-main focus:border-brand/50 outline-none"
+                    className={`w-full bg-ui-accent border ${errors.name ? 'border-red-500' : 'border-ui-border'} rounded-md px-4 py-3 text-sm text-text-main focus:border-brand/50 outline-none`}
                   />
+                  {errors.name && (
+                    <p className="text-xs text-red-500 flex items-center gap-1 mt-1">
+                      <AlertCircle className="w-3 h-3" /> {errors.name.message}
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-text-sub">Image</label>
                   <input 
+                    {...register('image')}
                     placeholder="nginx:latest"
-                    value={data.image}
-                    onChange={(e) => updateField('image', e.target.value)}
-                    className="w-full bg-ui-accent border border-ui-border rounded-md px-4 py-3 text-sm text-text-main focus:border-brand/50 outline-none"
+                    className={`w-full bg-ui-accent border ${errors.image ? 'border-red-500' : 'border-ui-border'} rounded-md px-4 py-3 text-sm text-text-main focus:border-brand/50 outline-none`}
                   />
+                  {errors.image && (
+                    <p className="text-xs text-red-500 flex items-center gap-1 mt-1">
+                      <AlertCircle className="w-3 h-3" /> {errors.image.message}
+                    </p>
+                  )}
                 </div>
               </div>
             </section>
@@ -109,18 +152,16 @@ export const SimpleForm = ({
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-text-sub">Ports</label>
                   <input 
+                    {...register('ports')}
                     placeholder="80:80"
-                    value={data.ports}
-                    onChange={(e) => updateField('ports', e.target.value)}
                     className="w-full bg-ui-accent border border-ui-border rounded-md px-4 py-3 text-sm text-text-main focus:border-brand/50 outline-none"
                   />
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-text-sub">Environment Variables</label>
                   <textarea 
+                    {...register('env')}
                     placeholder="KEY=VALUE"
-                    value={data.env}
-                    onChange={(e) => updateField('env', e.target.value)}
                     className="w-full bg-ui-accent border border-ui-border rounded-md px-4 py-3 text-sm text-text-main focus:border-brand/50 outline-none h-24"
                   />
                 </div>
@@ -148,19 +189,19 @@ export const SimpleForm = ({
                         <label className="text-sm font-medium text-text-sub flex items-center gap-2">
                            <Cpu className="w-4 h-4" /> CPU
                         </label>
-                        <input type="number" placeholder="1024" className="w-full bg-ui-bg border border-ui-border rounded-md px-4 py-2.5 text-sm text-text-main" />
+                        <input {...register('cpu')} type="number" placeholder="1024" className="w-full bg-ui-bg border border-ui-border rounded-md px-4 py-2.5 text-sm text-text-main" />
                      </div>
                      <div className="space-y-2">
                         <label className="text-sm font-medium text-text-sub flex items-center gap-2">
                            <Database className="w-4 h-4" /> RAM (MB)
                         </label>
-                        <input type="number" placeholder="512" className="w-full bg-ui-bg border border-ui-border rounded-md px-4 py-2.5 text-sm text-text-main" />
+                        <input {...register('memory')} type="number" placeholder="512" className="w-full bg-ui-bg border border-ui-border rounded-md px-4 py-2.5 text-sm text-text-main" />
                      </div>
                      <div className="space-y-2">
                         <label className="text-sm font-medium text-text-sub flex items-center gap-2">
                            <ShieldCheck className="w-4 h-4" /> Privileged
                         </label>
-                        <select className="w-full bg-ui-bg border border-ui-border rounded-md px-4 py-2.5 text-sm text-text-main font-semibold">
+                        <select {...register('privileged')} className="w-full bg-ui-bg border border-ui-border rounded-md px-4 py-2.5 text-sm text-text-main font-semibold">
                            <option value="false">No</option>
                            <option value="true">Yes</option>
                         </select>
@@ -197,13 +238,23 @@ export const SimpleForm = ({
 
       {/* Action */}
       <div className="pt-8 border-t border-ui-border flex justify-end">
-        <button 
-          onClick={onDeploy}
-          disabled={isDeploying || (deploymentMode === 'form' && (!data.name || !data.image)) || (deploymentMode === 'cli' && !cliCommand)}
-          className="bg-brand hover:bg-brand/90 text-white px-10 py-3 rounded-md text-sm font-semibold transition-all active:scale-95 disabled:opacity-30 disabled:grayscale shadow-sm"
-        >
-          {isDeploying ? 'Deploying...' : 'Deploy Container'}
-        </button>
+        {deploymentMode === 'form' ? (
+          <button 
+            onClick={handleSubmit(onSubmit)}
+            disabled={isDeploying || !isValid}
+            className="bg-brand hover:bg-brand/90 text-white px-10 py-3 rounded-md text-sm font-semibold transition-all active:scale-95 disabled:opacity-30 disabled:grayscale shadow-sm"
+          >
+            {isDeploying ? 'Deploying...' : 'Deploy Container'}
+          </button>
+        ) : (
+          <button 
+            onClick={() => onDeploy(undefined as any)} // Handled by parent for CLI mode
+            disabled={isDeploying || !cliCommand}
+            className="bg-brand hover:bg-brand/90 text-white px-10 py-3 rounded-md text-sm font-semibold transition-all active:scale-95 disabled:opacity-30 disabled:grayscale shadow-sm"
+          >
+            {isDeploying ? 'Deploying...' : 'Deploy from CLI'}
+          </button>
+        )}
       </div>
     </div>
   );

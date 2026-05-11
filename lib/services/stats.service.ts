@@ -1,4 +1,4 @@
-import { ContainerStats } from './types';
+import { ContainerStats } from '../types/index';
 
 export function transformDockerStats(id: string, dockerStats: any): ContainerStats {
   // Calculate CPU percentage

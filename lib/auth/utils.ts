@@ -2,7 +2,7 @@ import { jwtVerify, JWTPayload } from 'jose';
 import fs from 'fs';
 import path from 'path';
 import { randomBytes } from 'crypto';
-import { logger } from './logger';
+import { logger } from '../core/logger';
 
 const DEFAULT_SECRET = 'containo-super-secret-key-change-this-in-production';
 const SECRET_FILE_PATH = path.join(process.cwd(), 'data', '.jwt_secret');

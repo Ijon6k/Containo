@@ -29,7 +29,7 @@ export const LogModal = ({ container, onClose }: LogModalProps) => {
               </button>
             </div>
             <div className="flex-1 bg-zinc-950 p-6 overflow-y-auto font-mono text-xs text-zinc-400">
-              {container.logs.length === 0 ? (
+              {(!container.logs || container.logs.length === 0) ? (
                 <div className="text-zinc-600 italic">No logs available for this container.</div>
               ) : (
                 container.logs.map((log, i) => (

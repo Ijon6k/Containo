@@ -4,7 +4,7 @@ export interface Container {
   image: string;
   status: 'running' | 'exited';
   ports: string;
-  logs: string[];
+  logs?: string[];
   networkMode?: string;
   exposedPorts?: number[];
 }

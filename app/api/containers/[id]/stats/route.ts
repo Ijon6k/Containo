@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { docker } from '@/lib/docker';
+import { docker } from '@/lib/core/docker';
 
 export async function GET(
   request: NextRequest,

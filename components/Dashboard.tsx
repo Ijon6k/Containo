@@ -14,8 +14,6 @@ import { ContainerGridView } from '@/components/dashboard/ContainerGridView';
 import { ImageListView } from '@/components/dashboard/ImageListView';
 
 interface DashboardProps {
-  containers: Container[];
-  setContainers: React.Dispatch<React.SetStateAction<Container[]>>;
   addToast: (msg: string, type?: 'success' | 'error') => void;
   showConfirm: (title: string, message: string, onConfirm: () => void, type?: 'danger' | 'warning' | 'info') => void;
   systemInfo: any;
@@ -23,8 +21,6 @@ interface DashboardProps {
 }
 
 export default function Dashboard({
-  containers,
-  setContainers,
   addToast,
   showConfirm,
   systemInfo,
@@ -34,6 +30,7 @@ export default function Dashboard({
   const [layoutMode, setLayoutMode] = useState<'list' | 'grid'>('list');
 
   const {
+    containers,
     selectedContainer,
     setSelectedContainer,
     searchQuery,
@@ -46,7 +43,7 @@ export default function Dashboard({
     deleteContainer,
     openWebUI,
     filteredContainers
-  } = useDashboardActions({ containers, setContainers, addToast, showConfirm });
+  } = useDashboardActions({ addToast, showConfirm });
 
   const {
     isLoadingImages,
