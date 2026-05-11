@@ -1,26 +1,27 @@
 import { useState, useEffect } from 'react';
 import { ContainerStats } from '@/lib/types';
+import { useWS } from '@/components/providers/WebSocketProvider';
 
 export const useStats = (expandedStatsIds: string[]) => {
   const [stats, setStats] = useState<Record<string, ContainerStats>>({});
+  const { sendMessage, subscribe, isConnected } = useWS();
 
   useEffect(() => {
     if (expandedStatsIds.length === 0) return;
-    
-    const interval = setInterval(async () => {
-      try {
-        const res = await fetch(`/api/containers/stats?ids=${expandedStatsIds.join(',')}`);
-        if (res.ok) {
-          const data = await res.json();
-          setStats(prev => ({ ...prev, ...data }));
-        }
-      } catch (e) {
-        console.error('Failed to fetch stats');
-      }
-    }, 2000);
 
-    return () => clearInterval(interval);
-  }, [expandedStatsIds]);
+    // Subscribe to stats for these IDs
+    sendMessage('stats:subscribe', expandedStatsIds);
+
+    // Listen for updates
+    const unsubscribe = subscribe('stats:update', (data) => {
+      setStats(prev => ({ ...prev, ...data }));
+    });
+
+    return () => {
+      unsubscribe();
+      sendMessage('stats:unsubscribe', expandedStatsIds);
+    };
+  }, [expandedStatsIds, sendMessage, subscribe, isConnected]);
 
   return { stats };
 };

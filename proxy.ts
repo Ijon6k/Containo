@@ -1,10 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { jwtVerify } from 'jose';
+import { verifySession } from './lib/auth-utils';
 
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || 'containo-super-secret-key-change-this-in-production'
-);
 
 const PROTECTED_ROUTES = [
   '/dashboard',
@@ -45,10 +42,10 @@ export async function proxy(request: NextRequest) {
       return NextResponse.redirect(new URL('/login', request.url));
     }
 
-    try {
-      await jwtVerify(session, JWT_SECRET);
+    const sessionPayload = await verifySession(session);
+    if (sessionPayload) {
       return NextResponse.next();
-    } catch (err) {
+    } else {
       return NextResponse.redirect(new URL('/login', request.url));
     }
   }
@@ -57,11 +54,9 @@ export async function proxy(request: NextRequest) {
   if (pathname === '/login' || pathname === '/setup') {
     const session = request.cookies.get('containo_session')?.value;
     if (session) {
-      try {
-        await jwtVerify(session, JWT_SECRET);
+      const sessionPayload = await verifySession(session);
+      if (sessionPayload) {
         return NextResponse.redirect(new URL('/dashboard', request.url));
-      } catch (err) {
-        // Invalid session, allow login/setup
       }
     }
   }

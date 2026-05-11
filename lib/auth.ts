@@ -1,10 +1,8 @@
-import { SignJWT, jwtVerify } from 'jose';
+import { SignJWT } from 'jose';
 import bcrypt from 'bcryptjs';
 import { cookies } from 'next/headers';
+import { getJwtSecret, verifySession } from './auth-utils';
 
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || 'containo-super-secret-key-change-this-in-production'
-);
 
 export async function hashPassword(password: string) {
   return await bcrypt.hash(password, 10);
@@ -19,7 +17,7 @@ export async function createSession(userId: number) {
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime('7d')
-    .sign(JWT_SECRET);
+    .sign(getJwtSecret());
 
   const cookieStore = await cookies();
   cookieStore.set('containo_session', token, {
@@ -39,8 +37,7 @@ export async function getSession() {
   if (!token) return null;
 
   try {
-    const { payload } = await jwtVerify(token, JWT_SECRET);
-    return payload as { userId: number };
+    return await verifySession(token);
   } catch (err) {
     return null;
   }

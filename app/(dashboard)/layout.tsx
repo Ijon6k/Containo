@@ -7,6 +7,7 @@ import { ToastContainer } from '@/components/ui/ToastContainer';
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import { NotificationProvider, useNotify } from '@/components/providers/NotificationProvider';
 import { ThemeProvider, useTheme } from '@/components/providers/ThemeProvider';
+import { WebSocketProvider } from '@/components/providers/WebSocketProvider';
 
 function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -47,7 +48,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <ThemeProvider>
       <NotificationProvider>
-        <DashboardLayoutInner>{children}</DashboardLayoutInner>
+        <WebSocketProvider>
+          <DashboardLayoutInner>{children}</DashboardLayoutInner>
+        </WebSocketProvider>
       </NotificationProvider>
     </ThemeProvider>
   );
