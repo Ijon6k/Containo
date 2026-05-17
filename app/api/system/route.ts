@@ -4,6 +4,8 @@ import { withErrorHandler } from '@/lib/utils/api-handler';
 import { getSystemHealth, getHostDiskInfo, getAggregateDockerStats } from '@/lib/services/docker-service';
 import os from 'os';
 
+export const dynamic = 'force-dynamic';
+
 const getCPUUsage = async () => {
   const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
   const getTicks = () => os.cpus().reduce((acc: any, cpu: any) => {

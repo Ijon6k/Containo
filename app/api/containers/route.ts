@@ -3,6 +3,8 @@ import { docker } from '@/lib/core/docker';
 import { Container } from '@/lib/types';
 import { withErrorHandler } from '@/lib/utils/api-handler';
 
+export const dynamic = 'force-dynamic';
+
 export const GET = withErrorHandler(async () => {
   const containers = await docker.listContainers({ all: true });
   

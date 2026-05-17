@@ -28,55 +28,74 @@ export const getHostDiskInfo = () => {
   try {
     const targetPath = fs.existsSync('/host') ? '/host' : '/';
     const stats = fs.statfsSync(targetPath);
-    hostDisk = { 
-      total: Number(stats.blocks) * stats.bsize, 
-      free: Number(stats.bavail) * stats.bsize, 
-      used: (Number(stats.blocks) - Number(stats.bfree)) * stats.bsize 
+    hostDisk = {
+      total: Number(stats.blocks) * stats.bsize,
+      free: Number(stats.bavail) * stats.bsize,
+      used: (Number(stats.blocks) - Number(stats.bfree)) * stats.bsize
     };
-  } catch (e) {}
+  } catch (e) { }
   return hostDisk;
 };
 
-// Calculates aggregate Docker CPU & Mem based on streamed latestStats or fallback
-export const getAggregateDockerStats = async (runningContainers: any[], latestStats: Record<string, any>) => {
-  let totalCpu = 0;
-  let totalMem = 0;
+// Cache to prevent overwhelming the Docker daemon with rapid polling
+let cachedAggregateStats = {
+  cpu: 0,
+  mem: 0,
+  lastFetch: 0
+};
 
-  for (const c of runningContainers) {
+export const getAggregateDockerStats = async (runningContainers: any[], latestStats: Record<string, any>) => {
+  const now = Date.now();
+  // Return cached data if fetched within the last 2 seconds
+  if (now - cachedAggregateStats.lastFetch < 2000) {
+    return {
+      dockerCpu: cachedAggregateStats.cpu,
+      dockerMem: cachedAggregateStats.mem
+    };
+  }
+
+  let totalCpu = 0;
+  let totalMemRaw = 0;
+
+  const fetchStats = async (c: any) => {
     const id = c.Id.substring(0, 12);
-    // If we have latestStats from WS stream, use them
     if (latestStats[id]) {
       totalCpu += latestStats[id].cpuPercentage || 0;
-      totalMem += (latestStats[id].memoryPercentage || 0); // Convert to aggregate memory percentage
-    } else {
-      // If no active stream, optionally we could perform a synchronous fetch. 
-      // To prevent CPU spikes, we just skip it or perform a single fetch if really needed.
-      // For now, let's pull it if missing to ensure accurate aggregate, 
-      // but only if the container count isn't overwhelmingly high.
-      try {
-        if (runningContainers.length < 50) {
-           const stream = await docker.getContainer(c.Id).stats({ stream: false });
-           const transformed = transformDockerStats(id, stream);
-           totalCpu += transformed.cpuPercentage || 0;
-           totalMem += (transformed.memoryPercentage || 0);
-        }
-      } catch (e) {}
+      totalMemRaw += (latestStats[id].memoryUsageMB || 0) * 1024 * 1024;
+      return;
     }
+    
+    try {
+      const stream = await docker.getContainer(c.Id).stats({ stream: false });
+      const transformed = transformDockerStats(id, stream);
+      totalCpu += transformed.cpuPercentage || 0;
+      totalMemRaw += (transformed.memoryUsageMB || 0) * 1024 * 1024;
+    } catch (e) {
+      // Ignore errors for individual containers
+    }
+  };
+
+  // Run all stat fetches concurrently, max 50 to avoid daemon overload
+  if (runningContainers.length < 50) {
+    await Promise.all(runningContainers.map(fetchStats));
   }
 
   // To calculate overall dockerMem percentage relative to system memory
   const totalSystemMem = os.totalmem();
-  const memUsageRaw = runningContainers.reduce((acc, c) => {
-    const id = c.Id.substring(0, 12);
-    if (latestStats[id]) return acc + (latestStats[id].memoryUsageMB * 1024 * 1024);
-    return acc;
-  }, 0);
+  const aggregateMemPercentage = totalSystemMem > 0 ? (totalMemRaw / totalSystemMem) * 100 : 0;
 
-  const aggregateMemPercentage = totalSystemMem > 0 ? (memUsageRaw / totalSystemMem) * 100 : 0;
+  const finalCpu = Math.min(100, Math.round(totalCpu));
+  const finalMem = Math.min(100, Math.round(aggregateMemPercentage > 0 ? aggregateMemPercentage : 0));
+
+  // Update cache
+  cachedAggregateStats = {
+    cpu: finalCpu,
+    mem: finalMem,
+    lastFetch: now
+  };
 
   return {
-    dockerCpu: Math.min(100, Math.round(totalCpu)),
-    // if memUsageRaw is calculated, use it, else use 0
-    dockerMem: Math.min(100, Math.round(aggregateMemPercentage > 0 ? aggregateMemPercentage : 0))
+    dockerCpu: finalCpu,
+    dockerMem: finalMem
   };
 };

@@ -3,7 +3,7 @@ import { docker } from '../core/docker';
 import { getSystemHealth, getHostDiskInfo, getAggregateDockerStats } from '../services/docker-service';
 import os from 'os';
 import { logger } from '../core/logger';
-import { getLatestStats } from './streamer';
+import { getLatestStats, startStatsStream } from './streamer';
 
 const getCPUUsage = async () => {
   const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
@@ -55,11 +55,11 @@ export const broadcastSystemInfo = async (io: SocketIOServer) => {
       dockerCpu,
       dockerMem,
       imagesCount: images.length,
-      containerStats: { 
-        total: containers.length, 
+      containerStats: {
+        total: containers.length,
         running: runningContainers.length,
         stopped: containers.length - runningContainers.length,
-        crashes: crashCount 
+        crashes: crashCount
       },
       storage: {
         hostTotal: hostDisk.total,
@@ -90,7 +90,7 @@ export const broadcastContainers = async (io: SocketIOServer) => {
   try {
     const containers = await docker.listContainers({ all: true });
     const visibleContainers = containers.filter((c: any) => c.Labels?.['containo.internal'] !== 'true');
-    
+
     const formatted = visibleContainers.map((c: any) => ({
       id: c.Id.substring(0, 12),
       name: c.Names[0].replace(/^\//, ''),
@@ -100,6 +100,14 @@ export const broadcastContainers = async (io: SocketIOServer) => {
     }));
 
     io.emit('containers:update', formatted);
+
+    // BACKGROUND OPTIMIZATION: Auto-start streams for all running containers.
+    // This populates `latestStats` globally, ensuring aggregate calculations
+    // (Docker CPU/RAM) are instant and preventing the host monitor from freezing.
+    containers.filter((c: any) => c.State === 'running').forEach((c: any) => {
+      startStatsStream(io, c.Id.substring(0, 12));
+    });
+
   } catch (error) {
     console.error('WS Containers Broadcast Error:', error);
   }

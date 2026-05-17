@@ -13,61 +13,52 @@ const WebSocketContext = createContext<WebSocketContextType | null>(null);
 
 export const WebSocketProvider = ({ children }: { children: React.ReactNode }) => {
   const [isConnected, setIsConnected] = useState(false);
-  const socketRef = useRef<Socket | null>(null);
+  const [socket, setSocket] = useState<Socket | null>(null);
 
-  const connect = useCallback(() => {
-    if (socketRef.current?.connected) return;
-
-    const socket = io({
+  useEffect(() => {
+    const s = io({
       path: '/api/ws',
-      transports: ['websocket'], // force websocket for performance
+      transports: ['websocket'],
       reconnectionDelay: 3000,
       reconnectionDelayMax: 10000,
     });
 
-    socket.on('connect', () => {
+    s.on('connect', () => {
       setIsConnected(true);
       console.log('Socket.io Connected');
     });
 
-    socket.on('disconnect', () => {
+    s.on('disconnect', () => {
       setIsConnected(false);
       console.log('Socket.io Disconnected');
     });
 
-    socket.on('connect_error', (err) => {
+    s.on('connect_error', (err) => {
       console.error('Socket.io Error:', err.message);
     });
 
-    socketRef.current = socket;
-  }, []);
+    setSocket(s);
 
-  useEffect(() => {
-    connect();
     return () => {
-      if (socketRef.current) {
-        socketRef.current.disconnect();
-      }
+      s.disconnect();
     };
-  }, [connect]);
+  }, []);
 
   const sendMessage = useCallback((type: string, payload: any) => {
-    if (socketRef.current?.connected) {
-      socketRef.current.emit(type, payload);
+    if (socket?.connected) {
+      socket.emit(type, payload);
     }
-  }, []);
+  }, [socket]);
 
   const subscribe = useCallback((type: string, callback: (payload: any) => void) => {
-    if (!socketRef.current) return () => {};
+    if (!socket) return () => {};
 
-    socketRef.current.on(type, callback);
+    socket.on(type, callback);
 
     return () => {
-      if (socketRef.current) {
-        socketRef.current.off(type, callback);
-      }
+      socket.off(type, callback);
     };
-  }, []);
+  }, [socket]);
 
   return (
     <WebSocketContext.Provider value={{ isConnected, sendMessage, subscribe }}>

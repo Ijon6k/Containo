@@ -19,7 +19,11 @@ export const useDashboardActions = ({
 
   // Atomic Logic Consumption
   const { containers, startContainer, stopContainer, restartContainer: restartMutation, deleteContainer: deleteMutation } = useContainers();
-  const { stats } = useStats(expandedStatsIds);
+  
+  // Always subscribe to all running containers so grid views show real-time stats immediately
+  const activeContainerIds = containers.filter(c => c.status === 'running').map(c => c.id);
+  const { stats } = useStats(activeContainerIds);
+  
   const { searchQuery, setSearchQuery, filteredContainers } = useSearch(containers as Container[]);
 
   const toggleStatus = async (id: string) => {
