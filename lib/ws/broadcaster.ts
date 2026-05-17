@@ -3,7 +3,7 @@ import { docker } from '../core/docker';
 import { getSystemHealth, getHostDiskInfo, getAggregateDockerStats } from '../services/docker-service';
 import os from 'os';
 import { logger } from '../core/logger';
-import { getLatestStats, startStatsStream } from './streamer';
+import { getLatestStats, startStatsStream, stopAllStatsStreams } from './streamer';
 
 const getCPUUsage = async () => {
   const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
@@ -22,6 +22,12 @@ const getCPUUsage = async () => {
 };
 
 export const broadcastSystemInfo = async (io: SocketIOServer) => {
+  // ZERO-LOAD IDLE: If no users are active, stop all background Docker streams to free RAM & CPU
+  if (io.engine.clientsCount === 0) {
+    stopAllStatsStreams();
+    return;
+  }
+
   try {
     const [containers, images, volumes, info, df] = await Promise.all([
       docker.listContainers({ all: true }),
@@ -87,6 +93,10 @@ export const broadcastSystemInfo = async (io: SocketIOServer) => {
 };
 
 export const broadcastContainers = async (io: SocketIOServer) => {
+  if (io.engine.clientsCount === 0) {
+    return;
+  }
+
   try {
     const containers = await docker.listContainers({ all: true });
     const visibleContainers = containers.filter((c: any) => c.Labels?.['containo.internal'] !== 'true');

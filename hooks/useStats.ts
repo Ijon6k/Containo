@@ -6,6 +6,8 @@ export const useStats = (expandedStatsIds: string[]) => {
   const [stats, setStats] = useState<Record<string, ContainerStats>>({});
   const { sendMessage, subscribe, isConnected } = useWS();
 
+  const idsKey = expandedStatsIds.join(',');
+
   useEffect(() => {
     if (expandedStatsIds.length === 0) return;
 
@@ -21,7 +23,7 @@ export const useStats = (expandedStatsIds: string[]) => {
       unsubscribe();
       sendMessage('stats:unsubscribe', expandedStatsIds);
     };
-  }, [expandedStatsIds, sendMessage, subscribe, isConnected]);
+  }, [idsKey, sendMessage, subscribe, isConnected]);
 
   return { stats };
 };

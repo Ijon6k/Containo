@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Container } from '@/lib/types';
 import { resolveContainerWebUrl } from '@/lib/utils/network';
 import { useStats } from './useStats';
@@ -21,7 +21,11 @@ export const useDashboardActions = ({
   const { containers, startContainer, stopContainer, restartContainer: restartMutation, deleteContainer: deleteMutation } = useContainers();
   
   // Always subscribe to all running containers so grid views show real-time stats immediately
-  const activeContainerIds = containers.filter(c => c.status === 'running').map(c => c.id);
+  // Memoized to prevent re-subscribing to WebSockets on every render loop
+  const activeContainerIds = useMemo(() => {
+    return containers.filter(c => c.status === 'running').map(c => c.id);
+  }, [containers]);
+  
   const { stats } = useStats(activeContainerIds);
   
   const { searchQuery, setSearchQuery, filteredContainers } = useSearch(containers as Container[]);

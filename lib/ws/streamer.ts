@@ -67,5 +67,23 @@ export const stopStatsStream = (id: string) => {
     if (stream.destroy) stream.destroy();
     else if (stream.end) stream.end();
     activeStatsStreams.delete(id);
+    delete latestStats[id];
   }
+};
+
+export const stopAllStatsStreams = () => {
+  if (activeStatsStreams.size === 0) return;
+  
+  activeStatsStreams.forEach((stream) => {
+    try {
+      if (stream.destroy) stream.destroy();
+      else if (stream.end) stream.end();
+    } catch (e) {}
+  });
+  activeStatsStreams.clear();
+  
+  // Clear all cached statistics
+  Object.keys(latestStats).forEach(key => {
+    delete latestStats[key];
+  });
 };

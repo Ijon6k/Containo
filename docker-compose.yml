@@ -14,6 +14,7 @@ services:
     environment:
       - NODE_ENV=production
       - DOCKER_HOST=unix:///var/run/docker.sock
+      - NODE_OPTIONS=--max-old-space-size=128
     user: root
     restart: unless-stopped
 
