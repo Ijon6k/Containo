@@ -34,6 +34,10 @@ export interface ServiceData {
   capAdd?: string[];
   securityOpt?: string[];
   privileged?: boolean;
+  depends_on?: string;
+  networks?: string;
+  buildContext?: string;
+  dockerfile?: string;
 }
 
 export interface ContainerStats {

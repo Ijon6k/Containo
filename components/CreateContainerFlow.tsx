@@ -38,7 +38,8 @@ export default function CreateContainerFlow({ addToast, onBack }: CreateContaine
     deploymentComplete,
     pullProgress,
     handleDeploy,
-    setDeploymentLogs
+    setDeploymentLogs,
+    setDeploymentComplete
   } = useDeployment(addToast);
 
   const resetAndBack = () => {
@@ -59,13 +60,100 @@ export default function CreateContainerFlow({ addToast, onBack }: CreateContaine
 
   const startDeployment = (data?: any) => {
     setStep('logs');
-    if (mode === 'compose') {
-      handleDeploy(data);
-    } else if (deploymentMode === 'cli') {
+    if (deploymentMode === 'cli') {
       const parsedData = parseDockerCommand(cliCommand);
       handleDeploy(parsedData);
     } else {
       handleDeploy(data);
+    }
+  };
+
+  const handleComposeDeploy = async (services: any, stackName: string, targetDir: string) => {
+    setStep('logs');
+    setDeploymentLogs([`Deploying new stack: ${stackName} at ${targetDir}...`]);
+    
+    // Collect all unique networks
+    const allNetworks = new Set<string>();
+    
+    // Generate YAML from services
+    let yamlContent = "services:\n";
+    services.forEach((s: any) => {
+      yamlContent += `  ${s.name}:\n`;
+      yamlContent += `    image: ${s.image || 'no-image'}\n`;
+      if (s.ports) yamlContent += `    ports:\n      - "${s.ports}"\n`;
+      if (s.restartPolicy) yamlContent += `    restart: ${s.restartPolicy}\n`;
+      if (s.env) {
+        yamlContent += `    environment:\n`;
+        s.env.split(',').forEach((e: string) => yamlContent += `      - ${e.trim()}\n`);
+      }
+      if (s.volumes) {
+        yamlContent += `    volumes:\n`;
+        s.volumes.split(',').forEach((v: string) => yamlContent += `      - ${v.trim()}\n`);
+      }
+      if (s.command) yamlContent += `    command: ${s.command}\n`;
+      if (s.depends_on) {
+        yamlContent += `    depends_on:\n`;
+        s.depends_on.split(',').forEach((d: string) => yamlContent += `      - ${d.trim()}\n`);
+      }
+      if (s.networks) {
+        yamlContent += `    networks:\n`;
+        s.networks.split(',').forEach((n: string) => {
+          const netName = n.trim();
+          if (netName) {
+            yamlContent += `      - ${netName}\n`;
+            allNetworks.add(netName);
+          }
+        });
+      }
+    });
+
+    // Append top-level networks if any exist
+    if (allNetworks.size > 0) {
+      yamlContent += `\nnetworks:\n`;
+      allNetworks.forEach(net => {
+        yamlContent += `  ${net}:\n`;
+      });
+    }
+
+    try {
+      // Membersihkan path dengan path.join secara manual via string manipulation (menangani trailing slash dll)
+      const cleanTargetDir = targetDir.endsWith('/') ? targetDir.slice(0, -1) : targetDir;
+      const finalPath = `${cleanTargetDir}/${stackName}`;
+
+      const res = await fetch('/api/compose/deploy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          targetPath: finalPath,
+          yamlContent
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.details || data.error || 'Failed');
+      setDeploymentLogs(prev => [...prev, '[SUCCESS] Stack deployed successfully!', data.details]);
+      setDeploymentComplete(true);
+    } catch (err: any) {
+      setDeploymentLogs(prev => [...prev, `[ERROR] ${err.message}`]);
+      addToast(err.message, 'error');
+    }
+  };
+
+  const handleExistingComposeDeploy = async (path: string) => {
+    setStep('logs');
+    setDeploymentLogs([`Deploying existing stack from: ${path}...`]);
+    try {
+      const res = await fetch('/api/compose/deploy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ targetPath: path })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.details || data.error || 'Failed');
+      setDeploymentLogs(prev => [...prev, '[SUCCESS] Stack deployed successfully!', data.details]);
+      setDeploymentComplete(true);
+    } catch (err: any) {
+      setDeploymentLogs(prev => [...prev, `[ERROR] ${err.message}`]);
+      addToast(err.message, 'error');
     }
   };
 
@@ -122,7 +210,8 @@ export default function CreateContainerFlow({ addToast, onBack }: CreateContaine
                 )}
                 {mode === 'compose' && (
                   <ComposeBuilder 
-                    onDeploy={startDeployment}
+                    onDeploy={handleComposeDeploy}
+                    onDeployExisting={handleExistingComposeDeploy}
                     isDeploying={isDeploying}
                   />
                 )}

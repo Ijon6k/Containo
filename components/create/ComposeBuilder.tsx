@@ -1,27 +1,58 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import { 
   Plus, 
-  Trash2, 
   Box, 
-  Network, 
   FileCode, 
   Terminal, 
   Layers,
-  Settings2
+  Settings2,
+  FolderOpen
 } from 'lucide-react';
 import { ServiceData } from '@/lib/types';
+import { ServiceCard } from './compose/ServiceCard';
+import { VisualizerTab } from './compose/VisualizerTab';
+import { YamlPreview } from './compose/YamlPreview';
+import { LocalStackDeployer } from './compose/LocalStackDeployer';
+import { DirectoryPicker } from './compose/DirectoryPicker';
 
 interface ComposeBuilderProps {
-  onDeploy: (composeData: any) => void;
+  onDeploy: (composeData: any, stackName: string, targetDir: string) => void;
+  onDeployExisting?: (path: string) => void;
   isDeploying: boolean;
 }
 
-export const ComposeBuilder = ({ onDeploy, isDeploying }: ComposeBuilderProps) => {
+export const ComposeBuilder = ({ onDeploy, onDeployExisting, isDeploying }: ComposeBuilderProps) => {
+  const [stackName, setStackName] = useState('my-stack');
+  const [targetDir, setTargetDir] = useState('');
+  const [showPicker, setShowPicker] = useState(false);
   const [services, setServices] = useState<ServiceData[]>([
-    { id: '1', name: 'web-app', image: 'nginx:alpine', ports: '8080:80', env: '', volumes: '', restartPolicy: 'always' }
+    { 
+      id: '1', 
+      name: 'web-frontend', 
+      image: 'traefik/whoami', 
+      ports: '8080:80', 
+      env: 'TITLE=Hello Demo', 
+      volumes: '', 
+      restartPolicy: 'always', 
+      command: '', 
+      depends_on: 'redis-cache', 
+      networks: 'demo-net' 
+    },
+    { 
+      id: '2', 
+      name: 'redis-cache', 
+      image: 'redis:alpine', 
+      ports: '', 
+      env: '', 
+      volumes: '', 
+      restartPolicy: 'unless-stopped', 
+      command: '', 
+      depends_on: '', 
+      networks: 'demo-net' 
+    }
   ]);
-  const [activeTab, setActiveTab] = useState<'visualizer' | 'yaml' | 'cli'>('visualizer');
+  const [activeTab, setActiveTab] = useState<'visualizer' | 'yaml' | 'existing'>('visualizer');
 
   const addService = () => {
     const newId = (services.length + 1).toString();
@@ -32,7 +63,10 @@ export const ComposeBuilder = ({ onDeploy, isDeploying }: ComposeBuilderProps) =
       ports: '', 
       env: '', 
       volumes: '', 
-      restartPolicy: 'no' 
+      restartPolicy: 'no',
+      command: '',
+      depends_on: '',
+      networks: ''
     }]);
   };
 
@@ -61,6 +95,15 @@ export const ComposeBuilder = ({ onDeploy, isDeploying }: ComposeBuilderProps) =
         yaml += `    volumes:\n`;
         s.volumes.split(',').forEach(v => yaml += `      - ${v.trim()}\n`);
       }
+      if (s.command) yaml += `    command: ${s.command}\n`;
+      if (s.depends_on) {
+        yaml += `    depends_on:\n`;
+        s.depends_on.split(',').forEach(d => yaml += `      - ${d.trim()}\n`);
+      }
+      if (s.networks) {
+        yaml += `    networks:\n`;
+        s.networks.split(',').forEach(n => yaml += `      - ${n.trim()}\n`);
+      }
     });
     return yaml;
   };
@@ -86,62 +129,12 @@ export const ComposeBuilder = ({ onDeploy, isDeploying }: ComposeBuilderProps) =
 
           <div className="space-y-4">
             {services.map((service) => (
-              <div 
-                key={service.id}
-                className="bg-ui-bg border border-ui-border rounded-lg p-6 space-y-5 group hover:border-brand/30 transition-all shadow-sm"
-              >
-                <div className="flex items-center justify-between">
-                  <input 
-                    value={service.name}
-                    onChange={(e) => updateService(service.id, 'name', e.target.value)}
-                    className="bg-transparent border-none text-base font-semibold text-text-main focus:ring-0 p-0 w-full"
-                    placeholder="service-name"
-                  />
-                  <button 
-                    onClick={() => removeService(service.id)} 
-                    className="p-2 hover:bg-rose-500/10 rounded-md transition-all text-text-sub hover:text-rose-500"
-                    title="Remove Service"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-
-                <div className="grid grid-cols-1 gap-5">
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold text-text-sub uppercase tracking-wider">Container Image</label>
-                    <input 
-                      placeholder="nginx:alpine"
-                      value={service.image}
-                      onChange={(e) => updateService(service.id, 'image', e.target.value)}
-                      className="w-full bg-ui-accent border border-ui-border rounded-md px-4 py-2.5 text-sm text-text-main focus:border-brand/50 outline-none transition-colors"
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <label className="text-xs font-bold text-text-sub uppercase tracking-wider">Exposed Ports</label>
-                      <input 
-                        placeholder="80:80"
-                        value={service.ports}
-                        onChange={(e) => updateService(service.id, 'ports', e.target.value)}
-                        className="w-full bg-ui-accent border border-ui-border rounded-md px-4 py-2.5 text-sm text-text-main focus:border-brand/50 outline-none transition-colors"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-xs font-bold text-text-sub uppercase tracking-wider">Restart Policy</label>
-                      <select 
-                        value={service.restartPolicy}
-                        onChange={(e) => updateService(service.id, 'restartPolicy', e.target.value)}
-                        className="w-full bg-ui-accent border border-ui-border rounded-md px-3 py-2.5 text-xs font-semibold text-text-main outline-none focus:border-brand/50 transition-colors"
-                      >
-                        <option value="no">No</option>
-                        <option value="always">Always</option>
-                        <option value="unless-stopped">Unless Stopped</option>
-                        <option value="on-failure">On Failure</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <ServiceCard 
+                key={service.id} 
+                service={service} 
+                updateService={updateService} 
+                removeService={removeService} 
+              />
             ))}
           </div>
         </div>
@@ -152,7 +145,7 @@ export const ComposeBuilder = ({ onDeploy, isDeploying }: ComposeBuilderProps) =
             {[
               { id: 'visualizer', label: 'Network View', icon: Box },
               { id: 'yaml', label: 'YAML Source', icon: FileCode },
-              { id: 'cli', label: 'CLI Import', icon: Terminal },
+              { id: 'existing', label: 'Deploy Existing', icon: FolderOpen },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -169,50 +162,13 @@ export const ComposeBuilder = ({ onDeploy, isDeploying }: ComposeBuilderProps) =
 
           <div className="flex-1 p-8 relative overflow-hidden flex flex-col">
             <AnimatePresence mode="wait">
-              {activeTab === 'visualizer' && (
-                <motion.div 
-                  key="viz" 
-                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                  className="h-full flex flex-col items-center justify-center space-y-12"
-                >
-                  <div className="flex items-center gap-3 px-5 py-2 bg-ui-accent border border-ui-border rounded-full shadow-sm">
-                    <Network className="w-4 h-4 text-brand" />
-                    <span className="text-xs font-bold text-text-sub uppercase tracking-widest">Stack Internal Network</span>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-2xl">
-                    {services.map((s) => (
-                      <div key={s.id} className="p-5 bg-ui-bg border border-ui-border rounded-lg flex items-center gap-4 shadow-sm group hover:border-brand/40 transition-all">
-                        <div className="w-10 h-10 rounded-md bg-brand/10 flex items-center justify-center group-hover:bg-brand/20 transition-colors">
-                          <Box className="w-5 h-5 text-brand" />
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-sm font-semibold text-text-main truncate uppercase tracking-tight">{s.name}</p>
-                          <p className="text-xs font-mono text-text-sub truncate opacity-60 mt-1">{s.image || 'no-image-selected'}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </motion.div>
-              )}
-
-              {activeTab === 'yaml' && (
-                <motion.div key="yaml" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-full">
-                  <pre className="h-full bg-ui-accent/30 p-8 rounded-lg font-mono text-sm text-text-main overflow-auto border border-ui-border leading-relaxed">
-                    {generateYaml()}
-                  </pre>
-                </motion.div>
-              )}
-
-              {activeTab === 'cli' && (
-                <motion.div key="cli" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-full flex flex-col gap-6">
-                  <div className="flex-1 bg-ui-accent/30 p-8 rounded-lg border border-ui-border flex flex-col">
-                    <textarea 
-                      placeholder="Paste docker-compose.yml or docker run command here for analysis..."
-                      className="flex-1 bg-transparent border-none outline-none resize-none font-mono text-sm text-text-main placeholder:text-text-sub/30 leading-relaxed"
-                    />
-                  </div>
-                </motion.div>
+              {activeTab === 'visualizer' && <VisualizerTab services={services} />}
+              {activeTab === 'yaml' && <YamlPreview yamlContent={generateYaml()} />}
+              {activeTab === 'existing' && (
+                <LocalStackDeployer 
+                  onDeployExisting={onDeployExisting || (() => {})} 
+                  isDeploying={isDeploying} 
+                />
               )}
             </AnimatePresence>
           </div>
@@ -220,24 +176,60 @@ export const ComposeBuilder = ({ onDeploy, isDeploying }: ComposeBuilderProps) =
       </div>
 
       {/* Footer: Deployment Summary */}
-      <div className="flex items-center justify-between p-8 bg-ui-accent/30 border border-ui-border rounded-xl mt-auto shadow-sm">
-        <div className="flex items-center gap-5">
-          <div className="p-3 bg-ui-bg rounded-lg border border-ui-border">
+      <div className="flex flex-col md:flex-row items-center justify-between p-6 bg-ui-accent/30 border border-ui-border rounded-xl mt-auto shadow-sm gap-4">
+        <div className="flex items-center gap-5 w-full md:w-auto">
+          <div className="p-3 bg-ui-bg rounded-lg border border-ui-border shrink-0">
             <Settings2 className="w-6 h-6 text-brand" />
           </div>
           <div>
-            <p className="text-base font-semibold text-text-main">Stack architecture verified</p>
-            <p className="text-sm text-text-sub">{services.length} internal services defined in local registry.</p>
+            <p className="text-base font-semibold text-text-main">Stack verified ({services.length} services)</p>
+            <div className="text-xs text-text-sub mt-1 flex items-center gap-2">
+              <span>Save Location:</span>
+              {targetDir ? (
+                <span className="font-mono text-brand truncate max-w-[200px]">{targetDir}</span>
+              ) : (
+                <span className="text-rose-400">Not selected</span>
+              )}
+            </div>
           </div>
         </div>
-        <button 
-          onClick={() => onDeploy(services)}
-          disabled={isDeploying}
-          className="bg-brand hover:bg-brand/90 text-white px-12 py-4 rounded-lg text-sm font-semibold transition-all shadow-md active:scale-95 disabled:opacity-50"
-        >
-          {isDeploying ? 'Deploying Stack...' : 'Deploy Infrastructure'}
-        </button>
+
+        <div className="flex flex-wrap items-center gap-3 w-full md:w-auto justify-end">
+          <input 
+            type="text"
+            value={stackName}
+            onChange={(e) => setStackName(e.target.value)}
+            placeholder="Stack Name"
+            className="bg-ui-bg border border-ui-border rounded-lg px-4 py-3 text-sm text-text-main focus:border-brand/50 outline-none w-40 transition-colors"
+          />
+          <button 
+            onClick={() => setShowPicker(true)}
+            className="bg-ui-bg border border-ui-border hover:border-brand/50 text-text-main px-4 py-3 rounded-lg text-sm font-semibold transition-all shadow-sm flex items-center gap-2"
+          >
+            <FolderOpen className="w-4 h-4" />
+            Browse
+          </button>
+          <button 
+            onClick={() => onDeploy(services, stackName, targetDir)}
+            disabled={isDeploying || !stackName || !targetDir}
+            className="bg-brand hover:bg-brand/90 text-white px-8 py-3 rounded-lg text-sm font-semibold transition-all shadow-md active:scale-95 disabled:opacity-50"
+          >
+            {isDeploying ? 'Deploying...' : 'Deploy Stack'}
+          </button>
+        </div>
       </div>
+
+      {showPicker && (
+        <DirectoryPicker 
+          title="Select Save Location"
+          onSelect={(path) => {
+            setTargetDir(path);
+            setShowPicker(false);
+          }}
+          onCancel={() => setShowPicker(false)}
+          initialPath={targetDir || '/'}
+        />
+      )}
     </div>
   );
 };

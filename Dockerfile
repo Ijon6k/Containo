@@ -60,7 +60,7 @@ ENV PORT 3611
 ENV HOSTNAME "0.0.0.0"
 
 # Install minimal runtime deps
-RUN apk add --no-cache libc6-compat
+RUN apk add --no-cache libc6-compat docker-cli docker-cli-compose
 
 # Security: Create non-root user
 RUN addgroup --system --gid 1001 nodejs && \
