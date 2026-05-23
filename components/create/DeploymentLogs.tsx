@@ -23,9 +23,9 @@ export const DeploymentLogs = ({ logs, pullProgress, onClose, isComplete }: Depl
 
   return (
     <div className="space-y-10 max-w-4xl mx-auto">
-      <div className="flex items-center justify-between border-b border-white/5 pb-6">
+      <div className="flex items-center justify-between border-b border-ui-border pb-6">
         <div className="flex items-center gap-4">
-          <div className={`p-3 rounded-md bg-white/5 ${!isComplete ? 'text-brand animate-pulse' : 'text-emerald-500'}`}>
+          <div className={`p-3 rounded-md bg-ui-accent ${!isComplete ? 'text-brand animate-pulse' : 'text-emerald-500'}`}>
             {isComplete ? <CheckCircle2 className="w-6 h-6" /> : <Loader2 className="w-6 h-6 animate-spin" />}
           </div>
           <div>
@@ -45,7 +45,7 @@ export const DeploymentLogs = ({ logs, pullProgress, onClose, isComplete }: Depl
           <motion.div 
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="grid grid-cols-1 md:grid-cols-2 gap-4"
+            className="flex flex-col gap-2"
           >
             {Object.entries(pullProgress).map(([id, info]) => {
               const progress = info.progressDetail?.total 
@@ -53,24 +53,23 @@ export const DeploymentLogs = ({ logs, pullProgress, onClose, isComplete }: Depl
                 : info.status === 'Download complete' || info.status === 'Pull complete' ? 100 : 0;
               
               return (
-                <div key={id} className="bg-white/5 p-4 rounded-md border border-white/5">
-                  <div className="flex justify-between items-center mb-3">
-                    <div className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 rounded-full bg-brand" />
-                      <span className="text-xs font-mono text-text-sub uppercase tracking-wider">{id}</span>
-                    </div>
-                    <span className="text-[10px] font-semibold text-text-sub uppercase tracking-widest px-2 py-0.5 bg-white/5 rounded">
-                      {info.status}
-                    </span>
+                <div key={id} className="bg-ui-accent/50 px-4 py-3 rounded-md border border-ui-border flex items-center justify-between gap-6">
+                  <div className="flex items-center gap-3 w-48 shrink-0">
+                    <div className="w-1.5 h-1.5 rounded-full bg-brand" />
+                    <span className="text-xs font-mono text-text-sub uppercase tracking-wider truncate">{id}</span>
                   </div>
                   
-                  <div className="relative h-1.5 bg-white/5 rounded-full overflow-hidden">
+                  <div className="flex-1 relative h-1.5 bg-ui-border rounded-full overflow-hidden">
                     <motion.div 
                       initial={{ width: 0 }}
                       animate={{ width: `${progress}%` }}
                       className={`absolute top-0 left-0 h-full transition-all duration-500 ${progress === 100 ? 'bg-emerald-500' : 'bg-brand'}`}
                     />
                   </div>
+
+                  <span className="text-[10px] font-semibold text-text-sub uppercase tracking-widest px-2 py-0.5 bg-ui-bg rounded shrink-0 w-32 text-center truncate border border-ui-border/50">
+                    {info.status}
+                  </span>
                 </div>
               );
             })}
@@ -86,7 +85,7 @@ export const DeploymentLogs = ({ logs, pullProgress, onClose, isComplete }: Depl
         </div>
         <div 
           ref={scrollRef}
-          className="bg-black/40 border border-white/5 rounded-md p-6 h-64 overflow-y-auto font-mono text-sm custom-scrollbar shadow-inner"
+          className="bg-ui-accent/30 border border-ui-border rounded-md p-6 h-64 overflow-y-auto font-mono text-sm custom-scrollbar shadow-inner"
         >
           <div className="space-y-3">
             {displayLogs.map((log, i) => (
@@ -96,8 +95,8 @@ export const DeploymentLogs = ({ logs, pullProgress, onClose, isComplete }: Depl
                 animate={{ opacity: 1, x: 0 }}
                 className="flex gap-4 group"
               >
-                <span className="text-text-sub opacity-20 select-none">{String(i + 1).padStart(2, '0')}</span>
-                <span className={`${log.includes('[ERROR]') ? 'text-rose-400' : log.includes('[SUCCESS]') ? 'text-emerald-400' : 'text-text-sub'}`}>
+                <span className="text-text-sub opacity-30 select-none">{String(i + 1).padStart(2, '0')}</span>
+                <span className={`${log.includes('[ERROR]') ? 'text-rose-500' : log.includes('[SUCCESS]') ? 'text-emerald-500' : 'text-text-main'}`}>
                   {log.replace(/\[.*?\]\s*/, '')}
                 </span>
               </motion.div>
@@ -114,7 +113,7 @@ export const DeploymentLogs = ({ logs, pullProgress, onClose, isComplete }: Depl
         >
           <button 
             onClick={onClose} 
-            className="w-full bg-white/10 hover:bg-white/20 text-text-main py-4 rounded-md font-semibold transition-all flex items-center justify-center gap-2 border border-white/10"
+            className="w-full bg-ui-accent hover:bg-ui-accent/80 text-text-main py-4 rounded-md font-semibold transition-all flex items-center justify-center gap-2 border border-ui-border"
           >
             Return to Infrastructure
             <ChevronRight className="w-4 h-4" />

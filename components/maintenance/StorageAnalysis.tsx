@@ -120,7 +120,7 @@ export function StorageAnalysis({ systemInfo }: StorageAnalysisProps) {
                <div className="w-3 h-3 rounded-sm bg-emerald-500/30" />
                <div className="flex flex-col">
                   <span className="text-[10px] font-bold text-text-sub uppercase tracking-tighter">Free Space</span>
-                  <span className="text-xs font-bold text-text-main">{((systemInfo?.storage?.hostFree || 0) / (1024**3)).toFixed(1)} GB</span>
+                  <span className="text-xs font-bold text-text-main">{((systemInfo?.storage?.hostFree || 0) / (1000**3)).toFixed(1)} GB</span>
                </div>
             </div>
          </div>

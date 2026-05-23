@@ -30,7 +30,7 @@ export const getHostDiskInfo = () => {
     const stats = fs.statfsSync(targetPath);
     hostDisk = {
       total: Number(stats.blocks) * stats.bsize,
-      free: Number(stats.bavail) * stats.bsize,
+      free: Number(stats.bfree) * stats.bsize,
       used: (Number(stats.blocks) - Number(stats.bfree)) * stats.bsize
     };
   } catch (e) { }
@@ -84,8 +84,8 @@ export const getAggregateDockerStats = async (runningContainers: any[], latestSt
   const totalSystemMem = os.totalmem();
   const aggregateMemPercentage = totalSystemMem > 0 ? (totalMemRaw / totalSystemMem) * 100 : 0;
 
-  const finalCpu = Math.min(100, Math.round(totalCpu));
-  const finalMem = Math.min(100, Math.round(aggregateMemPercentage > 0 ? aggregateMemPercentage : 0));
+  const finalCpu = Math.min(100, Number(totalCpu.toFixed(1)));
+  const finalMem = Math.min(100, Number((aggregateMemPercentage > 0 ? aggregateMemPercentage : 0).toFixed(1)));
 
   // Update cache
   cachedAggregateStats = {

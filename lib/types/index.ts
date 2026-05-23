@@ -29,6 +29,8 @@ export interface ServiceData {
   restartPolicy: string;
   networkMode?: string;
   pidMode?: string;
+  command?: string;
+  labels?: string;
   capAdd?: string[];
   securityOpt?: string[];
   privileged?: boolean;

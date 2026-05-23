@@ -10,6 +10,7 @@ export function transformDockerStats(id: string, dockerStats: any): ContainerSta
   let cpuPercentage = 0;
   if (systemDelta > 0 && cpuDelta > 0) {
     cpuPercentage = (cpuDelta / systemDelta) * onlineCpus * 100;
+    cpuPercentage = Math.min(cpuPercentage, 100);
   }
 
   // Calculate Memory

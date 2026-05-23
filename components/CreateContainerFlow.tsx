@@ -72,11 +72,11 @@ export default function CreateContainerFlow({ addToast, onBack }: CreateContaine
   return (
     <div className="flex flex-col min-h-[calc(100vh-80px)] animate-in fade-in duration-500">
       {/* Page Header */}
-      <div className="flex justify-between items-center mb-10 pb-6 border-b border-white/5">
+      <div className="flex justify-between items-center mb-10 pb-6 border-b border-ui-border">
         <div className="flex items-center gap-6">
           <button 
             onClick={step === 'mode' ? onBack : () => setStep('mode')} 
-            className="p-2 hover:bg-white/5 rounded-md transition-all text-text-sub hover:text-text-main"
+            className="p-2 hover:bg-ui-accent rounded-md transition-all text-text-sub hover:text-text-main"
           >
             <ChevronLeft className="w-6 h-6" />
           </button>

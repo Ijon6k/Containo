@@ -27,6 +27,7 @@ export async function GET(
               let cpuPercent = 0.0;
               if (systemDelta > 0.0 && cpuDelta > 0.0) {
                 cpuPercent = (cpuDelta / systemDelta) * data.cpu_stats.online_cpus * 100.0;
+                cpuPercent = Math.min(cpuPercent, 100.0);
               }
 
               // Calculate Memory
