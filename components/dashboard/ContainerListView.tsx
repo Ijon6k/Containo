@@ -14,6 +14,7 @@ interface ContainerListViewProps {
   onToggleStatus: (id: string) => void;
   onRestart: (id: string, name: string) => void;
   onOpenLogs: (container: Container) => void;
+  onOpenTerminal: (container: Container) => void;
   onDelete: (container: Container) => void;
   onOpenWebUI: (container: Container) => void;
 }
@@ -26,6 +27,7 @@ export function ContainerListView({
   onToggleStatus,
   onRestart,
   onOpenLogs,
+  onOpenTerminal,
   onDelete,
   onOpenWebUI
 }: ContainerListViewProps) {
@@ -50,6 +52,7 @@ export function ContainerListView({
                 onToggleStatus={onToggleStatus}
                 onRestart={onRestart}
                 onOpenLogs={onOpenLogs}
+                onOpenTerminal={onOpenTerminal}
                 onDelete={onDelete}
                 onOpenWebUI={onOpenWebUI}
               />

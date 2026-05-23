@@ -15,6 +15,7 @@ export const useDashboardActions = ({
   showConfirm 
 }: UseDashboardActionsProps) => {
   const [selectedContainer, setSelectedContainer] = useState<Container | null>(null);
+  const [selectedTerminalContainer, setSelectedTerminalContainer] = useState<Container | null>(null);
   const [expandedStatsIds, setExpandedStatsIds] = useState<string[]>([]);
 
   // Atomic Logic Consumption
@@ -82,6 +83,8 @@ export const useDashboardActions = ({
     containers,
     selectedContainer,
     setSelectedContainer,
+    selectedTerminalContainer,
+    setSelectedTerminalContainer,
     searchQuery,
     setSearchQuery,
     stats,

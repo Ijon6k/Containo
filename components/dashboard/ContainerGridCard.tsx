@@ -12,7 +12,8 @@ import {
   Cpu,
   Box,
   Network,
-  Zap
+  Zap,
+  ScrollText
 } from 'lucide-react';
 import { Container, ContainerStats } from '@/lib/types';
 
@@ -22,6 +23,7 @@ interface ContainerGridCardProps {
   onToggleStatus: (id: string) => void;
   onRestart: (id: string, name: string) => void;
   onOpenLogs: (container: Container) => void;
+  onOpenTerminal: (container: Container) => void;
   onDelete: (container: Container) => void;
   onOpenWebUI: (container: Container) => void;
 }
@@ -32,6 +34,7 @@ export const ContainerGridCard = ({
   onToggleStatus,
   onRestart,
   onOpenLogs,
+  onOpenTerminal,
   onDelete,
   onOpenWebUI
 }: ContainerGridCardProps) => {
@@ -169,7 +172,15 @@ export const ContainerGridCard = ({
         <button 
           onClick={() => onOpenLogs(c)}
           className="p-2.5 rounded-md hover:bg-ui-accent-light text-text-sub hover:text-text-main transition-all"
-          title="Telemetry"
+          title="Logs"
+        >
+          <ScrollText className="w-4 h-4" />
+        </button>
+
+        <button 
+          onClick={() => onOpenTerminal(c)}
+          className="p-2.5 rounded-md hover:bg-brand/10 text-text-sub hover:text-brand transition-all"
+          title="Terminal"
         >
           <Terminal className="w-4 h-4" />
         </button>

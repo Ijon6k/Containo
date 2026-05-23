@@ -5,6 +5,7 @@ import { Plus } from 'lucide-react';
 import { Container } from '@/lib/types';
 import { SystemStats } from '@/components/dashboard/SystemStats';
 import { LogModal } from '@/components/dashboard/LogModal';
+import { TerminalModal } from '@/components/dashboard/TerminalModal';
 import { InfoBox } from '@/components/ui/InfoBox';
 import { useDashboardActions } from '@/hooks/useDashboardActions';
 import { useImageActions } from '@/hooks/useImageActions';
@@ -33,6 +34,8 @@ export default function Dashboard({
     containers,
     selectedContainer,
     setSelectedContainer,
+    selectedTerminalContainer,
+    setSelectedTerminalContainer,
     searchQuery,
     setSearchQuery,
     stats,
@@ -107,6 +110,7 @@ export default function Dashboard({
             onToggleStatus={toggleStatus}
             onRestart={restartContainer}
             onOpenLogs={setSelectedContainer}
+            onOpenTerminal={setSelectedTerminalContainer}
             onDelete={deleteContainer}
             onOpenWebUI={openWebUI}
           />
@@ -119,6 +123,7 @@ export default function Dashboard({
             onToggleStatus={toggleStatus}
             onRestart={restartContainer}
             onOpenLogs={setSelectedContainer}
+            onOpenTerminal={setSelectedTerminalContainer}
             onDelete={deleteContainer}
             onOpenWebUI={openWebUI}
           />
@@ -139,6 +144,11 @@ export default function Dashboard({
       <LogModal
         container={selectedContainer}
         onClose={() => setSelectedContainer(null)}
+      />
+
+      <TerminalModal
+        container={selectedTerminalContainer}
+        onClose={() => setSelectedTerminalContainer(null)}
       />
     </div>
   );

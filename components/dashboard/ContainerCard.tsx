@@ -7,6 +7,7 @@ import {
   Square, 
   Activity, 
   Terminal as TerminalIcon,
+  ScrollText,
   Trash2
 } from 'lucide-react';
 import { Container } from '@/lib/types';
@@ -18,6 +19,7 @@ interface ContainerCardProps {
   onToggleStatus: (id: string) => void;
   onRestart: (id: string, name: string) => void;
   onOpenLogs: (container: Container) => void;
+  onOpenTerminal: (container: Container) => void;
   onDelete: (container: Container) => void;
   onOpenWebUI: (container: Container) => void;
 }
@@ -44,6 +46,7 @@ export const ContainerCard = ({
   onToggleStatus, 
   onRestart, 
   onOpenLogs,
+  onOpenTerminal,
   onDelete,
   onOpenWebUI
 }: ContainerCardProps) => {
@@ -115,6 +118,14 @@ export const ContainerCard = ({
             onClick={() => onOpenLogs(c)}
             className="p-2 rounded-md hover:bg-ui-accent text-text-sub hover:text-text-main transition-colors"
             title="Logs"
+          >
+            <ScrollText className="w-4 h-4" />
+          </button>
+
+          <button 
+            onClick={() => onOpenTerminal(c)}
+            className="p-2 rounded-md hover:bg-brand/10 text-text-sub hover:text-brand transition-colors"
+            title="Terminal"
           >
             <TerminalIcon className="w-4 h-4" />
           </button>
