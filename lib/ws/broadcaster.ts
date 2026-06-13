@@ -101,13 +101,25 @@ export const broadcastContainers = async (io: SocketIOServer) => {
     const containers = await docker.listContainers({ all: true });
     const visibleContainers = containers.filter((c: any) => c.Labels?.['containo.internal'] !== 'true');
 
-    const formatted = visibleContainers.map((c: any) => ({
-      id: c.Id.substring(0, 12),
-      name: c.Names[0].replace(/^\//, ''),
-      image: c.Image,
-      status: c.State === 'running' ? 'running' : 'exited',
-      ports: c.Ports.map((p: any) => `${p.PublicPort || p.PrivatePort}:${p.PrivatePort}`).join(', ') || 'N/A',
-    }));
+    const formatted = visibleContainers.map((c: any) => {
+      let ports = c.Ports.map((p: any) => `${p.PublicPort || p.PrivatePort}:${p.PrivatePort}`).join(', ') || 'N/A';
+      const networkMode = c.HostConfig?.NetworkMode || 'default';
+      if (networkMode === 'host' && ports === 'N/A') {
+        ports = 'Host Mode';
+      }
+      return {
+        id: c.Id.substring(0, 12),
+        name: c.Names[0].replace(/^\//, ''),
+        image: c.Image,
+        status: c.State === 'running' ? 'running' : 'exited',
+        ports,
+        networkMode,
+        composeProject: c.Labels?.['com.docker.compose.project'],
+        composeService: c.Labels?.['com.docker.compose.service'],
+        composeConfig: c.Labels?.['com.docker.compose.project.config_files'],
+        composeWorkingDir: c.Labels?.['com.docker.compose.project.working_dir'],
+      };
+    });
 
     io.emit('containers:update', formatted);
 

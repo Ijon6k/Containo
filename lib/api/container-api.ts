@@ -1,6 +1,6 @@
-import axios from 'axios';
 import { z } from 'zod';
-import { Container } from '../types/index';
+import { Container, ServiceData } from '../types/index';
+import { apiClient as api } from './client';
 
 export const ContainerSchema = z.object({
   id: z.string(),
@@ -9,11 +9,21 @@ export const ContainerSchema = z.object({
   status: z.union([z.literal('running'), z.literal('exited')]),
   ports: z.string(),
   logs: z.array(z.string()).optional(),
+  composeProject: z.string().optional(),
+  composeService: z.string().optional(),
+  composeConfig: z.string().optional(),
+  composeWorkingDir: z.string().optional(),
 });
 
-const api = axios.create({
-  baseURL: '/api',
-});
+export const deployContainerStream = async (data: ServiceData) => {
+  const response = await fetch('/api/containers/deploy', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) throw new Error('Deployment failed');
+  return response;
+};
 
 export const fetchContainers = async (): Promise<Container[]> => {
   const { data } = await api.get('/containers');

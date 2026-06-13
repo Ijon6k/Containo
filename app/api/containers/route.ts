@@ -31,6 +31,10 @@ export const GET = withErrorHandler(async () => {
       logs: [],
       networkMode,
       exposedPorts: Array.from(new Set(exposedPorts)) as number[],
+      composeProject: c.Labels?.['com.docker.compose.project'],
+      composeService: c.Labels?.['com.docker.compose.service'],
+      composeConfig: c.Labels?.['com.docker.compose.project.config_files'],
+      composeWorkingDir: c.Labels?.['com.docker.compose.project.working_dir'],
     };
   });
 

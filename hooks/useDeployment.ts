@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { ServiceData } from '@/lib/types';
+import { deployContainerStream as apiDeployContainerStream } from '@/lib/api/container-api';
 
 export const useDeployment = (addToast: (msg: string, type?: 'success' | 'error') => void) => {
   const [isDeploying, setIsDeploying] = useState(false);
@@ -14,11 +15,7 @@ export const useDeployment = (addToast: (msg: string, type?: 'success' | 'error'
     setPullProgress({});
 
     try {
-      const response = await fetch('/api/containers/deploy', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
+      const response = await apiDeployContainerStream(data);
 
       if (!response.ok) throw new Error('Deployment failed');
 

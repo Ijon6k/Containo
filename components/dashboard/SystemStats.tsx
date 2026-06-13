@@ -44,6 +44,73 @@ const LinearBar = ({ value, color }: { value: number; color: string }) => (
   </div>
 );
 
+const HostAreaChart = ({ value, strokeColor, fillColor, trigger }: { value: number; strokeColor: string; fillColor: string; trigger?: any }) => {
+  const history = useMetricHistory(value, 30, trigger);
+  const width = 300;
+  const height = 64;
+  const padding = 2;
+
+  const points = history.map((val, index) => {
+    const x = (index / (history.length - 1)) * width;
+    const y = height - padding - (val / 100) * (height - 2 * padding);
+    return { x, y };
+  });
+
+  const linePath = points.length > 0 
+    ? `M ${points[0].x} ${points[0].y} ` + points.slice(1).map(p => `L ${p.x} ${p.y}`).join(' ')
+    : '';
+
+  const areaPath = points.length > 0
+    ? `${linePath} L ${width} ${height} L 0 ${height} Z`
+    : '';
+
+  const lastPoint = points[points.length - 1] || { x: width, y: height };
+  const gradId = `grad-${strokeColor.replace('#', '')}`;
+
+  return (
+    <div className="h-16 w-full overflow-hidden mt-2 rounded-md bg-ui-accent/30 border border-ui-border/50 relative">
+      <svg className="w-full h-full" viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none">
+        <defs>
+          <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={fillColor} stopOpacity="0.4" />
+            <stop offset="100%" stopColor={fillColor} stopOpacity="0.0" />
+          </linearGradient>
+        </defs>
+
+        {/* Grid lines */}
+        <line x1="0" y1={height * 0.33} x2={width} y2={height * 0.33} stroke="var(--color-ui-border)" strokeOpacity="0.1" strokeDasharray="2 2" />
+        <line x1="0" y1={height * 0.66} x2={width} y2={height * 0.66} stroke="var(--color-ui-border)" strokeOpacity="0.1" strokeDasharray="2 2" />
+
+        {/* Area */}
+        {areaPath && (
+          <path d={areaPath} fill={`url(#${gradId})`} className="transition-all duration-300" />
+        )}
+
+        {/* Line */}
+        {linePath && (
+          <path 
+            d={linePath} 
+            fill="none" 
+            stroke={strokeColor} 
+            strokeWidth="1.5" 
+            strokeLinecap="round" 
+            strokeLinejoin="round" 
+            className="transition-all duration-300"
+          />
+        )}
+
+        {/* Marker */}
+        {points.length > 0 && (
+          <>
+            <circle cx={lastPoint.x} cy={lastPoint.y} r="3" fill={strokeColor} />
+            <circle cx={lastPoint.x} cy={lastPoint.y} r="6" fill={strokeColor} className="animate-ping" opacity="0.3" />
+          </>
+        )}
+      </svg>
+    </div>
+  );
+};
+
 export const SystemStats = ({ containers, systemInfo }: SystemStatsProps) => {
   const [viewMode, setViewMode] = useState<ViewMode>('braille');
 
@@ -102,14 +169,14 @@ export const SystemStats = ({ containers, systemInfo }: SystemStatsProps) => {
                 <span>CPU Load</span>
                 <span className="text-text-main font-bold">{sysCpu}%</span>
               </div>
-              {viewMode === 'braille' ? <BtopChart value={sysCpu} color="bg-brand" trigger={timestamp} /> : <LinearBar value={sysCpu} color="bg-brand" />}
+              <HostAreaChart value={sysCpu} strokeColor="#6366f1" fillColor="#6366f1" trigger={timestamp} />
             </div>
             <div>
               <div className="flex justify-between text-sm font-medium text-text-sub mb-2">
                 <span>Memory Use</span>
                 <span className="text-text-main font-bold">{sysMem}%</span>
               </div>
-              {viewMode === 'braille' ? <BtopChart value={sysMem} color="bg-indigo-500" trigger={timestamp} /> : <LinearBar value={sysMem} color="bg-indigo-500" />}
+              <HostAreaChart value={sysMem} strokeColor="#818cf8" fillColor="#818cf8" trigger={timestamp} />
             </div>
           </div>
         </div>
@@ -162,14 +229,14 @@ export const SystemStats = ({ containers, systemInfo }: SystemStatsProps) => {
                 <span>Docker CPU</span>
                 <span className="text-amber-500 font-bold">{dockerCpu}%</span>
               </div>
-              {viewMode === 'braille' ? <BtopChart value={dockerCpu} color="bg-amber-500" trigger={timestamp} /> : <LinearBar value={dockerCpu} color="bg-amber-500" />}
+              <HostAreaChart value={dockerCpu} strokeColor="#f59e0b" fillColor="#f59e0b" trigger={timestamp} />
             </div>
             <div>
               <div className="flex justify-between text-sm font-medium text-text-sub mb-2">
                 <span>Docker RAM</span>
                 <span className="text-amber-500 font-bold">{dockerMem}%</span>
               </div>
-              {viewMode === 'braille' ? <BtopChart value={dockerMem} color="bg-amber-600" trigger={timestamp} /> : <LinearBar value={dockerMem} color="bg-amber-600" />}
+              <HostAreaChart value={dockerMem} strokeColor="#d97706" fillColor="#d97706" trigger={timestamp} />
             </div>
           </div>
         </div>

@@ -1,11 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
+import os from 'os';
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
-  const defaultPath = fs.existsSync('/host') ? '/host' : '/';
-  let targetPath = searchParams.get('path') || defaultPath;
+  
+  let defaultPath = os.homedir();
+  if (fs.existsSync('/host')) {
+    const hostHome = path.join('/host', defaultPath);
+    if (fs.existsSync(hostHome)) {
+      defaultPath = hostHome;
+    } else {
+      defaultPath = '/host';
+    }
+  }
+
+  let targetPath = searchParams.get('path');
+  if (!targetPath || targetPath === 'undefined') {
+    targetPath = defaultPath;
+  }
+  
   if (targetPath === '/' && fs.existsSync('/host')) {
     targetPath = '/host';
   }

@@ -7,6 +7,10 @@ export interface Container {
   logs?: string[];
   networkMode?: string;
   exposedPorts?: number[];
+  composeProject?: string;
+  composeService?: string;
+  composeConfig?: string;
+  composeWorkingDir?: string;
 }
 
 export interface Volume {

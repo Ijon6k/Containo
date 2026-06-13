@@ -14,6 +14,23 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
   const { toasts, confirmDialog, closeConfirm } = useNotify();
   const { theme, toggleTheme } = useTheme();
 
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
+  useEffect(() => {
+    const saved = localStorage.getItem('sidebar-collapsed');
+    if (saved === 'true') {
+      setIsCollapsed(true);
+    }
+  }, []);
+
+  const handleToggleCollapse = () => {
+    setIsCollapsed(prev => {
+      const newVal = !prev;
+      localStorage.setItem('sidebar-collapsed', String(newVal));
+      return newVal;
+    });
+  };
+
   const handleLogout = async () => {
     try {
       await fetch('/api/auth/logout', { method: 'POST' });
@@ -27,12 +44,14 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen bg-ui-bg text-text-main transition-colors duration-300">
       <Sidebar
+        isCollapsed={isCollapsed}
+        onToggleCollapse={handleToggleCollapse}
         onLogout={handleLogout}
         theme={theme}
         toggleTheme={toggleTheme}
       />
 
-      <main className="flex-1 lg:ml-64 p-4 md:p-10 min-h-screen overflow-y-auto bg-background">
+      <main className={`flex-1 transition-all duration-300 ${isCollapsed ? 'lg:ml-20' : 'lg:ml-64'} p-4 md:p-10 min-h-screen overflow-y-auto bg-background`}>
         <div className="max-w-[1400px] mx-auto w-full">
           {children}
         </div>

@@ -227,7 +227,7 @@ export const ComposeBuilder = ({ onDeploy, onDeployExisting, isDeploying }: Comp
             setShowPicker(false);
           }}
           onCancel={() => setShowPicker(false)}
-          initialPath={targetDir || '/'}
+          initialPath={targetDir || ''}
         />
       )}
     </div>

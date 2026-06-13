@@ -1,12 +1,13 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
+import { fetchImages as apiFetchImages, deleteImage as apiDeleteImage } from '@/lib/api/image-api';
 
 interface UseImageActionsProps {
   searchQuery: string;
   addToast: (msg: string, type?: 'success' | 'error') => void;
   showConfirm: (title: string, message: string, onConfirm: () => void, type?: 'danger' | 'warning' | 'info') => void;
-  viewMode: 'containers' | 'images';
+  viewMode: 'containers' | 'stacks' | 'images';
 }
 
 export function useImageActions({ searchQuery, addToast, showConfirm, viewMode }: UseImageActionsProps) {
@@ -17,10 +18,8 @@ export function useImageActions({ searchQuery, addToast, showConfirm, viewMode }
   const fetchImages = useCallback(async () => {
     setIsLoadingImages(true);
     try {
-      const res = await fetch('/api/images');
-      if (res.ok) {
-        setImages(await res.json());
-      }
+      const data = await apiFetchImages();
+      setImages(data);
     } catch (e) {
       addToast('Failed to fetch images', 'error');
     } finally {
@@ -42,22 +41,18 @@ export function useImageActions({ searchQuery, addToast, showConfirm, viewMode }
     
     showConfirm(title, msg, async () => {
       try {
-        const res = await fetch(`/api/images?id=${id}${force ? '&force=true' : ''}`, { method: 'DELETE' });
-        if (res.ok) {
-          addToast(force ? 'Image forcefully removed' : 'Image deleted successfully');
-          fetchImages();
+        await apiDeleteImage(id, force);
+        addToast(force ? 'Image forcefully removed' : 'Image deleted successfully');
+        fetchImages();
+      } catch (err: any) {
+        const errMsg = err.response?.data?.error || err.message || 'Failed to delete image';
+        if (errMsg.includes('conflict') && !force) {
+           // Offer force delete
+           addToast('Image is in use. Use Force Delete to remove.', 'error');
+           deleteImage(id, true);
         } else {
-          const err = await res.json();
-          if (err.error?.includes('conflict') && !force) {
-             // Offer force delete
-             addToast('Image is in use. Use Force Delete to remove.', 'error');
-             deleteImage(id, true);
-          } else {
-             addToast(err.error || 'Failed to delete image', 'error');
-          }
+           addToast(errMsg, 'error');
         }
-      } catch (e) {
-        addToast('Failed to delete image', 'error');
       }
     }, force ? 'danger' : 'warning');
   }, [addToast, showConfirm, fetchImages]);

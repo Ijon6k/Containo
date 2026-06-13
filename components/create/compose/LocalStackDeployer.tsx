@@ -72,7 +72,7 @@ export const LocalStackDeployer = ({ onDeployExisting, isDeploying }: LocalStack
             setShowPicker(false);
           }}
           onCancel={() => setShowPicker(false)}
-          initialPath={selectedPath || '/'}
+          initialPath={selectedPath || ''}
         />
       )}
     </motion.div>

@@ -94,6 +94,8 @@ export const useDashboardActions = ({
     restartContainer,
     deleteContainer,
     openWebUI,
-    filteredContainers
+    filteredContainers,
+    startContainer,
+    stopContainer
   };
 };

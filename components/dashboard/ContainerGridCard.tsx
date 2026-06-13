@@ -80,9 +80,6 @@ export const ContainerGridCard = ({
         
         <div className="flex flex-col items-end gap-1.5">
            <span className="text-[10px] font-mono text-text-sub opacity-50 uppercase tracking-tighter">ID: {c.id.substring(0, 8)}</span>
-           <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-brand/10 border border-brand/20 text-[10px] font-bold text-brand uppercase tracking-tighter">
-              NODE-01
-           </div>
         </div>
       </div>
 
@@ -119,11 +116,11 @@ export const ContainerGridCard = ({
                      <span className="text-sm font-mono font-bold text-text-main mt-1.5">{(stats?.networkRxMB || 0).toFixed(1)}MB</span>
                   </div>
                </div>
-               <div className="flex items-center gap-3">
-                  <Zap className="w-4 h-4 text-amber-500 opacity-50" />
-                  <div className="flex flex-col">
-                     <span className="text-[10px] text-text-sub uppercase font-bold leading-none tracking-wider">Health</span>
-                     <span className="text-sm font-mono font-bold text-emerald-500 mt-1.5 uppercase">Optimal</span>
+               <div className="flex items-center gap-3 min-w-0">
+                  <Network className="w-4 h-4 text-brand opacity-50" />
+                  <div className="flex flex-col min-w-0">
+                     <span className="text-[10px] text-text-sub uppercase font-bold leading-none tracking-wider">Ports</span>
+                     <span className="text-xs font-mono font-bold text-text-main mt-1.5 truncate max-w-[100px]" title={c.ports}>{c.ports}</span>
                   </div>
                </div>
             </div>

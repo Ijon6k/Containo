@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { authenticate as apiAuthenticate } from '@/lib/api/auth-api';
 
 interface UseAuthFormOptions {
   endpoint: string;
@@ -30,18 +31,10 @@ export function useAuthForm({ endpoint, onSuccess, validateBeforeSubmit }: UseAu
     setIsLoading(true);
 
     try {
-      const res = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Request failed');
-
+      await apiAuthenticate(endpoint, username, password);
       onSuccess();
     } catch (err: any) {
-      setError(err.message);
+      setError(err.response?.data?.error || err.message || 'Request failed');
     } finally {
       setIsLoading(false);
     }

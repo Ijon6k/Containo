@@ -15,7 +15,7 @@ interface DirectoryPickerProps {
   initialPath?: string;
 }
 
-export const DirectoryPicker = ({ onSelect, onCancel, title = "Select Target Directory", initialPath = "/" }: DirectoryPickerProps) => {
+export const DirectoryPicker = ({ onSelect, onCancel, title = "Select Target Directory", initialPath = "" }: DirectoryPickerProps) => {
   const [currentPath, setCurrentPath] = useState(initialPath);
   const [parentPath, setParentPath] = useState('/');
   const [items, setItems] = useState<FileItem[]>([]);
@@ -71,6 +71,14 @@ export const DirectoryPicker = ({ onSelect, onCancel, title = "Select Target Dir
           <button onClick={onCancel} className="p-2 text-text-sub hover:text-text-main hover:bg-ui-border/50 rounded-lg transition-colors">
             <X className="w-5 h-5" />
           </button>
+        </div>
+
+        {/* Tip Info */}
+        <div className="mx-6 mt-4 p-3.5 bg-brand/5 border border-brand/10 rounded-lg flex gap-3 text-xs text-text-sub leading-relaxed">
+          <span className="shrink-0 text-brand">💡</span>
+          <div>
+            <span className="font-bold text-text-main">Tip:</span> Docker Compose stacks are commonly organized in a dedicated directory under your user home folder (e.g., <code className="bg-ui-accent px-1 py-0.5 rounded font-mono text-[10px]">~/stacks/</code> or <code className="bg-ui-accent px-1 py-0.5 rounded font-mono text-[10px]">~/projects/</code>). For production servers, system-wide directories like <code className="bg-ui-accent px-1 py-0.5 rounded font-mono text-[10px]">/srv/docker/</code> or <code className="bg-ui-accent px-1 py-0.5 rounded font-mono text-[10px]">/opt/</code> are also standard.
+          </div>
         </div>
 
         {/* Browser Body */}

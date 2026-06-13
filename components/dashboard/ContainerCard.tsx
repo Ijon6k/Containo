@@ -54,7 +54,7 @@ export const ContainerCard = ({
     <div className={`transition-all ${isExpanded ? 'bg-ui-accent/30' : 'hover:bg-ui-accent/10'}`}>
       <div className="grid grid-cols-12 gap-4 px-6 py-4 items-center group border-b border-ui-border">
         {/* Status Column */}
-        <div className="col-span-2">
+        <div className="col-span-1">
           <span className={statusBadge({ status: c.status as 'running' | 'exited' })}>
             {c.status}
           </span>
@@ -66,8 +66,13 @@ export const ContainerCard = ({
         </div>
 
         {/* Image Column */}
-        <div className="col-span-4 min-w-0">
+        <div className="col-span-3 min-w-0">
           <p className="text-sm text-text-sub font-mono truncate opacity-60 group-hover:opacity-100 transition-opacity">{c.image}</p>
+        </div>
+
+        {/* Ports Column */}
+        <div className="col-span-2 min-w-0">
+          <span className="text-xs font-semibold text-text-main font-mono opacity-80">{c.ports}</span>
         </div>
 
         {/* Actions Column */}

@@ -13,6 +13,8 @@ import { DashboardToolbar } from '@/components/dashboard/DashboardToolbar';
 import { ContainerListView } from '@/components/dashboard/ContainerListView';
 import { ContainerGridView } from '@/components/dashboard/ContainerGridView';
 import { ImageListView } from '@/components/dashboard/ImageListView';
+import { StackListView } from '@/components/dashboard/StackListView';
+import { useStacks } from '@/hooks/useStacks';
 
 interface DashboardProps {
   addToast: (msg: string, type?: 'success' | 'error') => void;
@@ -27,7 +29,7 @@ export default function Dashboard({
   systemInfo,
   onNavigateToDeploy
 }: DashboardProps) {
-  const [viewMode, setViewMode] = useState<'containers' | 'images'>('containers');
+  const [viewMode, setViewMode] = useState<'containers' | 'stacks' | 'images'>('containers');
   const [layoutMode, setLayoutMode] = useState<'list' | 'grid'>('list');
 
   const {
@@ -45,8 +47,14 @@ export default function Dashboard({
     restartContainer,
     deleteContainer,
     openWebUI,
-    filteredContainers
+    filteredContainers,
+    startContainer,
+    stopContainer
   } = useDashboardActions({ addToast, showConfirm });
+
+  const stacks = useStacks(filteredContainers);
+
+
 
   const {
     isLoadingImages,
@@ -77,11 +85,8 @@ export default function Dashboard({
       </div>
 
       {/* Welcome Info */}
-      <InfoBox title="Welcome to Containo" variant="info" className="mb-8">
-        We're here to make Docker management simple and stress-free. If you're new to this, just remember: 
-        <span className="text-text-main font-bold px-1">Containers</span> are where your apps live, and 
-        <span className="text-text-main font-bold px-1">Volumes</span> are where your data is safely kept. 
-        We handle the technical complexity so you can focus on what matters most—your creations.
+      <InfoBox title="Docker Workspace Dashboard" variant="info" className="mb-8">
+        Manage container deployments, inspect real-time system stats, and configure data volumes.
       </InfoBox>
 
       <SystemStats containers={containers} systemInfo={systemInfo} />
@@ -126,6 +131,25 @@ export default function Dashboard({
             onOpenTerminal={setSelectedTerminalContainer}
             onDelete={deleteContainer}
             onOpenWebUI={openWebUI}
+          />
+        )}
+
+        {viewMode === 'stacks' && (
+          <StackListView
+            stacks={stacks}
+            expandedStatsIds={expandedStatsIds}
+            setExpandedStatsIds={setExpandedStatsIds}
+            stats={stats}
+            onToggleStatus={toggleStatus}
+            onRestart={restartContainer}
+            onOpenLogs={setSelectedContainer}
+            onOpenTerminal={setSelectedTerminalContainer}
+            onDelete={deleteContainer}
+            onOpenWebUI={openWebUI}
+            startContainer={startContainer}
+            stopContainer={stopContainer}
+            addToast={addToast}
+            showConfirm={showConfirm}
           />
         )}
 
