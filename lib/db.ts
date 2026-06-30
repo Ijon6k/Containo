@@ -1,9 +1,9 @@
-import Database from 'better-sqlite3';
-import path from 'path';
+import Database from "better-sqlite3";
+import path from "path";
 
-import fs from 'fs';
+import fs from "fs";
 
-const dataDir = path.join(process.cwd(), 'data');
+const dataDir = path.join(process.cwd(), "data");
 
 try {
   if (!fs.existsSync(dataDir)) {
@@ -12,17 +12,17 @@ try {
     fs.chmodSync(dataDir, 0o777);
   }
 } catch (err) {
-  console.error('Failed to create data directory:', err);
+  console.error("Failed to create data directory:", err);
 }
 
-const dbPath = process.env.DATABASE_PATH || path.join(dataDir, 'containo.db');
-console.log('Initializing database at:', dbPath);
+const dbPath = process.env.DATABASE_PATH || path.join(dataDir, "containo.db");
+console.log("Initializing database at:", dbPath);
 
-let db: any;
+let db: Database.Database;
 try {
   db = new Database(dbPath);
 } catch (err) {
-  console.error('FAILED TO INITIALIZE SQLITE:', err);
+  console.error("FAILED TO INITIALIZE SQLITE:", err);
   throw err;
 }
 
@@ -37,10 +37,12 @@ db.exec(`
 `);
 
 // Self-healing: Create setup flag if users exist
-const userCount = db.prepare('SELECT COUNT(*) as count FROM users').get() as { count: number };
-const flagPath = path.join(dataDir, '.setup_done');
+const userCount = db.prepare("SELECT COUNT(*) as count FROM users").get() as {
+  count: number;
+};
+const flagPath = path.join(dataDir, ".setup_done");
 if (userCount.count > 0 && !fs.existsSync(flagPath)) {
-  fs.writeFileSync(flagPath, 'done');
+  fs.writeFileSync(flagPath, "done");
   fs.chmodSync(flagPath, 0o666);
 }
 

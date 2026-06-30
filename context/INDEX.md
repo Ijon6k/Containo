@@ -1,6 +1,6 @@
 # Containo — Project Context Index
 
-> **Auto-updated**: Last built from commit `eaf1679b`
+> **Auto-updated**: Last built from commit `af81c40`
 > **Graph data**: `graphify-out/graph.json` (584 nodes, 942 edges, 49 communities)
 > **Git hook**: Auto-updates on every commit via `graphify hook`
 

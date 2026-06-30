@@ -11,9 +11,10 @@
 
 | File | Purpose |
 |---|---|
-| `docker-service.ts` | System health score, disk info, aggregate Docker stats (cached) |
-| `container-actions.service.ts` | Start/stop/restart containers, get logs, inspect |
-| `stats.service.ts` | Transform raw Docker stats stream to `ContainerStats` |
+| `docker-service.ts` | System health, host CPU, disk info, aggregate Docker stats, `getSystemInfo()` |
+| `container-format.service.ts` | Shared `formatContainer()` — used by WebSocket broadcaster + REST API |
+| `compose-yaml.service.ts` | `buildComposeYaml()` — generates docker-compose YAML from service definitions |
+| `stats.service.ts` | `transformDockerStats()` — raw Docker stats stream to `ContainerStats` |
 | `cli-parser.service.ts` | Parse Docker CLI commands to compose config |
 
 ## `lib/api/`
@@ -32,14 +33,14 @@
 | File | Purpose |
 |---|---|
 | `server.ts` | `setupSocketIO()` — auth middleware, `stats:subscribe/unsubscribe`, `disconnect` |
-| `broadcaster.ts` | `broadcastContainers()` every 5s, `broadcastSystemInfo()` every 2s, idle detection |
+| `broadcaster.ts` | `broadcastContainers()` every 5s, `broadcastSystemInfo()` every 2s — uses shared `getSystemInfo()` and `formatContainer()`, idle detection |
 | `streamer.ts` | `startStatsStream()` / `stopStatsStream()` — per-container Docker stats streaming |
 
 ## `lib/auth/`
 
 | File | Purpose |
 |---|---|
-| `utils.ts` | `getJwtSecret()` — env → file → auto-generate, `verifySession()` |
+| `utils.ts` | `getJwtSecret()` — env -> file -> auto-generate, `verifySession()` |
 | `index.ts` | Re-exports |
 
 ## `lib/utils/`
@@ -58,8 +59,9 @@ Core TypeScript interfaces: [[types]]
 | Hook | Purpose |
 |---|---|
 | `useContainers` | Container list state + CRUD via React Query |
-| `useDashboardActions` | `startContainer`, `stopContainer`, `restartContainer` mutations |
-| `useWebSocket` / `useWS` | WebSocket connection, event subscriptions |
+| `useDashboardActions` | Orchestrates `useContainers` + `useStats` + `useSearch` + `useContainerActions` |
+| `useContainerActions` | `toggleStatus`, `restartContainer`, `deleteContainer`, `openWebUI` — extracted action wrappers |
+| `useWS` | WebSocket connection, event subscriptions (via `WebSocketProvider`) |
 | `useStats` | Container CPU/RAM stats (via WS `stats:update`) |
 | `useStacks` | Docker stack listing |
 | `useBackupRestore` | Volume backup/restore operations |

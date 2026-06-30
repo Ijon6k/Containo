@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 # --- STAGE 1: Install Dependencies ---
 FROM node:22-alpine AS deps
 RUN apk add --no-cache libc6-compat python3 make g++ sqlite-dev
@@ -9,10 +10,11 @@ RUN corepack enable && corepack prepare pnpm@latest --activate
 # Copy manifest files
 COPY pnpm-lock.yaml package.json ./
 
-# Use --ignore-scripts to avoid "approve-builds" interactive prompt during install
-RUN pnpm install --frozen-lockfile --ignore-scripts
+# Cache pnpm store between builds — avoids re-downloading every package
+RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
+    pnpm install --frozen-lockfile --ignore-scripts
 
-# Rebuild native modules manually for the current OS/Arch
+# Rebuild native modules for current OS/Arch
 RUN pnpm rebuild better-sqlite3 sharp cpu-features protobufjs ssh2 unrs-resolver
 
 # --- STAGE 2: Builder ---
@@ -26,11 +28,12 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 # Set environment for build
-ENV NEXT_TELEMETRY_DISABLED 1
-ENV NODE_ENV production
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV NODE_ENV=production
 
-# 1. Build Next.js (generates .next/standalone)
-RUN pnpm build
+# Cache Next.js compilation cache — skips recompiling unchanged files
+RUN --mount=type=cache,target=/app/.next/cache \
+    pnpm build
 
 # 2. Transpile server.ts to server.js using esbuild
 RUN npx esbuild server.ts \
@@ -54,10 +57,10 @@ RUN pnpm prune --prod
 FROM node:22-alpine AS runner
 WORKDIR /app
 
-ENV NODE_ENV production
-ENV NEXT_TELEMETRY_DISABLED 1
-ENV PORT 3611
-ENV HOSTNAME "0.0.0.0"
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV PORT=3611
+ENV HOSTNAME=0.0.0.0
 
 # Install minimal runtime deps
 RUN apk add --no-cache libc6-compat docker-cli docker-cli-compose

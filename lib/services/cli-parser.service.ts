@@ -25,7 +25,7 @@ export const parseDockerCommand = (command: string): ServiceData => {
   };
 
   // 1. Clean backslashes and unify spaces
-  let cleanCmd = command.replace(/\\\n/g, ' ').replace(/\s+/g, ' ').trim();
+  const cleanCmd = command.replace(/\\\n/g, ' ').replace(/\s+/g, ' ').trim();
   
   // 2. Tokenize by space but keep quoted strings together
   const parts: string[] = [];
@@ -46,7 +46,7 @@ export const parseDockerCommand = (command: string): ServiceData => {
 
   // 3. Process tokens
   for (let i = 0; i < parts.length; i++) {
-    let part = parts[i];
+    const part = parts[i];
     let key = part;
     let value = '';
 
