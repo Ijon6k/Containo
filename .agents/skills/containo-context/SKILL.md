@@ -1,22 +1,40 @@
 ---
 name: containo-context
-description: "Context-first architecture for Containo project. Use this skill for ANY question about the Containo codebase, architecture, Docker management features, API routes, WebSocket communication, or data flow. This skill provides semantic context (architecture, flows, modules) while graphify handles structural queries (imports, call chains, dependencies). Always read from context/ folder first before reading source files."
+description: "Context-first architecture for Containo project. Use this skill for ANY question about the Containo codebase, architecture, Docker management features, API routes, WebSocket communication, or data flow. Also use when starting work on Containo, setting up the project, or any question that mentions Containo. This skill provides semantic context (architecture, flows, modules) while graphify handles structural queries (imports, call chains, dependencies). Always read from context/ folder first before reading source files. On first load, check if graphify is set up."
 ---
 
 # Containo Context System
 
 You are working on **Containo** — a Docker management dashboard (Next.js + TypeScript + Dockerode + WebSocket).
 
-## 🛡️ STALENESS CHECK — Mandatory First Step
+## 🛡️ AVAILABILITY CHECK — Mandatory First Step
+
+**Before doing anything else**, check if the knowledge graph exists:
+
+```bash
+if [ ! -f graphify-out/graph.json ]; then
+    echo "⚠️ GRAPHIFY NOT SET UP — graphify-out/graph.json missing"
+fi
+```
+
+**If graphify is missing (fresh clone / deleted):**
+1. Tell the user: "Graphify knowledge graph not found. Want me to set it up? It takes 2 commands."
+2. If user says yes, run setup: install `graphifyy`, set API key, run `extract` + `cluster-only`
+3. Context files can still be used — they are committed to git
+
+**If graphify exists**, proceed to staleness check:
+
+## 🛡️ STALENESS CHECK
 
 **Before using ANY context file**, verify it's not stale:
 
 ```bash
-# Compare context commit hash vs current HEAD
-CONTEXT_HASH=$(grep 'Last built from commit' context/INDEX.md | grep -oP '[a-f0-9]{7,}') CURRENT_HASH=$(git rev-parse --short HEAD)
-if [ "$CONTEXT_HASH" != "$CURRENT_HASH" ]; then
+# Compare context commit hash vs current HEAD (portable: works on Linux & macOS)
+CONTEXT_HASH=$(grep 'Last built from commit' context/INDEX.md | sed 's/.*`\([a-f0-9]*\)`.*/\1/')
+CURRENT_HASH=$(git rev-parse --short=7 HEAD)
+if [ "${CONTEXT_HASH:0:7}" != "$CURRENT_HASH" ]; then
     echo "⚠️ CONTEXT IS STALE! Context=$CONTEXT_HASH, HEAD=$CURRENT_HASH"
-    echo "Context is $(( $(git rev-list --count $CONTEXT_HASH..HEAD 2>/dev/null || echo '?') )) commits behind."
+    echo "Context may be outdated. Verify against source files."
 fi
 ```
 

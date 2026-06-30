@@ -45,3 +45,5 @@ next-env.d.ts
 *.db-journal
 data/*
 !data/.gitkeep
+graphify-out/
+skills-lock.json
