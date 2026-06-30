@@ -38,50 +38,69 @@ Containo is a lightweight and beginner-friendly Docker management dashboard. Unl
 
 Follow these steps to get Containo running on your machine:
 
-### 1. Clone the Repository
-First, clone the project to your local machine:
+### 1. Run with Docker (Recommended)
+You can run Containo directly from the terminal without cloning the project:
 ```bash
-git clone https://github.com/Ijon6k/containo.git
-cd containo
+docker run -d \
+  --name containo \
+  --restart unless-stopped \
+  -p 3611:3611 \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v containo-data:/app/data \
+  -e DOCKER_HOST=unix:///var/run/docker.sock \
+  ijon6k/containo:latest
 ```
 
-### 2. Run with Docker Compose (Recommended)
-The easiest way to run Containo is using Docker Compose, which will build the image locally for you:
-
+### 2. Run with Docker Compose
+If you prefer Docker Compose, save the following as `docker-compose.yml` in an empty directory:
 ```yaml
 services:
   containo:
-    build: .
+    image: ijon6k/containo:latest
     container_name: containo
     ports:
       - "3611:3611"
-    environment:
-      - NODE_ENV=production
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - ./data:/app/data
-    restart: always
-```
+      - containo-data:/app/data
+    environment:
+      - DOCKER_HOST=unix:///var/run/docker.sock
+    restart: unless-stopped
 
-Simply run:
+volumes:
+  containo-data:
+```
+Then run:
 ```bash
-docker-compose up -d --build
+docker compose up -d
 ```
 
-### 3. Manual Installation (Node.js)
-If you prefer to run it directly without Docker:
+### 3. Run from Source (Development)
+If you want to run it from the source code:
 
-1. **Install Dependencies**:
+1. **Clone the Repository**:
    ```bash
-   pnpm install
+   git clone https://github.com/Ijon6k/containo.git
+   cd containo
    ```
 
-2. **Build & Start**:
+2. **Option A: Run with Docker Compose (Local Build)**:
    ```bash
-   pnpm run build
-   pnpm run start
+   docker-compose up -d --build
    ```
-   Access the dashboard at `http://localhost:3611`.
+
+3. **Option B: Manual Installation (Node.js)**:
+   - Install Dependencies:
+     ```bash
+     pnpm install
+     ```
+   - Build & Start:
+     ```bash
+     pnpm run build
+     pnpm run start
+     ```
+
+Access the dashboard at `http://localhost:3611`.
 
 ---
 
