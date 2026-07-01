@@ -13,17 +13,12 @@ const PROTECTED_ROUTES = [
 import fs from "fs";
 import path from "path";
 
-// ponytail: cached — .setup_done never changes during app lifetime
-let isSetupDone: boolean | null = null;
-
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // 0. Check if setup is completed
-  if (isSetupDone === null) {
-    const flagPath = path.join(process.cwd(), "data", ".setup_done");
-    isSetupDone = fs.existsSync(flagPath);
-  }
+  const flagPath = path.join(process.cwd(), "data", ".setup_done");
+  const isSetupDone = fs.existsSync(flagPath);
 
   if (
     !isSetupDone &&
