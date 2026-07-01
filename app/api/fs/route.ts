@@ -5,22 +5,19 @@ import os from 'os';
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
-  
-  let defaultPath = os.homedir();
+
+  let defaultPath = '/host';
   if (fs.existsSync('/host')) {
-    const hostHome = path.join('/host', defaultPath);
-    if (fs.existsSync(hostHome)) {
-      defaultPath = hostHome;
-    } else {
-      defaultPath = '/host';
-    }
+    defaultPath = '/host';
+  } else {
+    defaultPath = os.homedir();
   }
 
   let targetPath = searchParams.get('path');
   if (!targetPath || targetPath === 'undefined') {
     targetPath = defaultPath;
   }
-  
+
   if (targetPath === '/' && fs.existsSync('/host')) {
     targetPath = '/host';
   }
@@ -38,7 +35,7 @@ export async function GET(req: NextRequest) {
 
     // Baca isi direktori
     const items = fs.readdirSync(targetPath, { withFileTypes: true });
-    
+
     const formattedItems = items
       .filter(item => {
         // Abaikan file sistem / hidden files jika perlu (opsional)
@@ -58,10 +55,10 @@ export async function GET(req: NextRequest) {
         return a.name.localeCompare(b.name);
       });
 
-    return NextResponse.json({ 
-      currentPath: targetPath, 
+    return NextResponse.json({
+      currentPath: targetPath,
       parentPath: targetPath === '/' ? '/' : path.dirname(targetPath),
-      items: formattedItems 
+      items: formattedItems
     });
 
   } catch (error: any) {

@@ -8,9 +8,8 @@ services:
       - "3611:3611"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - /:/host
+      - /home:/host
       - ./data:/app/data
-    privileged: true
     environment:
       - NODE_ENV=production
       - DOCKER_HOST=unix:///var/run/docker.sock

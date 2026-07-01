@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Archivo } from "next/font/google";
 import "./globals.css";
 import QueryProvider from "@/components/providers/QueryProvider";
-
+import { ThemeProvider } from "@/components/providers/ThemeProvider";
 const archivo = Archivo({
   subsets: ["latin"],
   variable: "--font-archivo",
@@ -25,10 +25,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${archivo.variable} h-full antialiased dark`}>
-      <body className="min-h-full font-sans bg-[#0F172A] text-slate-200">
-        <QueryProvider>
-          {children}
-        </QueryProvider>
+      <body className="min-h-full font-sans">
+        <ThemeProvider>
+          <QueryProvider>
+            {children}
+          </QueryProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

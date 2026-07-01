@@ -46,34 +46,54 @@ docker run -d \
   --restart unless-stopped \
   -p 3611:3611 \
   -v /var/run/docker.sock:/var/run/docker.sock \
+  -v /home:/host \
   -v containo-data:/app/data \
   -e DOCKER_HOST=unix:///var/run/docker.sock \
   ijon6k/containo:latest
 ```
 
 ### 2. Run with Docker Compose
-If you prefer Docker Compose, save the following as `docker-compose.yml` in an empty directory:
-```yaml
-services:
-  containo:
-    image: ijon6k/containo:latest
-    container_name: containo
-    ports:
-      - "3611:3611"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - containo-data:/app/data
-    environment:
-      - DOCKER_HOST=unix:///var/run/docker.sock
-    restart: unless-stopped
+If you prefer using Docker Compose, follow these simple steps to set it up:
 
-volumes:
-  containo-data:
-```
-Then run:
-```bash
-docker compose up -d
-```
+1. **Create a new folder and enter it**:
+   ```bash
+   mkdir containo && cd containo
+   ```
+
+2. **Create a configuration file**:
+   Create a file named `docker-compose.yml` in that folder and paste the following configuration:
+   ```yaml
+   services:
+     containo:
+       image: ijon6k/containo:latest
+       container_name: containo
+       ports:
+         - "3611:3611"
+       volumes:
+         - /var/run/docker.sock:/var/run/docker.sock
+         - /home:/host
+         
+         # Choose ONE option for persisting data:
+         # Option A: Named Volume (Recommended - managed by Docker)
+         - containo-data:/app/data
+         
+         # Option B: Bind Mount (Uncomment below if you want data in your local folder)
+         # - ./data:/app/data
+         
+       environment:
+         - DOCKER_HOST=unix:///var/run/docker.sock
+       restart: unless-stopped
+
+   # Required if using Option A (Named Volume)
+   volumes:
+     containo-data:
+   ```
+
+3. **Start the application**:
+   Run this command in the same directory:
+   ```bash
+   docker compose up -d
+   ```
 
 ### 3. Run from Source (Development)
 If you want to run it from the source code:

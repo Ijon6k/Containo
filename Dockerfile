@@ -81,9 +81,9 @@ COPY --from=builder --chown=nextjs:nodejs /app/server.js ./server.js
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
 
 # Ensure data directory exists and is writable
-RUN mkdir -p /app/data && chown -R nextjs:nodejs /app/data
+RUN mkdir -p /app/data
 
-USER nextjs
+USER root
 EXPOSE 3611
 
 # Run using standard node (no tsx/typescript overhead)
