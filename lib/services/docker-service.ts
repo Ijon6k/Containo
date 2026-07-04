@@ -141,10 +141,9 @@ export const getAggregateDockerStats = async (
  * Shared by WebSocket broadcaster and REST API route.
  */
 export const getSystemInfo = async (latestStats?: Record<string, any>) => {
-  const [containers, images, _volumes, info, df] = await Promise.all([
+  const [containers, images, info, df] = await Promise.all([
     docker.listContainers({ all: true }),
     docker.listImages(),
-    docker.listVolumes(),
     docker.info(),
     docker.df(),
   ]);

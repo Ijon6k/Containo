@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, ChevronLeft } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import { ServiceData } from "@/lib/types";
 import { ModeSelection } from "./create/ModeSelection";
 import { SimpleForm } from "./create/SimpleForm";
@@ -24,16 +24,9 @@ export default function CreateContainerFlow({
   const [step, setStep] = useState<"mode" | "form" | "logs">("mode");
   const [mode, setMode] = useState<"simple" | "compose" | "cli">("simple");
   const [deploymentMode, setDeploymentMode] = useState<"form" | "cli">("form");
+  const abortRef = useRef<AbortController | null>(null);
+  const [isComposeDeploying, setIsComposeDeploying] = useState(false);
 
-  const [simpleData, setSimpleData] = useState<ServiceData>({
-    id: "",
-    name: "",
-    image: "",
-    ports: "",
-    env: "",
-    volumes: "",
-    restartPolicy: "no",
-  });
   const [cliCommand, setCliCommand] = useState(
     "docker run -d --name my-app -p 8080:80 nginx",
   );
@@ -54,23 +47,89 @@ export default function CreateContainerFlow({
     onBack();
   };
 
-  const onModeSelect = (selectedMode: "simple" | "compose" | "cli") => {
-    setMode(selectedMode);
-    if (selectedMode === "cli") {
-      setDeploymentMode("cli");
-    } else {
-      setDeploymentMode("form");
-    }
+  const onModeSelect = (m: "simple" | "compose" | "cli") => {
+    setMode(m);
+    setDeploymentMode(m === "cli" ? "cli" : "form");
     setStep("form");
   };
 
   const startDeployment = (data?: any) => {
     setStep("logs");
-    if (deploymentMode === "cli") {
-      const parsedData = parseDockerCommand(cliCommand);
-      handleDeploy(parsedData);
-    } else {
-      handleDeploy(data);
+    if (deploymentMode === "cli") handleDeploy(parseDockerCommand(cliCommand));
+    else handleDeploy(data);
+  };
+
+  const streamComposeDeploy = async (body: Record<string, string>) => {
+    setStep("logs");
+    setDeploymentLogs([]);
+    setDeploymentComplete(false);
+    setIsComposeDeploying(true);
+    const controller = new AbortController();
+    abortRef.current = controller;
+    const decoder = new TextDecoder();
+    try {
+      const res = await fetch("/api/compose/deploy", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      });
+      if (!res.ok) throw new Error(`Server returned ${res.status}`);
+      const reader = res.body?.getReader();
+      if (!reader) throw new Error("No response stream");
+      let buffer = "";
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
+        for (const line of lines) {
+          if (!line.trim()) continue;
+          try {
+            const p = JSON.parse(line);
+            if (p.type === "log" || p.type === "create")
+              setDeploymentLogs((prev) => [...prev, p.message]);
+            else if (p.type === "success") {
+              setDeploymentLogs((prev) => [...prev, `[SUCCESS] ${p.message}`]);
+              setDeploymentComplete(true);
+            } else if (p.type === "error") {
+              setDeploymentLogs((prev) => [...prev, `[ERROR] ${p.message}`]);
+              setDeploymentComplete(true);
+              addToast(p.message, "error");
+            }
+          } catch {
+            setDeploymentLogs((prev) => [...prev, line]);
+          }
+        }
+      }
+      if (buffer.trim()) {
+        try {
+          const p = JSON.parse(buffer);
+          if (p.type === "success") {
+            setDeploymentLogs((prev) => [...prev, `[SUCCESS] ${p.message}`]);
+            setDeploymentComplete(true);
+          }
+        } catch {
+          setDeploymentLogs((prev) => [...prev, buffer.trim()]);
+        }
+      }
+    } catch (err: any) {
+      if (err.name === "AbortError") {
+        setDeploymentLogs((prev) => [
+          ...prev,
+          "[STOPPED] Deployment cancelled",
+        ]);
+        setDeploymentComplete(true);
+        addToast("Deployment stopped", "error");
+      } else {
+        setDeploymentLogs((prev) => [...prev, `[ERROR] ${err.message}`]);
+        setDeploymentComplete(true);
+        addToast(err.message, "error");
+      }
+    } finally {
+      setIsComposeDeploying(false);
+      abortRef.current = null;
     }
   };
 
@@ -79,65 +138,26 @@ export default function CreateContainerFlow({
     stackName: string,
     targetDir: string,
   ) => {
-    setStep("logs");
-    setDeploymentLogs([`Deploying new stack: ${stackName} at ${targetDir}...`]);
-
-    const { yaml: yamlContent } = buildComposeYaml(services);
-
-    try {
-      const cleanTargetDir = targetDir.endsWith("/")
-        ? targetDir.slice(0, -1)
-        : targetDir;
-      const finalPath = `${cleanTargetDir}/${stackName}`;
-
-      const res = await fetch("/api/compose/deploy", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          targetPath: finalPath,
-          yamlContent,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.details || data.error || "Failed");
-      setDeploymentLogs((prev) => [
-        ...prev,
-        "[SUCCESS] Stack deployed successfully!",
-        data.details,
-      ]);
-      setDeploymentComplete(true);
-    } catch (err: any) {
-      setDeploymentLogs((prev) => [...prev, `[ERROR] ${err.message}`]);
-      addToast(err.message, "error");
-    }
+    const { yaml } = buildComposeYaml(services);
+    const clean = targetDir.endsWith("/") ? targetDir.slice(0, -1) : targetDir;
+    await streamComposeDeploy({
+      targetPath: `${clean}/${stackName}`,
+      yamlContent: yaml,
+    });
   };
 
-  const handleExistingComposeDeploy = async (path: string) => {
-    setStep("logs");
-    setDeploymentLogs([`Deploying existing stack from: ${path}...`]);
-    try {
-      const res = await fetch("/api/compose/deploy", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ targetPath: path }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.details || data.error || "Failed");
-      setDeploymentLogs((prev) => [
-        ...prev,
-        "[SUCCESS] Stack deployed successfully!",
-        data.details,
-      ]);
-      setDeploymentComplete(true);
-    } catch (err: any) {
-      setDeploymentLogs((prev) => [...prev, `[ERROR] ${err.message}`]);
-      addToast(err.message, "error");
-    }
+  const handleExistingComposeDeploy = async (
+    path: string,
+    composeFile?: string,
+  ) => {
+    await streamComposeDeploy({
+      targetPath: path,
+      ...(composeFile ? { composeFile } : {}),
+    });
   };
 
   return (
     <div className="flex flex-col min-h-[calc(100vh-80px)] animate-in fade-in duration-500">
-      {/* Page Header */}
       <div className="flex justify-between items-center mb-10 pb-6 border-b border-ui-border">
         <div className="flex items-center gap-6">
           <button
@@ -163,7 +183,6 @@ export default function CreateContainerFlow({
             </p>
           </div>
         </div>
-
         <button
           onClick={onBack}
           className="px-4 py-2 text-sm font-semibold text-text-sub hover:text-text-main transition-all"
@@ -171,8 +190,6 @@ export default function CreateContainerFlow({
           Cancel
         </button>
       </div>
-
-      {/* Main Page Content */}
       <div className="flex-1 bg-ui-bg border border-ui-border rounded-md shadow-sm flex flex-col overflow-hidden">
         <div className="flex-1 overflow-y-auto custom-scrollbar p-10">
           <AnimatePresence mode="wait">
@@ -187,7 +204,6 @@ export default function CreateContainerFlow({
                 <ModeSelection onSelect={onModeSelect} />
               </motion.div>
             )}
-
             {step === "form" && (
               <motion.div
                 key="form"
@@ -198,7 +214,7 @@ export default function CreateContainerFlow({
               >
                 {(mode === "simple" || mode === "cli") && (
                   <SimpleForm
-                    onDeploy={(data) => startDeployment(data)}
+                    onDeploy={startDeployment}
                     isDeploying={isDeploying}
                     cliCommand={cliCommand}
                     setCliCommand={setCliCommand}
@@ -210,12 +226,11 @@ export default function CreateContainerFlow({
                   <ComposeBuilder
                     onDeploy={handleComposeDeploy}
                     onDeployExisting={handleExistingComposeDeploy}
-                    isDeploying={isDeploying}
+                    isDeploying={isDeploying || isComposeDeploying}
                   />
                 )}
               </motion.div>
             )}
-
             {step === "logs" && (
               <motion.div
                 key="logs"
@@ -228,17 +243,20 @@ export default function CreateContainerFlow({
                   isComplete={deploymentComplete}
                   pullProgress={pullProgress}
                   onClose={resetAndBack}
+                  onStop={
+                    isComposeDeploying
+                      ? () => abortRef.current?.abort()
+                      : undefined
+                  }
                 />
               </motion.div>
             )}
           </AnimatePresence>
         </div>
       </div>
-
-      {/* Simplified Footer */}
       <div className="mt-6 flex justify-end">
         <span className="text-xs text-text-sub opacity-30 font-medium">
-          Containo v2.4
+          Containo
         </span>
       </div>
     </div>

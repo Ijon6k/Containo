@@ -1,30 +1,36 @@
-'use client';
+"use client";
 
-import { useState, useCallback } from 'react';
-import { Volume } from '@/lib/types';
+import { useState, useCallback } from "react";
+import { Volume } from "@/lib/types";
 import {
   importBackup as apiImportBackup,
-  backupAll as apiBackupAll,
-  backupIndividual as apiBackupIndividual
-} from '@/lib/api/volume-api';
+  backupIndividual as apiBackupIndividual,
+} from "@/lib/api/volume-api";
 
 interface UseBackupRestoreProps {
-  addToast: (msg: string, type?: 'success' | 'error') => void;
+  addToast: (msg: string, type?: "success" | "error") => void;
   fetchVolumes: () => Promise<void>;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
 }
 
-export function useBackupRestore({ addToast, fetchVolumes, fileInputRef }: UseBackupRestoreProps) {
+export function useBackupRestore({
+  addToast,
+  fetchVolumes,
+  fileInputRef,
+}: UseBackupRestoreProps) {
   const [isRestoring, setIsRestoring] = useState(false);
   const [restoreProgress, setRestoreProgress] = useState(0);
-  const [restoreStep, setRestoreStep] = useState('');
+  const [restoreStep, setRestoreStep] = useState("");
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>, targetVolume?: string) => {
+  const handleFileChange = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    targetVolume?: string,
+  ) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     if (!targetVolume) {
-      addToast('Please select a target volume/container first', 'error');
+      addToast("Please select a target volume/container first", "error");
       return;
     }
 
@@ -32,18 +38,18 @@ export function useBackupRestore({ addToast, fetchVolumes, fileInputRef }: UseBa
     setRestoreStep(`Uploading ${file.name}...`);
 
     const formData = new FormData();
-    formData.append('backup', file);
-    formData.append('action', 'import');
-    formData.append('targetVolume', targetVolume);
+    formData.append("backup", file);
+    formData.append("action", "import");
+    formData.append("targetVolume", targetVolume);
 
     try {
       await apiImportBackup(formData);
       setRestoreProgress(50);
-      setRestoreStep('Extracting data to volume...');
+      setRestoreStep("Extracting data to volume...");
 
       setTimeout(() => {
         setRestoreProgress(100);
-        setRestoreStep('Finalizing...');
+        setRestoreStep("Finalizing...");
 
         setTimeout(() => {
           setIsRestoring(false);
@@ -53,56 +59,44 @@ export function useBackupRestore({ addToast, fetchVolumes, fileInputRef }: UseBa
         }, 1000);
       }, 2000);
     } catch (err: any) {
-      const errMsg = err.response?.data?.error || err.message || 'Import failed';
-      addToast(errMsg, 'error');
+      const errMsg =
+        err.response?.data?.error || err.message || "Import failed";
+      addToast(errMsg, "error");
       setIsRestoring(false);
     }
 
-    if (fileInputRef.current) fileInputRef.current.value = '';
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  const handleBackupAll = useCallback(async () => {
-    addToast('Preparing system-wide backup bundle...');
-    try {
-      const blob = await apiBackupAll();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `containo_full_backup_${new Date().toISOString().split('T')[0]}.tar`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-      addToast('Backup downloaded successfully');
-    } catch (e: any) {
-      addToast(e.response?.data?.error || e.message || 'Backup failed', 'error');
-    }
-  }, [addToast]);
-
-  const handleBackupIndividual = useCallback(async (name: string) => {
-    addToast(`Exporting ${name}...`);
-    try {
-      const blob = await apiBackupIndividual(name);
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${name}_backup.tar`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-      addToast(`${name} exported successfully`);
-    } catch (e: any) {
-      addToast(e.response?.data?.error || e.message || 'Export failed', 'error');
-    }
-  }, [addToast]);
+  const handleBackupIndividual = useCallback(
+    async (name: string) => {
+      addToast(`Exporting ${name}...`);
+      try {
+        const blob = await apiBackupIndividual(name);
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `${name}_backup.tar`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        addToast(`${name} exported successfully`);
+      } catch (e: any) {
+        addToast(
+          e.response?.data?.error || e.message || "Export failed",
+          "error",
+        );
+      }
+    },
+    [addToast],
+  );
 
   return {
     isRestoring,
     restoreProgress,
     restoreStep,
     handleFileChange,
-    handleBackupAll,
-    handleBackupIndividual
+    handleBackupIndividual,
   };
 }

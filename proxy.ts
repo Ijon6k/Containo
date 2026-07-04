@@ -55,7 +55,20 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  // 2. Prevent accessing login/setup if already logged in
+  // 2. Protect API routes with JWT session check
+  if (pathname.startsWith("/api/") && !pathname.startsWith("/api/auth/")) {
+    const session = request.cookies.get("containo_session")?.value;
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const sessionPayload = await verifySession(session);
+    if (!sessionPayload) {
+      return NextResponse.json({ error: "Invalid session" }, { status: 401 });
+    }
+    return NextResponse.next();
+  }
+
+  // 3. Prevent accessing login/setup if already logged in
   if (pathname === "/login" || pathname === "/setup") {
     const session = request.cookies.get("containo_session")?.value;
     if (session) {
@@ -73,13 +86,12 @@ export const config = {
   matcher: [
     /*
      * Match all request paths except for the ones starting with:
-     * - api (API routes)
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      * - logo/ (public logos)
      * - asset/ (public assets)
      */
-    "/((?!api|_next/static|_next/image|favicon.ico|logo|asset).*)",
+    "/((?!_next/static|_next/image|favicon.ico|logo|asset).*)",
   ],
 };

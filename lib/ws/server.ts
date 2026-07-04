@@ -54,9 +54,16 @@ export function setupSocketIO(io: SocketIOServer) {
     });
 
     socket.on("disconnect", () => {
-      // Check if any rooms became empty to clean up streams
-      // Socket.io automatically removes the socket from all rooms on disconnect
-      // We can periodically clean up empty streams or check on disconnect
+      // ponytail: cleanup stats streams for rooms that become empty
+      for (const room of socket.rooms) {
+        if (room.startsWith("stats:")) {
+          const containerId = room.replace("stats:", "");
+          const clientsInRoom = io.sockets.adapter.rooms.get(room);
+          if (clientsInRoom && clientsInRoom.size === 1) {
+            stopStatsStream(containerId);
+          }
+        }
+      }
     });
 
     socket.on("error", (err) => {
