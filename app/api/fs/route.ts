@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
 import os from "os";
+import { logger } from "@/lib/core/logger";
 
-// ponytail: /home → /host for file operations (container mount)
+// Translate user path to container mount point: /home → /host
 function toContainerPath(p: string): string {
   if (fs.existsSync("/host") && p.startsWith("/home")) {
     return "/host" + p.slice(5);
@@ -11,12 +12,14 @@ function toContainerPath(p: string): string {
   return p;
 }
 
-// ponytail: /host → /home for display (user-friendly)
+// Reverse translation for UI display: /host → /home
 function toDisplayPath(p: string): string {
   if (p.startsWith("/host")) return "/home" + p.slice(5);
   return p;
 }
 
+// Filesystem browser: lists directories and docker-compose files,
+// auto-translates /home ↔ /host paths, hides dot-prefixed entries.
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
 
@@ -32,6 +35,7 @@ export async function GET(req: NextRequest) {
 
   targetPath = toContainerPath(targetPath);
 
+  // Redirect filesystem root to /host when containerized
   if (targetPath === "/" && fs.existsSync("/host")) {
     targetPath = "/host";
   }
@@ -53,7 +57,7 @@ export async function GET(req: NextRequest) {
     const items = fs.readdirSync(targetPath, { withFileTypes: true });
     const formattedItems = items
       .filter((item) => {
-        if (item.name.startsWith(".")) return false;
+        if (item.name.startsWith(".")) return false; // skip hidden files
         return item.isDirectory() || item.name.includes("docker-compose");
       })
       .map((item) => ({
@@ -62,6 +66,7 @@ export async function GET(req: NextRequest) {
         isDirectory: item.isDirectory(),
       }))
       .sort((a, b) => {
+        // Directories first, then alphabetical
         if (a.isDirectory && !b.isDirectory) return -1;
         if (!a.isDirectory && b.isDirectory) return 1;
         return a.name.localeCompare(b.name);
@@ -74,6 +79,10 @@ export async function GET(req: NextRequest) {
       items: formattedItems,
     });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    logger.error("API", `Filesystem browse error for '${targetPath}'`, error);
+    return NextResponse.json(
+      { error: "Failed to browse directory" },
+      { status: 500 },
+    );
   }
 }

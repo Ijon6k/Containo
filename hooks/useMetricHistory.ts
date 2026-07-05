@@ -1,5 +1,4 @@
-import { useState, useEffect } from 'react';
-import { ContainerStats } from '@/lib/types';
+import { useState, useEffect } from "react";
 
 /**
  * Hook to manage a sliding window of numeric metrics.
@@ -7,11 +6,15 @@ import { ContainerStats } from '@/lib/types';
  * @param limit Number of data points to keep
  * @param trigger A value that changes on every update (e.g. timestamp) to force a shift
  */
-export const useMetricHistory = (currentValue: number, limit: number = 40, trigger?: any) => {
+export const useMetricHistory = (
+  currentValue: number,
+  limit: number = 40,
+  trigger?: any,
+) => {
   const [history, setHistory] = useState<number[]>(new Array(limit).fill(0));
 
   useEffect(() => {
-    setHistory(prev => {
+    setHistory((prev) => {
       const newHistory = [...prev.slice(1), currentValue];
       return newHistory;
     });

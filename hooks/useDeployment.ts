@@ -10,6 +10,8 @@ export const useDeployment = (
   const [deploymentComplete, setDeploymentComplete] = useState(false);
   const [pullProgress, setPullProgress] = useState<Record<string, any>>({});
 
+  // Stream container deployment logs via SSE (newline-delimited JSON).
+  // Reads chunk-by-chunk with ReadableStream + TextDecoder.
   const handleDeploy = useCallback(
     async (data: ServiceData) => {
       setIsDeploying(true);
@@ -25,7 +27,6 @@ export const useDeployment = (
         const reader = response.body?.getReader();
         if (!reader) throw new Error("Failed to read response stream");
 
-        // ponytail: TextDecoder exists in all modern runtimes (Node 18+, all browsers)
         const decoder = new TextDecoder();
 
         while (true) {
@@ -57,6 +58,8 @@ export const useDeployment = (
                 message = `[CREATE] ${parsed.message}`;
               } else if (parsed.type === "success") {
                 message = `[SUCCESS] ${parsed.message}`;
+                // Marks complete on first service success.
+                // Multi-service stacks may still be deploying after this.
                 setDeploymentComplete(true);
               } else if (parsed.type === "error") {
                 message = `[ERROR] ${parsed.message}`;
@@ -65,6 +68,7 @@ export const useDeployment = (
 
               if (message) setDeploymentLogs((prev) => [...prev, message]);
             } catch (e) {
+              // Non-JSON line — append raw
               setDeploymentLogs((prev) => [...prev, line]);
             }
           });

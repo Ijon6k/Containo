@@ -3,7 +3,6 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { motion } from "framer-motion";
 import {
   LayoutDashboard,
   Database,
@@ -42,13 +41,6 @@ export default function Sidebar({
     { id: "backup", label: "Backups", icon: Database, href: "/backups" },
   ];
 
-  // const menuItems = [
-  //   { id: 'dashboard', label: 'Containers', icon: LayoutDashboard, href: '/dashboard' },
-  //   { id: 'backup', label: 'Backups', icon: Database, href: '/backups' },
-  //   { id: 'maintenance', label: 'Maintenance', icon: Wrench, href: '/maintenance' },
-  //   { id: 'settings', label: 'Settings', icon: Settings, href: '/settings' },
-  // ];
-
   return (
     <aside
       className={`h-screen flex flex-col bg-ui-bg border-r border-ui-border z-40 fixed left-0 top-0 ${
@@ -71,6 +63,7 @@ export default function Sidebar({
               <PanelLeft className="w-5 h-5 text-brand" />
             ) : (
               <div className="w-8 h-8 flex items-center justify-center overflow-hidden">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src="/logo/containologo.webp"
                   alt="Containo Logo"
@@ -84,6 +77,7 @@ export default function Sidebar({
         <div className="p-6 flex items-center justify-between border-b border-ui-border/20 h-[73px]">
           <div className="flex items-center gap-3 overflow-hidden">
             <div className="w-8 h-8 flex items-center justify-center overflow-hidden shrink-0">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src="/logo/containologo.webp"
                 alt="Containo Logo"

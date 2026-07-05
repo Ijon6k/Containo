@@ -69,7 +69,7 @@ export function useImageActions({
               err.message ||
               "Failed to delete image";
             if (errMsg.includes("conflict") && !force) {
-              // ponytail: force-delete directly instead of recursive confirm dialog
+              // Docker rejects in-use images — auto-retry with force delete
               try {
                 await apiDeleteImage(id, true);
                 addToast("Image forcefully removed");

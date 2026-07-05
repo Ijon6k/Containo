@@ -5,7 +5,7 @@ import { Container } from "../types/index";
  * Shared by both the WebSocket broadcaster and REST API route.
  */
 export function formatContainer(raw: any): Container {
-  // ponytail: optional chain guards against containers with no Ports (null/undefined)
+  // Ports may be null for containers without published ports
   let ports =
     raw.Ports?.map(
       (p: any) => `${p.PublicPort || p.PrivatePort}:${p.PrivatePort}`,

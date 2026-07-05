@@ -77,8 +77,8 @@ export default function Maintenance({
           <div className="p-4 bg-ui-accent/50 rounded-md border border-ui-border flex items-start gap-3">
             <Info className="w-4 h-4 text-text-sub mt-0.5" />
             <p className="text-xs text-text-sub leading-relaxed">
-              Regular maintenance helps prevent performance degradation. It's
-              recommended to prune your system at least once a month.
+              Regular maintenance helps prevent performance degradation.
+              It&rsquo;s recommended to prune your system at least once a month.
             </p>
           </div>
         </div>

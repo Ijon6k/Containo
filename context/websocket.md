@@ -90,6 +90,15 @@
               └───────────────┘
 ```
 
+## Disconnect Cleanup
+
+When `socket.on("disconnect")` fires (tab close, network loss, no explicit unsubscribe):
+
+1. Iterate all rooms the socket was in
+2. For each `stats:*` room, check if room is now empty
+3. If empty → `stopStatsStream(id)` — kills the Docker stats stream
+4. Prevents zombie stats streams from orphaned tabs
+
 ## Idle Detection
 
 When `io.engine.clientsCount === 0`:

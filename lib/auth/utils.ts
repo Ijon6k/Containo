@@ -7,9 +7,14 @@ import { logger } from "../core/logger";
 const DEFAULT_SECRET = "containo-super-secret-key-change-this-in-production";
 const SECRET_FILE_PATH = path.join(process.cwd(), "data", ".jwt_secret");
 
-// ponytail: cache to avoid re-encoding on every verifySession() call
+// Cached JWT secret (Uint8Array for jose) — avoids re-reading file on every request
 let _cached: Uint8Array | null = null;
 
+// Resolves JWT secret with three-tier fallback:
+//   1. JWT_SECRET env var (explicit)
+//   2. data/.jwt_secret file (auto-generated, persisted)
+//   3. Auto-generate new secret (zero-config first run)
+// Falls back to hardcoded default only in development.
 export function getJwtSecret() {
   if (_cached) return _cached;
 
@@ -47,7 +52,7 @@ export function getJwtSecret() {
     _cached = new TextEncoder().encode(newSecret);
     return _cached;
   } catch (e) {
-    // Fallback for extreme cases (e.g. read-only filesystem)
+    // Read-only filesystem fallback — refuse in production
     if (process.env.NODE_ENV === "production") {
       throw new Error("CRITICAL: Could not generate or read JWT_SECRET!");
     }

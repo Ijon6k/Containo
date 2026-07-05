@@ -1,12 +1,34 @@
-import { ContainerStats } from '../types/index';
+import { ContainerStats } from "../types/index";
 
-export function transformDockerStats(id: string, dockerStats: any): ContainerStats {
+export function transformDockerStats(
+  id: string,
+  dockerStats: any,
+): ContainerStats {
+  // Guard: paused/starting containers may return null stats
+  const cpuStats = dockerStats.cpu_stats;
+  const precpuStats = dockerStats.precpu_stats;
+
+  if (!cpuStats?.cpu_usage || !precpuStats?.cpu_usage) {
+    return {
+      id,
+      cpuPercentage: 0,
+      memoryUsageMB: 0,
+      memoryLimitMB: 0,
+      memoryPercentage: 0,
+      networkRxMB: 0,
+      networkTxMB: 0,
+      blockReadMB: 0,
+      blockWriteMB: 0,
+    };
+  }
+
   // Calculate CPU percentage
   // Formula: (cpu_delta / system_delta) * online_cpus * 100
-  const cpuDelta = dockerStats.cpu_stats.cpu_usage.total_usage - dockerStats.precpu_stats.cpu_usage.total_usage;
-  const systemDelta = dockerStats.cpu_stats.system_cpu_usage - dockerStats.precpu_stats.system_cpu_usage;
-  const onlineCpus = dockerStats.cpu_stats.online_cpus || 1;
-  
+  const cpuDelta =
+    cpuStats.cpu_usage.total_usage - precpuStats.cpu_usage.total_usage;
+  const systemDelta = cpuStats.system_cpu_usage - precpuStats.system_cpu_usage;
+  const onlineCpus = cpuStats.online_cpus || 1;
+
   let cpuPercentage = 0;
   if (systemDelta > 0 && cpuDelta > 0) {
     cpuPercentage = (cpuDelta / systemDelta) * onlineCpus * 100;
@@ -14,14 +36,15 @@ export function transformDockerStats(id: string, dockerStats: any): ContainerSta
   }
 
   // Calculate Memory
-  const memoryUsage = dockerStats.memory_stats.usage || 0;
-  const memoryLimit = dockerStats.memory_stats.limit || 0;
-  const memoryPercentage = memoryLimit > 0 ? (memoryUsage / memoryLimit) * 100 : 0;
+  const memoryUsage = dockerStats.memory_stats?.usage || 0;
+  const memoryLimit = dockerStats.memory_stats?.limit || 0;
+  const memoryPercentage =
+    memoryLimit > 0 ? (memoryUsage / memoryLimit) * 100 : 0;
 
   // Network Stats (sum across all interfaces)
   let networkRx = 0;
   let networkTx = 0;
-  
+
   if (dockerStats.networks) {
     Object.values(dockerStats.networks).forEach((net: any) => {
       networkRx += net.rx_bytes || 0;
@@ -32,11 +55,11 @@ export function transformDockerStats(id: string, dockerStats: any): ContainerSta
   // Block I/O Stats
   let blockRead = 0;
   let blockWrite = 0;
-  
+
   if (dockerStats.blkio_stats?.io_service_bytes_recursive) {
     dockerStats.blkio_stats.io_service_bytes_recursive.forEach((stat: any) => {
-      if (stat.op === 'Read') blockRead += stat.value;
-      if (stat.op === 'Write') blockWrite += stat.value;
+      if (stat.op === "Read") blockRead += stat.value;
+      if (stat.op === "Write") blockWrite += stat.value;
     });
   }
 

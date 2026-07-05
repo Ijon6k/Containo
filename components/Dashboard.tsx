@@ -1,24 +1,28 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import { Plus } from 'lucide-react';
-import { Container } from '@/lib/types';
-import { SystemStats } from '@/components/dashboard/SystemStats';
-import { LogModal } from '@/components/dashboard/LogModal';
-import { TerminalModal } from '@/components/dashboard/TerminalModal';
-import { InfoBox } from '@/components/ui/InfoBox';
-import { useDashboardActions } from '@/hooks/useDashboardActions';
-import { useImageActions } from '@/hooks/useImageActions';
-import { DashboardToolbar } from '@/components/dashboard/DashboardToolbar';
-import { ContainerListView } from '@/components/dashboard/ContainerListView';
-import { ContainerGridView } from '@/components/dashboard/ContainerGridView';
-import { ImageListView } from '@/components/dashboard/ImageListView';
-import { StackListView } from '@/components/dashboard/StackListView';
-import { useStacks } from '@/hooks/useStacks';
+import React, { useState } from "react";
+import { Plus } from "lucide-react";
+import { SystemStats } from "@/components/dashboard/SystemStats";
+import { LogModal } from "@/components/dashboard/LogModal";
+import { TerminalModal } from "@/components/dashboard/TerminalModal";
+import { InfoBox } from "@/components/ui/InfoBox";
+import { useDashboardActions } from "@/hooks/useDashboardActions";
+import { useImageActions } from "@/hooks/useImageActions";
+import { DashboardToolbar } from "@/components/dashboard/DashboardToolbar";
+import { ContainerListView } from "@/components/dashboard/ContainerListView";
+import { ContainerGridView } from "@/components/dashboard/ContainerGridView";
+import { ImageListView } from "@/components/dashboard/ImageListView";
+import { StackListView } from "@/components/dashboard/StackListView";
+import { useStacks } from "@/hooks/useStacks";
 
 interface DashboardProps {
-  addToast: (msg: string, type?: 'success' | 'error') => void;
-  showConfirm: (title: string, message: string, onConfirm: () => void, type?: 'danger' | 'warning' | 'info') => void;
+  addToast: (msg: string, type?: "success" | "error") => void;
+  showConfirm: (
+    title: string,
+    message: string,
+    onConfirm: () => void,
+    type?: "danger" | "warning" | "info",
+  ) => void;
   systemInfo: any;
   onNavigateToDeploy: () => void;
 }
@@ -27,10 +31,12 @@ export default function Dashboard({
   addToast,
   showConfirm,
   systemInfo,
-  onNavigateToDeploy
+  onNavigateToDeploy,
 }: DashboardProps) {
-  const [viewMode, setViewMode] = useState<'containers' | 'stacks' | 'images'>('containers');
-  const [layoutMode, setLayoutMode] = useState<'list' | 'grid'>('list');
+  const [viewMode, setViewMode] = useState<"containers" | "stacks" | "images">(
+    "containers",
+  );
+  const [layoutMode, setLayoutMode] = useState<"list" | "grid">("list");
 
   const {
     containers,
@@ -49,12 +55,10 @@ export default function Dashboard({
     openWebUI,
     filteredContainers,
     startContainer,
-    stopContainer
+    stopContainer,
   } = useDashboardActions({ addToast, showConfirm });
 
   const stacks = useStacks(filteredContainers);
-
-
 
   const {
     isLoadingImages,
@@ -64,7 +68,7 @@ export default function Dashboard({
     toggleImageSelection,
     toggleSelectAll,
     bulkDeleteImages,
-    filteredImages
+    filteredImages,
   } = useImageActions({ searchQuery, addToast, showConfirm, viewMode });
 
   return (
@@ -72,8 +76,12 @@ export default function Dashboard({
       {/* Header */}
       <div className="flex justify-between items-end mb-4">
         <div>
-          <h1 className="text-2xl font-semibold text-text-main tracking-tight">Containers</h1>
-          <p className="text-sm text-text-sub mt-1">Manage and monitor your Docker containers.</p>
+          <h1 className="text-2xl font-semibold text-text-main tracking-tight">
+            Containers
+          </h1>
+          <p className="text-sm text-text-sub mt-1">
+            Manage and monitor your Docker containers.
+          </p>
         </div>
         <button
           onClick={onNavigateToDeploy}
@@ -85,8 +93,13 @@ export default function Dashboard({
       </div>
 
       {/* Welcome Info */}
-      <InfoBox title="Docker Workspace Dashboard" variant="info" className="mb-8">
-        Manage container deployments, inspect real-time system stats, and configure data volumes.
+      <InfoBox
+        title="Docker Workspace Dashboard"
+        variant="info"
+        className="mb-8"
+      >
+        Manage container deployments, inspect real-time system stats, and
+        configure data volumes.
       </InfoBox>
 
       <SystemStats containers={containers} systemInfo={systemInfo} />
@@ -106,7 +119,7 @@ export default function Dashboard({
         />
 
         {/* List Content */}
-        {viewMode === 'containers' && layoutMode === 'list' && (
+        {viewMode === "containers" && layoutMode === "list" && (
           <ContainerListView
             containers={filteredContainers}
             expandedStatsIds={expandedStatsIds}
@@ -121,7 +134,7 @@ export default function Dashboard({
           />
         )}
 
-        {viewMode === 'containers' && layoutMode === 'grid' && (
+        {viewMode === "containers" && layoutMode === "grid" && (
           <ContainerGridView
             containers={filteredContainers}
             stats={stats}
@@ -134,7 +147,7 @@ export default function Dashboard({
           />
         )}
 
-        {viewMode === 'stacks' && (
+        {viewMode === "stacks" && (
           <StackListView
             stacks={stacks}
             expandedStatsIds={expandedStatsIds}
@@ -153,7 +166,7 @@ export default function Dashboard({
           />
         )}
 
-        {viewMode === 'images' && (
+        {viewMode === "images" && (
           <ImageListView
             images={filteredImages}
             isLoading={isLoadingImages}

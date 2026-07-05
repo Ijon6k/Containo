@@ -3,7 +3,6 @@
 import React, { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft } from "lucide-react";
-import { ServiceData } from "@/lib/types";
 import { ModeSelection } from "./create/ModeSelection";
 import { SimpleForm } from "./create/SimpleForm";
 import { ComposeBuilder } from "./create/ComposeBuilder";

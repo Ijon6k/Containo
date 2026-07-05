@@ -12,8 +12,8 @@
 | File | Purpose |
 |---|---|
 | `docker-service.ts` | System health, host CPU, disk info, aggregate Docker stats, `getSystemInfo()` |
-| `container-format.service.ts` | Shared `formatContainer()` — used by WebSocket broadcaster + REST API |
-| `compose-yaml.service.ts` | `buildComposeYaml()` — generates docker-compose YAML from service definitions |
+| `container-format.service.ts` | Shared `formatContainer()` — used by WebSocket broadcaster + REST API. Null-safe `Ports?.map()` guard. |
+| `compose-yaml.service.ts` | `buildComposeYaml()` — generates modern docker-compose YAML from service definitions (no `version` field) |
 | `stats.service.ts` | `transformDockerStats()` — raw Docker stats stream to `ContainerStats` |
 | `cli-parser.service.ts` | Parse Docker CLI commands to compose config |
 
@@ -32,7 +32,7 @@
 
 | File | Purpose |
 |---|---|
-| `server.ts` | `setupSocketIO()` — auth middleware, `stats:subscribe/unsubscribe`, `disconnect` |
+| `server.ts` | `setupSocketIO()` — auth middleware, `stats:subscribe/unsubscribe`, `disconnect` cleanup handler |
 | `broadcaster.ts` | `broadcastContainers()` every 5s, `broadcastSystemInfo()` every 2s — uses shared `getSystemInfo()` and `formatContainer()`, idle detection |
 | `streamer.ts` | `startStatsStream()` / `stopStatsStream()` — per-container Docker stats streaming |
 
@@ -40,7 +40,7 @@
 
 | File | Purpose |
 |---|---|
-| `utils.ts` | `getJwtSecret()` — env -> file -> auto-generate, `verifySession()` |
+| `utils.ts` | `getJwtSecret()` — env → file → auto-generate (cached after first read). `verifySession()` — JWT verification. |
 | `index.ts` | Re-exports |
 
 ## `lib/utils/`
@@ -65,7 +65,7 @@ Core TypeScript interfaces: [[types]]
 | `useStats` | Container CPU/RAM stats (via WS `stats:update`) |
 | `useStacks` | Docker stack listing |
 | `useBackupRestore` | Volume backup/restore operations |
-| `useDeployment` | Docker Compose deployment from UI |
+| `useDeployment` | Docker Compose deployment with SSE streaming + AbortController |
 | `useImageActions` | Image pull/remove |
 | `usePrune` | System prune (unused images, volumes, networks) |
 | `useMetricHistory` | Historical stats data for charts |
@@ -80,3 +80,25 @@ Core TypeScript interfaces: [[types]]
 | `QueryProvider` | `@tanstack/react-query` (root layout) |
 | `WebSocketProvider` | socket.io connection + `useWS` context |
 | `NotificationProvider` | Toast notification context + `useNotify` |
+
+## `components/create/`
+
+| Component | Purpose |
+|---|---|
+| `SimpleForm` | Single-container deployment form with "Try Demo" button |
+| `ComposeBuilder` | Multi-service compose definition with "Demo Stack" button |
+| `DeploymentLogs` | Real-time deployment log viewer with Stop + Close & Fix buttons |
+| `create/compose/LocalStackDeployer` | Paste-path input, auto-detect compose files, deploy existing stacks |
+| `create/compose/YamlPreview` | YAML preview with Copy button + clipboard feedback |
+
+## `components/dashboard/`
+
+| Component | Purpose |
+|---|---|
+| `SystemStats` | CPU/RAM/storage dashboard cards with toggle: chart (area) / bar (horizontal) / hidden. Uses real Docker version from `systemInfo.dockerInfo.serverVersion`. |
+
+## `public/demo/`
+
+| File | Purpose |
+|---|---|
+| `PROMPT.md` | AI prompt for generating demo Docker images (`ijon6k/containo-demo-*`) |

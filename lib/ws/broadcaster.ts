@@ -9,8 +9,9 @@ import {
 } from "./streamer";
 import { formatContainer } from "../services/container-format.service";
 
+// Broadcasts host + Docker system stats every 2s.
+// Skips all work when no clients are connected (idle optimization).
 export const broadcastSystemInfo = async (io: SocketIOServer) => {
-  // ZERO-LOAD IDLE: If no users are active, stop all background Docker streams to free RAM & CPU
   if (io.engine.clientsCount === 0) {
     stopAllStatsStreams();
     return;
@@ -24,6 +25,9 @@ export const broadcastSystemInfo = async (io: SocketIOServer) => {
   }
 };
 
+// Broadcasts container list every 5s. Also auto-starts stats streams
+// for all running containers to keep the aggregate Docker CPU/RAM
+// metrics populated and instant.
 export const broadcastContainers = async (io: SocketIOServer) => {
   if (io.engine.clientsCount === 0) {
     return;
@@ -36,28 +40,25 @@ export const broadcastContainers = async (io: SocketIOServer) => {
     );
 
     const formatted = visibleContainers.map(formatContainer);
-
     io.emit("containers:update", formatted);
 
-    // BACKGROUND OPTIMIZATION: Auto-start streams for all running containers.
-    // This populates `latestStats` globally, ensuring aggregate calculations
-    // (Docker CPU/RAM) are instant and preventing the host monitor from freezing.
+    // Fire-and-forget: start stats streams for all running containers.
+    // Calls are no-ops if a stream already exists for that container.
     containers
       .filter((c: any) => c.State === "running")
       .forEach((c: any) => {
         startStatsStream(io, c.Id.substring(0, 12));
       });
   } catch (error) {
-    console.error("WS Containers Broadcast Error:", error);
+    logger.error("WS", "Container broadcast error", error);
   }
 };
 
+// Kick off the two broadcast loops with an initial immediate run.
 export function startSystemBroadcaster(io: SocketIOServer) {
-  // Initial broadcast
   broadcastSystemInfo(io);
   broadcastContainers(io);
 
-  // Set intervals
-  setInterval(() => broadcastSystemInfo(io), 2000);
-  setInterval(() => broadcastContainers(io), 5000);
+  setInterval(() => broadcastSystemInfo(io), 2000); // System: every 2s
+  setInterval(() => broadcastContainers(io), 5000); // Containers: every 5s
 }

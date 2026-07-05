@@ -2,7 +2,6 @@
 
 import React, { useRef, useState } from "react";
 import { AnimatePresence } from "framer-motion";
-import { Info } from "lucide-react";
 import { Volume, Container } from "@/lib/types";
 import { VolumeList } from "./backup/VolumeList";
 import { RecoveryActions } from "./backup/RecoveryActions";

@@ -10,6 +10,21 @@
 5. All subsequent requests include cookie → auth middleware verifies JWT
 ```
 
+## Middleware: `proxy.ts`
+
+Next.js middleware that enforces auth at the edge (before route handlers run):
+
+```
+proxy.ts request pipeline:
+  1. Setup check → redirect to /setup if not done
+  2. Page routes (/dashboard, /, etc.)   → JWT check → redirect /login
+  3. API routes (/api/* except /api/auth) → JWT check → 401 Unauthorized
+  4. Auth routes (/api/auth/*)            → OPEN (no check)
+  5. Login/Setup pages                    → redirect /dashboard if already logged in
+```
+
+**Matcher**: All paths except `_next/static`, `_next/image`, `favicon.ico`, `logo/`, `asset/`.
+
 ## Secret Management (`lib/auth/utils.ts`)
 
 Three-tier priority system (zero-config):
@@ -22,6 +37,8 @@ getJwtSecret():
 ```
 
 Uses `randomBytes(32)` → hex string → saved to `data/.jwt_secret`.
+
+**Caching**: `getJwtSecret()` result is cached after first read to avoid re-encoding on every `verifySession()` call (previously re-read the file on every request).
 
 ## Session Verification
 
@@ -48,5 +65,7 @@ Uses `randomBytes(32)` → hex string → saved to `data/.jwt_secret`.
 ## Security Notes
 
 - Secret auto-generated on first run if no `JWT_SECRET` env var
-- Docker socket access required to manage containers (mounted as volume)
+- **API routes now JWT-protected** via `proxy.ts` middleware (was previously open)
+- Server binds to `0.0.0.0:3611` — accessible from network, not just localhost
+- Docker socket access = root-level host access — defense in depth essential
 - No API key or external auth service needed — fully self-contained

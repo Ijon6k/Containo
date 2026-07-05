@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { Volume } from "@/lib/types";
 import {
   importBackup as apiImportBackup,
   backupIndividual as apiBackupIndividual,
@@ -13,6 +12,8 @@ interface UseBackupRestoreProps {
   fileInputRef: React.RefObject<HTMLInputElement | null>;
 }
 
+// Handles volume backup (export as .tar download) and restore (upload .tar,
+// stop dependent containers, extract via alpine helper, restart containers).
 export function useBackupRestore({
   addToast,
   fetchVolumes,
@@ -44,6 +45,7 @@ export function useBackupRestore({
 
     try {
       await apiImportBackup(formData);
+      // Progress bar is simulated — the API call is synchronous from the client side
       setRestoreProgress(50);
       setRestoreStep("Extracting data to volume...");
 
@@ -73,6 +75,7 @@ export function useBackupRestore({
       addToast(`Exporting ${name}...`);
       try {
         const blob = await apiBackupIndividual(name);
+        // Trigger browser download of the .tar blob
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;

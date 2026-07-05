@@ -1,6 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Folder, FileCode, CornerLeftUp, Loader2, CheckCircle2, X } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import {
+  Folder,
+  FileCode,
+  CornerLeftUp,
+  Loader2,
+  CheckCircle2,
+  X,
+} from "lucide-react";
 
 interface FileItem {
   name: string;
@@ -15,19 +22,24 @@ interface DirectoryPickerProps {
   initialPath?: string;
 }
 
-export const DirectoryPicker = ({ onSelect, onCancel, title = "Select Target Directory", initialPath = "" }: DirectoryPickerProps) => {
+export const DirectoryPicker = ({
+  onSelect,
+  onCancel,
+  title = "Select Target Directory",
+  initialPath = "",
+}: DirectoryPickerProps) => {
   const [currentPath, setCurrentPath] = useState(initialPath);
-  const [parentPath, setParentPath] = useState('/');
+  const [parentPath, setParentPath] = useState("/");
   const [items, setItems] = useState<FileItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   const fetchDirectory = async (path: string) => {
     setLoading(true);
-    setError('');
+    setError("");
     try {
       const res = await fetch(`/api/fs?path=${encodeURIComponent(path)}`);
-      if (!res.ok) throw new Error('Failed to read directory');
+      if (!res.ok) throw new Error("Failed to read directory");
       const data = await res.json();
       setCurrentPath(data.currentPath);
       setParentPath(data.parentPath);
@@ -41,14 +53,14 @@ export const DirectoryPicker = ({ onSelect, onCancel, title = "Select Target Dir
 
   useEffect(() => {
     fetchDirectory(currentPath);
-  }, []);
+  }, [currentPath]);
 
   const handleItemClick = (item: FileItem) => {
     if (item.isDirectory) {
       fetchDirectory(item.path);
     } else {
       // If it's a file, maybe select its parent directory or the file itself?
-      // Since it's a directory picker, we usually select the folder. 
+      // Since it's a directory picker, we usually select the folder.
       // But if they click docker-compose.yml, we select its parent.
       onSelect(currentPath);
     }
@@ -56,7 +68,7 @@ export const DirectoryPicker = ({ onSelect, onCancel, title = "Select Target Dir
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
@@ -66,9 +78,14 @@ export const DirectoryPicker = ({ onSelect, onCancel, title = "Select Target Dir
         <div className="flex items-center justify-between p-5 border-b border-ui-border bg-ui-accent/30">
           <div>
             <h3 className="text-lg font-bold text-text-main">{title}</h3>
-            <p className="text-xs text-text-sub mt-1 font-mono">{currentPath}</p>
+            <p className="text-xs text-text-sub mt-1 font-mono">
+              {currentPath}
+            </p>
           </div>
-          <button onClick={onCancel} className="p-2 text-text-sub hover:text-text-main hover:bg-ui-border/50 rounded-lg transition-colors">
+          <button
+            onClick={onCancel}
+            className="p-2 text-text-sub hover:text-text-main hover:bg-ui-border/50 rounded-lg transition-colors"
+          >
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -77,7 +94,25 @@ export const DirectoryPicker = ({ onSelect, onCancel, title = "Select Target Dir
         <div className="mx-6 mt-4 p-3.5 bg-brand/5 border border-brand/10 rounded-lg flex gap-3 text-xs text-text-sub leading-relaxed">
           <span className="shrink-0 text-brand">💡</span>
           <div>
-            <span className="font-bold text-text-main">Tip:</span> Docker Compose stacks are commonly organized in a dedicated directory under your user home folder (e.g., <code className="bg-ui-accent px-1 py-0.5 rounded font-mono text-[10px]">~/stacks/</code> or <code className="bg-ui-accent px-1 py-0.5 rounded font-mono text-[10px]">~/projects/</code>). For production servers, system-wide directories like <code className="bg-ui-accent px-1 py-0.5 rounded font-mono text-[10px]">/srv/docker/</code> or <code className="bg-ui-accent px-1 py-0.5 rounded font-mono text-[10px]">/opt/</code> are also standard.
+            <span className="font-bold text-text-main">Tip:</span> Docker
+            Compose stacks are commonly organized in a dedicated directory under
+            your user home folder (e.g.,{" "}
+            <code className="bg-ui-accent px-1 py-0.5 rounded font-mono text-[10px]">
+              ~/stacks/
+            </code>{" "}
+            or{" "}
+            <code className="bg-ui-accent px-1 py-0.5 rounded font-mono text-[10px]">
+              ~/projects/
+            </code>
+            ). For production servers, system-wide directories like{" "}
+            <code className="bg-ui-accent px-1 py-0.5 rounded font-mono text-[10px]">
+              /srv/docker/
+            </code>{" "}
+            or{" "}
+            <code className="bg-ui-accent px-1 py-0.5 rounded font-mono text-[10px]">
+              /opt/
+            </code>{" "}
+            are also standard.
           </div>
         </div>
 
@@ -96,13 +131,15 @@ export const DirectoryPicker = ({ onSelect, onCancel, title = "Select Target Dir
           )}
 
           <div className="space-y-1">
-            {currentPath !== '/' && (
-              <button 
+            {currentPath !== "/" && (
+              <button
                 onClick={() => fetchDirectory(parentPath)}
                 className="w-full flex items-center gap-3 p-3 hover:bg-ui-accent rounded-lg transition-colors text-left"
               >
                 <CornerLeftUp className="w-5 h-5 text-text-sub" />
-                <span className="text-sm font-semibold text-text-sub">.. (Go Up)</span>
+                <span className="text-sm font-semibold text-text-sub">
+                  .. (Go Up)
+                </span>
               </button>
             )}
 
@@ -113,7 +150,7 @@ export const DirectoryPicker = ({ onSelect, onCancel, title = "Select Target Dir
             )}
 
             {items.map((item, idx) => (
-              <button 
+              <button
                 key={idx}
                 onClick={() => handleItemClick(item)}
                 className="w-full flex items-center gap-3 p-3 hover:bg-ui-accent rounded-lg transition-colors text-left group"
@@ -133,12 +170,17 @@ export const DirectoryPicker = ({ onSelect, onCancel, title = "Select Target Dir
 
         {/* Footer */}
         <div className="p-5 border-t border-ui-border bg-ui-accent/30 flex items-center justify-between">
-          <p className="text-xs text-text-sub">Select the current directory to proceed.</p>
+          <p className="text-xs text-text-sub">
+            Select the current directory to proceed.
+          </p>
           <div className="flex gap-3">
-            <button onClick={onCancel} className="px-5 py-2.5 rounded-lg text-sm font-semibold text-text-sub hover:bg-ui-border transition-colors">
+            <button
+              onClick={onCancel}
+              className="px-5 py-2.5 rounded-lg text-sm font-semibold text-text-sub hover:bg-ui-border transition-colors"
+            >
               Cancel
             </button>
-            <button 
+            <button
               onClick={() => onSelect(currentPath)}
               className="flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-bold text-white bg-brand hover:bg-brand/90 transition-all shadow-md active:scale-95"
             >

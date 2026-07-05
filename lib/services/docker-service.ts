@@ -3,6 +3,7 @@ import { transformDockerStats } from "../services/stats.service";
 import os from "os";
 import fs from "fs";
 
+// Measures host CPU usage over a 100ms interval for accuracy
 export const getCPUUsage = async () => {
   const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
   const getTicks = () =>
@@ -26,6 +27,7 @@ export const getCPUUsage = async () => {
   return Math.round(100 * (1 - idleDiff / totalDiff));
 };
 
+// Health score (0-100): stability (crashes), hygiene (dangling images), resources (container count)
 export const getSystemHealth = async (containers: any[], images: any[]) => {
   let crashCount = 0;
   containers.forEach((c: any) => {
@@ -54,6 +56,7 @@ export const getSystemHealth = async (containers: any[], images: any[]) => {
   return { healthScore, breakdown, crashCount };
 };
 
+// Reads host disk from /host mount point (or / on bare metal)
 export const getHostDiskInfo = () => {
   let hostDisk = { total: 1, free: 0, used: 0 };
   try {
@@ -68,7 +71,8 @@ export const getHostDiskInfo = () => {
   return hostDisk;
 };
 
-// Cache to prevent overwhelming the Docker daemon with rapid polling
+// Aggregate Docker CPU/RAM with a 2s cache to avoid overwhelming the daemon.
+// Falls back to individual container stats when latestStats hasn't populated yet.
 let cachedAggregateStats = {
   cpu: 0,
   mem: 0,
@@ -98,6 +102,7 @@ export const getAggregateDockerStats = async (
       return;
     }
 
+    // Fallback: fetch a one-shot stats snapshot if cache is cold
     try {
       const stream = await docker.getContainer(c.Id).stats({ stream: false });
       const transformed = transformDockerStats(id, stream);
@@ -108,6 +113,7 @@ export const getAggregateDockerStats = async (
     }
   };
 
+  // Only parallelize if <50 containers (avoids thundering herd)
   if (runningContainers.length < 50) {
     await Promise.all(runningContainers.map(fetchStats));
   }
@@ -136,10 +142,8 @@ export const getAggregateDockerStats = async (
   };
 };
 
-/**
- * Fetch all Docker system data and compute health, CPU, memory, storage.
- * Shared by WebSocket broadcaster and REST API route.
- */
+// Fetch all Docker system data: containers, images, health, CPU, RAM, storage.
+// Shared by WebSocket broadcaster (real-time) and REST /api/system (on-demand).
 export const getSystemInfo = async (latestStats?: Record<string, any>) => {
   const [containers, images, info, df] = await Promise.all([
     docker.listContainers({ all: true }),
