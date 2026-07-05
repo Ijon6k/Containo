@@ -1,4 +1,5 @@
 import React from 'react';
+import { cva } from 'class-variance-authority';
 import { 
   ExternalLink, 
   RotateCcw, 
@@ -6,6 +7,7 @@ import {
   Square, 
   Activity, 
   Terminal as TerminalIcon,
+  ScrollText,
   Trash2
 } from 'lucide-react';
 import { Container } from '@/lib/types';
@@ -17,9 +19,25 @@ interface ContainerCardProps {
   onToggleStatus: (id: string) => void;
   onRestart: (id: string, name: string) => void;
   onOpenLogs: (container: Container) => void;
+  onOpenTerminal: (container: Container) => void;
   onDelete: (container: Container) => void;
   onOpenWebUI: (container: Container) => void;
 }
+
+const statusBadge = cva(
+  "px-2 py-0.5 rounded-sm text-[10px] font-black uppercase border tracking-widest",
+  {
+    variants: {
+      status: {
+        running: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
+        exited: "bg-rose-500/10 text-rose-500 border-rose-500/20",
+      }
+    },
+    defaultVariants: {
+      status: "exited",
+    }
+  }
+);
 
 export const ContainerCard = ({ 
   container: c, 
@@ -28,6 +46,7 @@ export const ContainerCard = ({
   onToggleStatus, 
   onRestart, 
   onOpenLogs,
+  onOpenTerminal,
   onDelete,
   onOpenWebUI
 }: ContainerCardProps) => {
@@ -35,12 +54,8 @@ export const ContainerCard = ({
     <div className={`transition-all ${isExpanded ? 'bg-ui-accent/30' : 'hover:bg-ui-accent/10'}`}>
       <div className="grid grid-cols-12 gap-4 px-6 py-4 items-center group border-b border-ui-border">
         {/* Status Column */}
-        <div className="col-span-2">
-          <span className={`px-2 py-0.5 rounded-sm text-[10px] font-black uppercase border tracking-widest ${
-            c.status === 'running' 
-              ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' 
-              : 'bg-rose-500/10 text-rose-500 border-rose-500/20'
-          }`}>
+        <div className="col-span-1">
+          <span className={statusBadge({ status: c.status as 'running' | 'exited' })}>
             {c.status}
           </span>
         </div>
@@ -51,8 +66,13 @@ export const ContainerCard = ({
         </div>
 
         {/* Image Column */}
-        <div className="col-span-4 min-w-0">
+        <div className="col-span-3 min-w-0">
           <p className="text-sm text-text-sub font-mono truncate opacity-60 group-hover:opacity-100 transition-opacity">{c.image}</p>
+        </div>
+
+        {/* Ports Column */}
+        <div className="col-span-2 min-w-0">
+          <span className="text-xs font-semibold text-text-main font-mono opacity-80">{c.ports}</span>
         </div>
 
         {/* Actions Column */}
@@ -103,6 +123,14 @@ export const ContainerCard = ({
             onClick={() => onOpenLogs(c)}
             className="p-2 rounded-md hover:bg-ui-accent text-text-sub hover:text-text-main transition-colors"
             title="Logs"
+          >
+            <ScrollText className="w-4 h-4" />
+          </button>
+
+          <button 
+            onClick={() => onOpenTerminal(c)}
+            className="p-2 rounded-md hover:bg-brand/10 text-text-sub hover:text-brand transition-colors"
+            title="Terminal"
           >
             <TerminalIcon className="w-4 h-4" />
           </button>

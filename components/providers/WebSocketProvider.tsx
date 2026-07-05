@@ -1,11 +1,14 @@
-'use client';
+"use client";
 
-import React, { createContext, useContext, useEffect, useRef, useState, useCallback } from 'react';
-
-interface WSMessage {
-  type: string;
-  payload: any;
-}
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  useCallback,
+} from "react";
+import { io, Socket } from "socket.io-client";
 
 interface WebSocketContextType {
   isConnected: boolean;
@@ -15,72 +18,68 @@ interface WebSocketContextType {
 
 const WebSocketContext = createContext<WebSocketContextType | null>(null);
 
-export const WebSocketProvider = ({ children }: { children: React.ReactNode }) => {
+// Global WebSocket provider — connects to socket.io at /api/ws on mount.
+// Socket stored in a ref (not state) to avoid unnecessary re-renders.
+// Only `isConnected` triggers re-renders when connection status changes.
+export const WebSocketProvider = ({
+  children,
+}: {
+  children: React.ReactNode;
+}) => {
   const [isConnected, setIsConnected] = useState(false);
-  const wsRef = useRef<WebSocket | null>(null);
-  const listenersRef = useRef<Map<string, Set<(payload: any) => void>>>(new Map());
-
-  const connect = useCallback(() => {
-    if (wsRef.current?.readyState === WebSocket.OPEN) return;
-
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const host = window.location.host;
-    const ws = new WebSocket(`${protocol}//${host}/api/ws`);
-
-    ws.onopen = () => {
-      setIsConnected(true);
-      console.log('WebSocket Connected');
-    };
-
-    ws.onmessage = (event) => {
-      try {
-        const { type, payload } = JSON.parse(event.data);
-        const callbacks = listenersRef.current.get(type);
-        if (callbacks) {
-          callbacks.forEach(cb => cb(payload));
-        }
-      } catch (e) {
-        console.error('WS Parse Error:', e);
-      }
-    };
-
-    ws.onclose = () => {
-      setIsConnected(false);
-      setTimeout(connect, 3000);
-    };
-
-    wsRef.current = ws;
-  }, []);
+  const socketRef = useRef<Socket | null>(null);
 
   useEffect(() => {
-    connect();
-    return () => {
-      if (wsRef.current) {
-        wsRef.current.onclose = null;
-        wsRef.current.close();
-      }
-    };
-  }, [connect]);
+    const s = io({
+      path: "/api/ws",
+      transports: ["websocket"],
+      reconnectionDelay: 3000,
+      reconnectionDelayMax: 10000,
+    });
 
+    socketRef.current = s;
+
+    s.on("connect", () => {
+      setIsConnected(true);
+      console.log("Socket.io Connected");
+    });
+
+    s.on("disconnect", () => {
+      setIsConnected(false);
+      console.log("Socket.io Disconnected");
+    });
+
+    s.on("connect_error", (err) => {
+      console.error("Socket.io Error:", err.message);
+    });
+
+    return () => {
+      s.disconnect();
+      socketRef.current = null;
+    };
+  }, []);
+
+  // Stable identity — reads latest socket from ref, no render needed
   const sendMessage = useCallback((type: string, payload: any) => {
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify({ type, payload }));
-    }
+    socketRef.current?.emit(type, payload);
   }, []);
 
-  const subscribe = useCallback((type: string, callback: (payload: any) => void) => {
-    if (!listenersRef.current.has(type)) {
-      listenersRef.current.set(type, new Set());
-    }
-    listenersRef.current.get(type)!.add(callback);
+  // Changes identity only on connect/disconnect (2x per session)
+  const subscribe = useCallback(
+    (type: string, callback: (payload: any) => void) => {
+      if (!socketRef.current) return () => {};
 
-    return () => {
-      const callbacks = listenersRef.current.get(type);
-      if (callbacks) {
-        callbacks.delete(callback);
-      }
-    };
-  }, []);
+      socketRef.current.on(type, callback);
+
+      return () => {
+        socketRef.current?.off(type, callback);
+      };
+    },
+    // isConnected is intentionally included as a dependency — it triggers
+    // subscribe identity change so consumers re-subscribe after connect.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [isConnected],
+  );
 
   return (
     <WebSocketContext.Provider value={{ isConnected, sendMessage, subscribe }}>
@@ -91,6 +90,6 @@ export const WebSocketProvider = ({ children }: { children: React.ReactNode }) =
 
 export const useWS = () => {
   const context = useContext(WebSocketContext);
-  if (!context) throw new Error('useWS must be used within WebSocketProvider');
+  if (!context) throw new Error("useWS must be used within WebSocketProvider");
   return context;
 };

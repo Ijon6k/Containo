@@ -61,11 +61,11 @@ export default function AuthLayout({ title, subtitle, badge, children }: AuthLay
             {badge}
           </motion.span>
 
-          <h1 className={`text-4xl md:text-5xl font-bold tracking-tight mb-3 ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>
+          <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-3 text-text-main">
             {title}
           </h1>
 
-          <p className={`text-sm md:text-base leading-relaxed ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>
+          <p className="text-sm md:text-base leading-relaxed text-text-sub">
             {subtitle}
           </p>
         </div>

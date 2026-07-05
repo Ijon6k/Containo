@@ -38,50 +38,89 @@ Containo is a lightweight and beginner-friendly Docker management dashboard. Unl
 
 Follow these steps to get Containo running on your machine:
 
-### 1. Clone the Repository
-First, clone the project to your local machine:
+### 1. Run with Docker (Recommended)
+You can run Containo directly from the terminal without cloning the project:
 ```bash
-git clone https://github.com/Ijon6k/containo.git
-cd containo
+docker run -d \
+  --name containo \
+  --restart unless-stopped \
+  -p 3611:3611 \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v /home:/host \
+  -v containo-data:/app/data \
+  -e DOCKER_HOST=unix:///var/run/docker.sock \
+  ijon6k/containo:latest
 ```
 
-### 2. Run with Docker Compose (Recommended)
-The easiest way to run Containo is using Docker Compose, which will build the image locally for you:
+### 2. Run with Docker Compose
+If you prefer using Docker Compose, follow these simple steps to set it up:
 
-```yaml
-services:
-  containo:
-    build: .
-    container_name: containo
-    ports:
-      - "3611:3611"
-    environment:
-      - NODE_ENV=production
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - ./data:/app/data
-    restart: always
-```
-
-Simply run:
-```bash
-docker-compose up -d --build
-```
-
-### 3. Manual Installation (Node.js)
-If you prefer to run it directly without Docker:
-
-1. **Install Dependencies**:
+1. **Create a new folder and enter it**:
    ```bash
-   pnpm install
+   mkdir containo && cd containo
    ```
 
-2. **Build & Start**:
-   ```bash
-   pnpm run build
-   pnpm run start
+2. **Create a configuration file**:
+   Create a file named `docker-compose.yml` in that folder and paste the following configuration:
+   ```yaml
+   services:
+     containo:
+       image: ijon6k/containo:latest
+       container_name: containo
+       ports:
+         - "3611:3611"
+       volumes:
+         - /var/run/docker.sock:/var/run/docker.sock
+         - /home:/host
+         
+         # Choose ONE option for persisting data:
+         # Option A: Named Volume (Recommended - managed by Docker)
+         - containo-data:/app/data
+         
+         # Option B: Bind Mount (Uncomment below if you want data in your local folder)
+         # - ./data:/app/data
+         
+       environment:
+         - DOCKER_HOST=unix:///var/run/docker.sock
+       restart: unless-stopped
+
+   # Required if using Option A (Named Volume)
+   volumes:
+     containo-data:
    ```
-   Access the dashboard at `http://localhost:3611`.
+
+3. **Start the application**:
+   Run this command in the same directory:
+   ```bash
+   docker compose up -d
+   ```
+
+### 3. Run from Source (Development)
+If you want to run it from the source code:
+
+1. **Clone the Repository**:
+   ```bash
+   git clone https://github.com/Ijon6k/containo.git
+   cd containo
+   ```
+
+2. **Option A: Run with Docker Compose (Local Build)**:
+   ```bash
+   docker-compose up -d --build
+   ```
+
+3. **Option B: Manual Installation (Node.js)**:
+   - Install Dependencies:
+     ```bash
+     pnpm install
+     ```
+   - Build & Start:
+     ```bash
+     pnpm run build
+     pnpm run start
+     ```
+
+Access the dashboard at `http://localhost:3611`.
 
 ---
 

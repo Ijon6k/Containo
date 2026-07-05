@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { pruneSystem as apiPruneSystem } from '@/lib/api/system-api';
 
 interface UsePruneProps {
   addToast: (msg: string, type?: 'success' | 'error') => void;
@@ -18,18 +19,11 @@ export function usePrune({ addToast, showConfirm, fetchSystemInfo }: UsePrunePro
       async () => {
         setIsPruning(true);
         try {
-          const res = await fetch('/api/system', {
-            method: 'POST',
-            body: JSON.stringify({ action: 'prune' })
-          });
-          if (res.ok) {
-            addToast('System pruned successfully');
-            fetchSystemInfo();
-          } else {
-            addToast('Prune failed', 'error');
-          }
-        } catch (e) {
-          addToast('Prune failed', 'error');
+          await apiPruneSystem();
+          addToast('System pruned successfully');
+          fetchSystemInfo();
+        } catch (e: any) {
+          addToast(e.response?.data?.error || e.message || 'Prune failed', 'error');
         } finally {
           setIsPruning(false);
         }

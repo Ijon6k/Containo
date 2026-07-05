@@ -1,5 +1,6 @@
 import React from 'react';
 import { Trash2, Box, HardDrive, Calendar } from 'lucide-react';
+import { formatDistanceToNow } from 'date-fns';
 
 interface ImageCardProps {
   image: {
@@ -15,7 +16,7 @@ interface ImageCardProps {
 
 export const ImageCard = ({ image: img, onDelete, isSelected = false, onToggleSelect }: ImageCardProps) => {
   const sizeGB = (img.size / (1024 ** 3)).toFixed(2);
-  const date = new Date(img.created * 1000).toLocaleDateString();
+  const date = formatDistanceToNow(new Date(img.created * 1000), { addSuffix: true });
 
   return (
     <div className={`hover:bg-white/[0.01] transition-all border-b border-white/[0.05] ${isSelected ? 'bg-brand/5' : ''}`}>

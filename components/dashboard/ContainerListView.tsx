@@ -14,6 +14,7 @@ interface ContainerListViewProps {
   onToggleStatus: (id: string) => void;
   onRestart: (id: string, name: string) => void;
   onOpenLogs: (container: Container) => void;
+  onOpenTerminal: (container: Container) => void;
   onDelete: (container: Container) => void;
   onOpenWebUI: (container: Container) => void;
 }
@@ -26,15 +27,17 @@ export function ContainerListView({
   onToggleStatus,
   onRestart,
   onOpenLogs,
+  onOpenTerminal,
   onDelete,
   onOpenWebUI
 }: ContainerListViewProps) {
   return (
     <div className="card overflow-hidden border-white/5 bg-ui-bg rounded-md shadow-2xl">
       <div className="grid grid-cols-12 gap-4 px-6 py-3 border-b border-white/5 bg-white/[0.02]">
-        <div className="col-span-2 text-xs font-semibold text-text-sub uppercase tracking-wide">Status</div>
+        <div className="col-span-1 text-xs font-semibold text-text-sub uppercase tracking-wide">Status</div>
         <div className="col-span-3 text-xs font-semibold text-text-sub uppercase tracking-wide">Container Name</div>
-        <div className="col-span-4 text-xs font-semibold text-text-sub uppercase tracking-wide">Image</div>
+        <div className="col-span-3 text-xs font-semibold text-text-sub uppercase tracking-wide">Image</div>
+        <div className="col-span-2 text-xs font-semibold text-text-sub uppercase tracking-wide">Ports</div>
         <div className="col-span-3 text-xs font-semibold text-text-sub uppercase tracking-wide text-right">Operations</div>
       </div>
       <div className="divide-y divide-ui-border">
@@ -50,6 +53,7 @@ export function ContainerListView({
                 onToggleStatus={onToggleStatus}
                 onRestart={onRestart}
                 onOpenLogs={onOpenLogs}
+                onOpenTerminal={onOpenTerminal}
                 onDelete={onDelete}
                 onOpenWebUI={onOpenWebUI}
               />

@@ -1,62 +1,83 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
-import { verifySession } from './lib/auth-utils';
-
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { verifySession } from "./lib/auth/utils";
+import fs from "fs";
+import path from "path";
 
 const PROTECTED_ROUTES = [
-  '/dashboard',
-  '/maintenance',
-  '/backups',
-  '/settings',
-  '/deploy',
+  "/dashboard",
+  "/maintenance",
+  "/backups",
+  "/settings",
+  "/deploy",
 ];
 
-import fs from 'fs';
-import path from 'path';
-
+// Global middleware — runs on every request (see matcher config below).
+// Flow: setup check → protected route guard → API auth guard → login redirect.
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // 0. Check if setup is completed
-  const flagPath = path.join(process.cwd(), 'data', '.setup_done');
+  // === Setup Gate ===
+  // Redirect everything to /setup until the admin creates the first user.
+  const flagPath = path.join(process.cwd(), "data", ".setup_done");
   const isSetupDone = fs.existsSync(flagPath);
 
-  if (!isSetupDone && pathname !== '/setup' && !pathname.startsWith('/api/auth/setup')) {
-    return NextResponse.redirect(new URL('/setup', request.url));
+  if (
+    !isSetupDone &&
+    pathname !== "/setup" &&
+    !pathname.startsWith("/api/auth/setup")
+  ) {
+    return NextResponse.redirect(new URL("/setup", request.url));
   }
 
-  // If setup is already done, don't allow access to /setup
-  if (isSetupDone && pathname === '/setup') {
-    return NextResponse.redirect(new URL('/login', request.url));
+  // Block /setup if already configured
+  if (isSetupDone && pathname === "/setup") {
+    return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  // 1. Check if it's a protected route
-  const isProtected = PROTECTED_ROUTES.some(route => pathname.startsWith(route)) || pathname === '/';
+  // === Page Route Guard ===
+  // Protected pages require a valid JWT session cookie.
+  const isProtected =
+    PROTECTED_ROUTES.some((route) => pathname.startsWith(route)) ||
+    pathname === "/";
 
   if (isProtected) {
-    const session = request.cookies.get('containo_session')?.value;
+    const session = request.cookies.get("containo_session")?.value;
 
     if (!session) {
-      // No session, check if setup is needed via an internal header or just redirect to login
-      // We can't check DB here, so we redirect to login. Login/Setup will handle the rest.
-      return NextResponse.redirect(new URL('/login', request.url));
+      return NextResponse.redirect(new URL("/login", request.url));
     }
 
     const sessionPayload = await verifySession(session);
     if (sessionPayload) {
       return NextResponse.next();
     } else {
-      return NextResponse.redirect(new URL('/login', request.url));
+      return NextResponse.redirect(new URL("/login", request.url));
     }
   }
 
-  // 2. Prevent accessing login/setup if already logged in
-  if (pathname === '/login' || pathname === '/setup') {
-    const session = request.cookies.get('containo_session')?.value;
+  // === API Route Guard ===
+  // All /api/* routes (except auth) require JWT. Returns 401, not a redirect.
+  if (pathname.startsWith("/api/") && !pathname.startsWith("/api/auth/")) {
+    const session = request.cookies.get("containo_session")?.value;
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const sessionPayload = await verifySession(session);
+    if (!sessionPayload) {
+      return NextResponse.json({ error: "Invalid session" }, { status: 401 });
+    }
+    return NextResponse.next();
+  }
+
+  // === Login Redirect ===
+  // Already-logged-in users visiting /login or /setup go straight to dashboard.
+  if (pathname === "/login" || pathname === "/setup") {
+    const session = request.cookies.get("containo_session")?.value;
     if (session) {
       const sessionPayload = await verifySession(session);
       if (sessionPayload) {
-        return NextResponse.redirect(new URL('/dashboard', request.url));
+        return NextResponse.redirect(new URL("/dashboard", request.url));
       }
     }
   }
@@ -67,14 +88,13 @@ export async function proxy(request: NextRequest) {
 export const config = {
   matcher: [
     /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
+     * Match all request paths except:
      * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
+     * - _next/image (image optimization)
+     * - favicon.ico
      * - logo/ (public logos)
      * - asset/ (public assets)
      */
-    '/((?!api|_next/static|_next/image|favicon.ico|logo|asset).*)',
+    "/((?!_next/static|_next/image|favicon.ico|logo|asset).*)",
   ],
 };

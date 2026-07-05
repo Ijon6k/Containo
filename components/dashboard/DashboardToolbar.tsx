@@ -1,11 +1,11 @@
 'use client';
 
 import React from 'react';
-import { Search, LayoutGrid, List as ListIcon, Trash2, Layers, Box } from 'lucide-react';
+import { Search, LayoutGrid, List as ListIcon, Trash2, Layers, Box, FolderOpen } from 'lucide-react';
 
 interface DashboardToolbarProps {
-  viewMode: 'containers' | 'images';
-  setViewMode: (mode: 'containers' | 'images') => void;
+  viewMode: 'containers' | 'stacks' | 'images';
+  setViewMode: (mode: 'containers' | 'stacks' | 'images') => void;
   layoutMode: 'list' | 'grid';
   setLayoutMode: (mode: 'list' | 'grid') => void;
   searchQuery: string;
@@ -74,7 +74,7 @@ export function DashboardToolbar({
       </div>
 
       <div className="flex items-center gap-6">
-        {/* View Mode Toggle (Containers vs Images) */}
+        {/* View Mode Toggle (Containers vs Stacks vs Images) */}
         <div className="flex bg-ui-accent p-1 rounded-md border border-ui-border shadow-inner">
            <button 
              onClick={() => { setViewMode('containers'); onClearImageSelection(); }}
@@ -82,6 +82,13 @@ export function DashboardToolbar({
            >
              <Layers className="w-3.5 h-3.5" />
              Containers
+           </button>
+           <button 
+             onClick={() => { setViewMode('stacks'); onClearImageSelection(); }}
+             className={`flex items-center gap-2 px-4 py-1.5 rounded-sm text-xs font-bold tracking-wide transition-all ${viewMode === 'stacks' ? 'bg-brand text-white shadow-lg' : 'text-text-sub hover:text-text-main'}`}
+           >
+             <FolderOpen className="w-3.5 h-3.5" />
+             Stacks
            </button>
            <button 
              onClick={() => setViewMode('images')}

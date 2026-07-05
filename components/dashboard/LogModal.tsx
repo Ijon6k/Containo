@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Terminal as TerminalIcon, X } from 'lucide-react';
+import { ScrollText, X } from 'lucide-react';
 import { Container } from '@/lib/types';
 
 interface LogModalProps {
@@ -9,6 +9,57 @@ interface LogModalProps {
 }
 
 export const LogModal = ({ container, onClose }: LogModalProps) => {
+  const [logs, setLogs] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!container) {
+      setLogs([]);
+      return;
+    }
+
+    setIsLoading(true);
+    setLogs([]);
+    
+    const eventSource = new EventSource(`/api/containers/${container.id}/logs`);
+    
+    eventSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.log) {
+          setLogs(prev => {
+            const newLogs = [...prev, data.log];
+            // keep last 500 lines max to prevent memory bloat
+            if (newLogs.length > 500) {
+              return newLogs.slice(newLogs.length - 500);
+            }
+            return newLogs;
+          });
+          setIsLoading(false);
+        }
+      } catch (err) {
+        console.error('Failed to parse log line', err);
+      }
+    };
+
+    eventSource.onerror = (err) => {
+      console.error('SSE Error', err);
+      // Optional: close connection on error
+      // eventSource.close();
+    };
+
+    return () => {
+      eventSource.close();
+    };
+  }, [container]);
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [logs]);
+
   return (
     <AnimatePresence>
       {container && (
@@ -21,19 +72,21 @@ export const LogModal = ({ container, onClose }: LogModalProps) => {
           >
             <div className="p-6 border-b border-ui-border flex justify-between items-center">
               <div className="flex items-center gap-3">
-                <TerminalIcon className="w-5 h-5 text-brand" />
+                <ScrollText className="w-5 h-5 text-brand" />
                 <h3 className="font-bold text-text-main">Logs: {container.name}</h3>
               </div>
               <button onClick={onClose}>
                 <X className="w-6 h-6 text-text-sub hover:text-rose-500" />
               </button>
             </div>
-            <div className="flex-1 bg-zinc-950 p-6 overflow-y-auto font-mono text-xs text-zinc-400">
-              {container.logs.length === 0 ? (
-                <div className="text-zinc-600 italic">No logs available for this container.</div>
+            <div ref={scrollRef} className="flex-1 bg-zinc-950 p-6 overflow-y-auto font-mono text-xs text-zinc-400">
+              {logs.length === 0 ? (
+                <div className="text-zinc-600 italic">
+                  {isLoading ? 'Fetching logs...' : 'No logs available for this container.'}
+                </div>
               ) : (
-                container.logs.map((log, i) => (
-                  <div key={i} className="py-0.5 border-b border-white/5">{log}</div>
+                logs.map((log, i) => (
+                  <div key={i} className="py-0.5 border-b border-white/5 whitespace-pre-wrap">{log}</div>
                 ))
               )}
             </div>

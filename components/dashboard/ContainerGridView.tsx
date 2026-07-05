@@ -10,6 +10,7 @@ interface ContainerGridViewProps {
   onToggleStatus: (id: string) => void;
   onRestart: (id: string, name: string) => void;
   onOpenLogs: (container: Container) => void;
+  onOpenTerminal: (container: Container) => void;
   onDelete: (container: Container) => void;
   onOpenWebUI: (container: Container) => void;
 }
@@ -20,6 +21,7 @@ export function ContainerGridView({
   onToggleStatus,
   onRestart,
   onOpenLogs,
+  onOpenTerminal,
   onDelete,
   onOpenWebUI
 }: ContainerGridViewProps) {
@@ -36,6 +38,7 @@ export function ContainerGridView({
             onToggleStatus={onToggleStatus}
             onRestart={onRestart}
             onOpenLogs={onOpenLogs}
+            onOpenTerminal={onOpenTerminal}
             onDelete={onDelete}
             onOpenWebUI={onOpenWebUI}
           />
