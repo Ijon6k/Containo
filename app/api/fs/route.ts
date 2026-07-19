@@ -3,20 +3,7 @@ import fs from "fs";
 import path from "path";
 import os from "os";
 import { logger } from "@/lib/core/logger";
-
-// Translate user path to container mount point: /home → /host
-function toContainerPath(p: string): string {
-  if (fs.existsSync("/host") && p.startsWith("/home")) {
-    return "/host" + p.slice(5);
-  }
-  return p;
-}
-
-// Reverse translation for UI display: /host → /home
-function toDisplayPath(p: string): string {
-  if (p.startsWith("/host")) return "/home" + p.slice(5);
-  return p;
-}
+import { toContainerPath, toDisplayPath } from "@/lib/utils/path-translation";
 
 // Filesystem browser: lists directories and docker-compose files,
 // auto-translates /home ↔ /host paths, hides dot-prefixed entries.

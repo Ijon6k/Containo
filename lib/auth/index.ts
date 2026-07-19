@@ -1,7 +1,7 @@
 import { SignJWT } from "jose";
 import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
-import { getJwtSecret, verifySession } from "./utils";
+import { getJwtSecret } from "./utils";
 
 // === Password Utilities ===
 
@@ -32,18 +32,6 @@ export async function createSession(userId: number) {
   });
 
   return token;
-}
-
-export async function getSession() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("containo_session")?.value;
-  if (!token) return null;
-
-  try {
-    return await verifySession(token);
-  } catch (err) {
-    return null;
-  }
 }
 
 export async function deleteSession() {

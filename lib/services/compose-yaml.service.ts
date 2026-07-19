@@ -2,8 +2,7 @@
  * Build a docker-compose YAML string from an array of service definitions.
  * Extracted from CreateContainerFlow to keep the component focused on UI.
  */
-export function buildComposeYaml(services: any[]): { yaml: string; networks: Set<string> } {
-  const allNetworks = new Set<string>();
+export function buildComposeYaml(services: any[]): string {
   let yaml = "services:\n";
 
   services.forEach((s: any) => {
@@ -28,20 +27,21 @@ export function buildComposeYaml(services: any[]): { yaml: string; networks: Set
       yaml += `    networks:\n`;
       s.networks.split(',').forEach((n: string) => {
         const netName = n.trim();
-        if (netName) {
-          yaml += `      - ${netName}\n`;
-          allNetworks.add(netName);
-        }
+        if (netName) yaml += `      - ${netName}\n`;
       });
+    }
+    if (s.networkMode) yaml += `    network_mode: ${s.networkMode}\n`;
+    if (s.pidMode) yaml += `    pid: ${s.pidMode}\n`;
+    if (s.privileged) yaml += `    privileged: true\n`;
+    if (s.capAdd?.length) {
+      yaml += `    cap_add:\n`;
+      s.capAdd.forEach((c: string) => yaml += `      - ${c}\n`);
+    }
+    if (s.securityOpt?.length) {
+      yaml += `    security_opt:\n`;
+      s.securityOpt.forEach((o: string) => yaml += `      - ${o}\n`);
     }
   });
 
-  if (allNetworks.size > 0) {
-    yaml += `\nnetworks:\n`;
-    allNetworks.forEach(net => {
-      yaml += `  ${net}:\n`;
-    });
-  }
-
-  return { yaml, networks: allNetworks };
+  return yaml;
 }

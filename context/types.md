@@ -10,12 +10,15 @@ interface Container {
   name: string;                  // Container name (stripped of leading /)
   image: string;                 // Docker image name:tag
   status: 'running' | 'exited';  // Binary state
-  ports: string;                 // Formatted port string (e.g., "8080:80, 3000:3000")
+  ports: string;                 // Formatted port string
+                                 //   Bound: "80:80" (host:container)
+                                 //   Internal: "service:port" (no host binding)
+                                 //   IPv4/IPv6 duplicates are de-duplicated
   logs?: string[];               // Container logs (loaded on demand)
-  networkMode?: string;         // Docker network mode (default, host, bridge, etc.)
-  exposedPorts?: number[];       // Exposed port numbers
+  networkMode?: string;          // Docker network mode (default, host, bridge, etc.)
+  hostPorts: Array<{ host: number; container: number }>;  // Ports bound to host
+  internalPorts: number[];       // Ports only exposed internally (no host binding)
   composeProject?: string;       // compose project name (from labels)
-  composeService?: string;       // compose service name (from labels)
   composeConfig?: string;        // compose config file path (from labels)
   composeWorkingDir?: string;    // compose working directory (from labels)
 }

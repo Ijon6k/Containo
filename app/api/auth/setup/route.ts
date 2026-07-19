@@ -6,7 +6,7 @@ import path from "path";
 import { logger } from "@/lib/core/logger";
 
 export async function GET() {
-  const userCount = db.prepare("SELECT COUNT(*) as count FROM users").get() as {
+  const userCount = db.query("SELECT COUNT(*) as count FROM users").get() as {
     count: number;
   };
   return NextResponse.json({ setupNeeded: userCount.count === 0 });
@@ -18,7 +18,7 @@ export async function POST(request: Request) {
 
     // Check if setup is actually needed
     const userCount = db
-      .prepare("SELECT COUNT(*) as count FROM users")
+      .query("SELECT COUNT(*) as count FROM users")
       .get() as { count: number };
     if (userCount.count > 0) {
       return NextResponse.json(
@@ -49,7 +49,7 @@ export async function POST(request: Request) {
     }
 
     const hashedPassword = await hashPassword(password);
-    db.prepare("INSERT INTO users (username, password) VALUES (?, ?)").run(
+    db.query("INSERT INTO users (username, password) VALUES (?1, ?2)").run(
       username,
       hashedPassword,
     );

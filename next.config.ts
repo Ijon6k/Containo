@@ -5,8 +5,6 @@ const nextConfig: NextConfig = {
   serverExternalPackages: [
     'dockerode',
     'ssh2',
-    'better-sqlite3',
-    'cpu-features',
   ],
 };
 

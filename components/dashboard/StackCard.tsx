@@ -111,13 +111,7 @@ export function StackCard({
       async () => {
         addToast(`Restarting stack "${stack.name}"...`);
         try {
-          await Promise.all(stack.containers.map(async (c) => {
-            await fetch(`/api/containers/${c.id}/action`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ action: 'restart' })
-            });
-          }));
+          await Promise.all(stack.containers.map((c) => onRestart(c.id, c.name)));
           addToast(`Stack "${stack.name}" restarted successfully`);
         } catch (err: any) {
           addToast(`Failed to restart stack: ${err.message || err}`, 'error');

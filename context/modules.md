@@ -1,19 +1,27 @@
 # Modules
 
-## `lib/core/`
+## `lib/`
+
+### `lib/core/`
 
 | File | Purpose |
 |---|---|
 | `docker.ts` | Single `dockerode` instance connected to `/var/run/docker.sock` |
 | `logger.ts` | Colored console logger with `success`, `info`, `error`, `warn` methods |
 
+### `lib/db.ts`
+
+| File | Purpose |
+|---|---|
+| `db.ts` | Lazy-initialized SQLite via `bun:sqlite` (Bun built-in). Uses Proxy pattern — DB only opens on first `query()`/`exec()`/`prepare()` call. WAL mode enabled. Replaced `better-sqlite3` during Bun migration.
+
 ## `lib/services/`
 
 | File | Purpose |
 |---|---|
 | `docker-service.ts` | System health, host CPU, disk info, aggregate Docker stats, `getSystemInfo()` |
-| `container-format.service.ts` | Shared `formatContainer()` — used by WebSocket broadcaster + REST API. Null-safe `Ports?.map()` guard. |
-| `compose-yaml.service.ts` | `buildComposeYaml()` — generates modern docker-compose YAML from service definitions (no `version` field) |
+| `container-format.service.ts` | Shared `formatContainer()` — used by WebSocket broadcaster + REST API. Distinguishes bound ports (`host:container`) from internal ports (`service:port`). Dedups IPv4/IPv6. |
+| `compose-yaml.service.ts` | `buildComposeYaml()` — generates docker-compose YAML from service definitions. Supports `networkMode`, `pidMode`, `privileged`, `capAdd`, `securityOpt`. |
 | `stats.service.ts` | `transformDockerStats()` — raw Docker stats stream to `ContainerStats` |
 | `cli-parser.service.ts` | Parse Docker CLI commands to compose config |
 
@@ -48,7 +56,8 @@
 | File | Purpose |
 |---|---|
 | `api-handler.ts` | `withErrorHandler()` — higher-order error wrapper for API routes |
-| `network.ts` | Network utilities |
+| `network.ts` | `resolveContainerWebUrl()` — resolves URL from bound host ports. Returns null for internal-only containers. |
+| `path-translation.ts` | `toContainerPath()`, `toHostPath()`, `toDisplayPath()`, `fixVolumePaths()` — shared path translation for `/home` ↔ `/host` (Docker volume mount). Used by `compose/deploy` and `fs` routes. |
 
 ## `lib/types/index.ts`
 

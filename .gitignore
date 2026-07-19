@@ -47,3 +47,4 @@ data/*
 !data/.gitkeep
 graphify-out/
 skills-lock.json
+.trae/

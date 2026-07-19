@@ -45,21 +45,12 @@ export function useBackupRestore({
 
     try {
       await apiImportBackup(formData);
-      // Progress bar is simulated — the API call is synchronous from the client side
-      setRestoreProgress(50);
       setRestoreStep("Extracting data to volume...");
-
-      setTimeout(() => {
-        setRestoreProgress(100);
-        setRestoreStep("Finalizing...");
-
-        setTimeout(() => {
-          setIsRestoring(false);
-          setRestoreProgress(0);
-          addToast(`${targetVolume} restored successfully`);
-          fetchVolumes();
-        }, 1000);
-      }, 2000);
+      setRestoreProgress(100);
+      setIsRestoring(false);
+      setRestoreProgress(0);
+      addToast(`${targetVolume} restored successfully`);
+      fetchVolumes();
     } catch (err: any) {
       const errMsg =
         err.response?.data?.error || err.message || "Import failed";

@@ -41,16 +41,22 @@ export const WebSocketProvider = ({
 
     s.on("connect", () => {
       setIsConnected(true);
-      console.log("Socket.io Connected");
+      if (process.env.NODE_ENV === 'development') {
+        console.log("Socket.io Connected");
+      }
     });
 
     s.on("disconnect", () => {
       setIsConnected(false);
-      console.log("Socket.io Disconnected");
+      if (process.env.NODE_ENV === 'development') {
+        console.log("Socket.io Disconnected");
+      }
     });
 
     s.on("connect_error", (err) => {
-      console.error("Socket.io Error:", err.message);
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Socket.io Error:", err.message);
+      }
     });
 
     return () => {

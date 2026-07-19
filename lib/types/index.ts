@@ -6,9 +6,9 @@ export interface Container {
   ports: string;
   logs?: string[];
   networkMode?: string;
-  exposedPorts?: number[];
+  hostPorts: Array<{ host: number; container: number }>;
+  internalPorts: number[];
   composeProject?: string;
-  composeService?: string;
   composeConfig?: string;
   composeWorkingDir?: string;
 }

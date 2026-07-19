@@ -3,6 +3,7 @@ import { spawn, ChildProcess } from "child_process";
 import fs from "fs";
 import path from "path";
 import { logger } from "@/lib/core/logger";
+import { toContainerPath, toHostPath, fixVolumePaths } from "@/lib/utils/path-translation";
 
 // Graceful kill: SIGTERM first, SIGKILL after 3s if still alive
 function killProcess(child: ChildProcess) {
@@ -11,25 +12,6 @@ function killProcess(child: ChildProcess) {
   setTimeout(() => {
     if (!child.killed) child.kill("SIGKILL");
   }, 3000);
-}
-
-// Path translation: user-facing /home → container-internal /host mount point
-function toContainerPath(p: string): string {
-  if (fs.existsSync("/host") && p.startsWith("/home"))
-    return "/host" + p.slice(5);
-  return p;
-}
-
-// Reverse translation for Docker daemon (host perspective)
-function toHostPath(p: string): string {
-  if (p.startsWith("/host")) return "/home" + p.slice(5);
-  return p;
-}
-
-// Converts relative volume mounts (./data:/app) to absolute paths
-// so Docker Compose resolves them correctly from inside the container.
-function fixVolumePaths(yaml: string, hostDir: string): string {
-  return yaml.replace(/^(\s*)-\s*\.\//gm, `$1- ${hostDir}/`);
 }
 
 // Deploys a docker-compose stack with real-time SSE streaming output.

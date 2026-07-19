@@ -89,12 +89,13 @@ Containo/
 
 1. **Custom HTTP server** — merges Next.js + socket.io on one port (3611)
 2. **proxy.ts middleware** — centralized JWT auth for both page routes AND API routes
-3. **SQLite (better-sqlite3)** — zero-config, file-based, portable. Student-friendly.
-4. **Auto-generated JWT secret** — no setup required. Saved to `data/.jwt_secret`. Cached after first read.
-5. **Docker socket mount** — `/var/run/docker.sock` mounted as volume. No TCP Docker API needed.
-6. **Standalone output** — `next.config.ts` sets `output: 'standalone'` for Docker deployment.
-7. **Containo self-hiding** — internal containers labeled `containo.internal=true` are hidden from UI.
-8. **SSE streaming for compose** — real-time `docker compose up` output via Server-Sent Events with kill support.
+3. **Bun runtime + `bun:sqlite`** — Replaced Node.js 22 + better-sqlite3. Bun runs TypeScript natively, has built-in SQLite driver, and uses 45-50% less memory. Zero native module dependencies.
+4. **Lazy DB initialization** — `lib/db.ts` uses Proxy pattern to defer SQLite connection until first query. Prevents build-time crashes when `data/` dir doesn't exist during `next build`.
+5. **Auto-generated JWT secret** — no setup required. Saved to `data/.jwt_secret`. Cached after first read.
+6. **Docker socket mount** — `/var/run/docker.sock` mounted as volume. No TCP Docker API needed.
+7. **Standalone output** — `next.config.ts` sets `output: 'standalone'` for Docker deployment.
+8. **Containo self-hiding** — internal containers labeled `containo.internal=true` are hidden from UI.
+9. **SSE streaming for compose** — real-time `docker compose up` output via Server-Sent Events with kill support.
 
 ## Path Translation System
 

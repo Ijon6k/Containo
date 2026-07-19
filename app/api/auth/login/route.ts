@@ -15,7 +15,7 @@ export async function POST(request: Request) {
     }
 
     const user = db
-      .prepare("SELECT * FROM users WHERE username = ?")
+      .query("SELECT * FROM users WHERE username = ?1")
       .get(username) as any;
 
     if (!user) {

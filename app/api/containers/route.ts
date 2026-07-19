@@ -16,15 +16,9 @@ export const GET = withErrorHandler(async () => {
     (c: any) => c.Labels?.["containo.internal"] !== "true",
   );
 
-  const formattedContainers: Container[] = visibleContainers.map((c: any) => {
-    const base = formatContainer(c);
-    const exposedPorts = c.Ports ? c.Ports.map((p: any) => p.PrivatePort) : [];
-    return {
-      ...base,
-      logs: [],
-      exposedPorts: Array.from(new Set(exposedPorts)) as number[],
-    };
-  });
+  const formattedContainers: Container[] = visibleContainers.map((c: any) =>
+    formatContainer(c),
+  );
 
   return NextResponse.json(formattedContainers);
 });

@@ -91,6 +91,5 @@ export const useDeployment = (
     handleDeploy,
     setDeploymentLogs,
     setDeploymentComplete,
-    setPullProgress,
   };
 };

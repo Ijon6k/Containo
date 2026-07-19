@@ -20,7 +20,11 @@ All routes are under `app/api/`. Auth required (JWT session cookie via `proxy.ts
 | `POST` | `/api/containers/stop` | Stop container by ID |
 | `POST` | `/api/containers/restart` | Restart container by ID |
 | `GET` | `/api/containers/{id}/logs` | Get container logs |
+| `POST` | `/api/containers/{id}/action` | Start/stop/restart container by ID |
+| `POST` | `/api/containers/deploy` | Create container from form (single container) |
 | `DELETE` | `/api/containers/{id}` | Remove container |
+
+> Note: Stats for containers are delivered via WebSocket (`stats:update` events) — not REST. The old REST stats endpoints were removed as dead code.
 
 ## Images (`app/api/images/`)
 

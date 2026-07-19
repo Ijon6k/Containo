@@ -137,7 +137,7 @@ export default function CreateContainerFlow({
     stackName: string,
     targetDir: string,
   ) => {
-    const { yaml } = buildComposeYaml(services);
+    const yaml = buildComposeYaml(services);
     const clean = targetDir.endsWith("/") ? targetDir.slice(0, -1) : targetDir;
     await streamComposeDeploy({
       targetPath: `${clean}/${stackName}`,

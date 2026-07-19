@@ -199,7 +199,7 @@ export const ContainerGridCard = ({
 
         <button
           onClick={() => onOpenWebUI(c)}
-          disabled={!isRunning}
+          disabled={!isRunning || c.hostPorts.length === 0}
           className="p-2.5 rounded-md hover:bg-emerald-500/10 text-text-sub hover:text-emerald-500 transition-all disabled:opacity-20"
           title="Access UI"
         >

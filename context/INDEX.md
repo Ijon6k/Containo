@@ -1,8 +1,9 @@
 # Containo — Project Context Index
 
-> **Auto-updated**: Last built from commit `aec0e8b`
+> **Auto-updated**: Last built from commit `9319095`
 > **Graph data**: `graphify-out/graph.json` (584 nodes, 942 edges, 49 communities)
 > **Git hook**: Auto-updates on every commit via `graphify hook`
+> **Migration note**: Migrated from Node.js + pnpm to Bun runtime. See [[architecture#key-design-decisions]].
 
 ## Files
 
@@ -19,9 +20,9 @@
 ## Tech Stack
 
 - **Framework**: Next.js 16 (App Router) with custom `server.ts`
-- **Runtime**: Node.js + TypeScript 5
+- **Runtime**: **Bun 1.3** (JavaScriptCore engine) — migrated from Node.js 22
 - **Docker**: `dockerode` via Unix socket (`/var/run/docker.sock`)
-- **Database**: `better-sqlite3` — file-based, zero-config (`data/containo.db`)
+- **Database**: `bun:sqlite` (built-in, zero native deps) — replaced `better-sqlite3`. WAL mode enabled.
 - **Real-time**: `socket.io` (WebSocket + polling fallback)
 - **Auth**: `jose` (JWT) with auto-generated secret
 - **UI**: React 19 + Tailwind CSS 4 + `framer-motion` + `lucide-react`
@@ -46,3 +47,5 @@ read context/ corresponding file, then follow linked notes
 - **Docker socket**: `/var/run/docker.sock` (mounted as volume)
 - **Data dir**: `./data/` (SQLite DB + JWT secret + setup flag)
 - **Containo internal containers** are hidden from UI via `containo.internal=true` label
+- **Bun Docker image**: `oven/bun:1-alpine` (no native module rebuilds needed)
+- **Memory**: ~90-180MB typical (Bun), vs ~200-350MB (Node.js). ~45-50% reduction.

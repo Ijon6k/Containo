@@ -109,7 +109,7 @@ export const ContainerCard = ({
             <RotateCcw className="w-4 h-4" />
           </button>
 
-          {c.status === 'running' && (
+          {c.status === 'running' && c.hostPorts.length > 0 && (
             <button 
               onClick={() => onOpenWebUI(c)}
               className="p-2 rounded-md hover:bg-emerald-500/10 text-emerald-500 transition-colors"

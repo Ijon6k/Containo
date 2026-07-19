@@ -72,7 +72,7 @@ export function useContainerActions({
     if (url) {
       window.open(url, '_blank');
     } else {
-      addToast(`Could not auto-detect web port for ${c.name}. Please check container logs.`, 'error');
+      addToast(`No host binding found for ${c.name}. Port is internal-only.`, 'error');
     }
   };
 

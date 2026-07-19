@@ -30,7 +30,7 @@ Containo is a lightweight and beginner-friendly Docker management dashboard. Unl
 - **Language**: [TypeScript](https://www.typescriptlang.org/)
 - **Docker Integration**: [Dockerode](https://github.com/apocas/dockerode)
 - **Real-time Engine**: [ws](https://github.com/websockets/ws) (WebSockets)
-- **Database**: [Better-SQLite3](https://github.com/WiseLibs/better-sqlite3)
+- **Database**: [bun:sqlite](https://bun.sh/docs/api/sqlite) (built-in SQLite)
 
 ---
 

@@ -1,60 +1,42 @@
 # syntax=docker/dockerfile:1
-# --- STAGE 1: Install Dependencies ---
-FROM node:22-alpine AS deps
-RUN apk add --no-cache libc6-compat python3 make g++ sqlite-dev
+# Containo on Bun — No native modules, no transpilation, no pnpm.
+# Bun runs TypeScript directly and has SQLite built-in.
+# =============================================================================
+
+# --- STAGE 1: Install ALL Dependencies (for build) ---
+FROM oven/bun:1-alpine AS deps
 WORKDIR /app
 
-# Install pnpm
-RUN corepack enable && corepack prepare pnpm@latest --activate
+COPY package.json bun.lock ./
 
-# Copy manifest files
-COPY pnpm-lock.yaml package.json ./
-
-# Cache pnpm store between builds — avoids re-downloading every package
-RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
-    pnpm install --frozen-lockfile --ignore-scripts
-
-# Rebuild native modules for current OS/Arch
-RUN pnpm rebuild better-sqlite3 sharp cpu-features protobufjs ssh2 unrs-resolver
+# Install ALL dependencies (including devDeps like tailwindcss) needed for build
+RUN bun install --frozen-lockfile
 
 # --- STAGE 2: Builder ---
-FROM node:22-alpine AS builder
+FROM oven/bun:1-alpine AS builder
 WORKDIR /app
-RUN apk add --no-cache libc6-compat python3 make g++ sqlite-dev
-RUN corepack enable && corepack prepare pnpm@latest --activate
 
-# Copy dependencies and source
+# Copy full deps and source
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Set environment for build
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
 
-# Cache Next.js compilation cache — skips recompiling unchanged files
-RUN --mount=type=cache,target=/app/.next/cache \
-    pnpm build
+# Build Next.js (Bun runs TypeScript natively — no esbuild/tsx needed)
+RUN bun --bun run build
 
-# 2. Transpile server.ts to server.js using esbuild
-RUN npx esbuild server.ts \
-    --bundle \
-    --platform=node \
-    --target=node22 \
-    --outfile=server.js \
-    --external:next \
-    --external:socket.io \
-    --external:better-sqlite3 \
-    --external:dockerode \
-    --external:sharp \
-    --external:ssh2 \
-    --external:cpu-features \
-    --external:protobufjs
+# --- STAGE 3: Production Dependencies (slim) ---
+FROM oven/bun:1-alpine AS prod-deps
+WORKDIR /app
 
-# 3. Prune node_modules to remove devDependencies
-RUN pnpm prune --prod
+COPY package.json bun.lock ./
 
-# --- STAGE 3: Runner ---
-FROM node:22-alpine AS runner
+# Install only production dependencies for the runtime image
+RUN bun install --frozen-lockfile --production
+
+# --- STAGE 4: Runner ---
+FROM oven/bun:1-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
@@ -62,29 +44,33 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3611
 ENV HOSTNAME=0.0.0.0
 
-# Install minimal runtime deps
-RUN apk add --no-cache libc6-compat docker-cli docker-cli-compose
+# Install runtime deps + create user with docker.sock access
+# The 'docker' group must have GID 985 to match the host's /var/run/docker.sock
+RUN apk add --no-cache docker-cli docker-cli-compose shadow && \
+    addgroup -g 985 docker && \
+    addgroup --system --gid 1001 bunjs && \
+    adduser --system --uid 1001 bunjs && \
+    addgroup bunjs docker
 
-# Security: Create non-root user
-RUN addgroup --system --gid 1001 nodejs && \
-    adduser --system --uid 1001 nextjs
-
-# Copy essential Next.js files
+# Copy production artifacts
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder --chown=bunjs:bunjs /app/.next/standalone ./
 
-# Copy standalone build
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+# Clean junk files from standalone output (keep server.ts — entry point)
+RUN rm -rf graphify-out context docs Dockerfile docker-compose.yml \
+    tsconfig.json tsconfig.tsbuildinfo proxy.ts \
+    eslint.config.mjs postcss.config.mjs pnpm-lock.yaml pnpm-workspace.yaml \
+    skills-lock.json .npmrc README.md
 
-# Copy our custom server (transpiled) and its production modules
-COPY --from=builder --chown=nextjs:nodejs /app/server.js ./server.js
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
+# Copy slim production node_modules
+COPY --from=prod-deps --chown=bunjs:bunjs /app/node_modules ./node_modules
 
-# Ensure data directory exists and is writable
-RUN mkdir -p /app/data
+# Ensure data directory exists
+RUN mkdir -p /app/data && chown bunjs:bunjs /app/data
 
-USER root
+USER bunjs
 EXPOSE 3611
 
-# Run using standard node (no tsx/typescript overhead)
-CMD ["node", "server.js"]
+# Run directly with Bun — no tsx, no esbuild, no node-gyp rebuilds
+CMD ["bun", "--bun", "server.ts"]
