@@ -1,5 +1,4 @@
 import React from 'react';
-import { motion } from 'framer-motion';
 import { Activity, Database, Globe, Layers } from 'lucide-react';
 import { ContainerStats } from '@/lib/types';
 
@@ -10,59 +9,41 @@ interface StatsPanelProps {
 export const StatsPanel = ({ stats }: StatsPanelProps) => {
   if (!stats) {
     return (
-      <div className="bg-ui-accent p-6 border-t border-b border-ui-border flex justify-center shadow-inner mb-4 mx-2 rounded-b-xl">
-        <div className="flex items-center gap-3 text-text-sub text-sm font-semibold uppercase tracking-widest animate-pulse">
-          <Activity className="w-4 h-4 text-brand" />
-          Synchronizing Metrics...
-        </div>
+      <div className="bg-surface2 border-l-2 border-brand mx-0 mb-2 px-4 py-3 rounded-r-lg text-[13px] text-text-tertiary flex items-center gap-2 transition-all duration-300">
+        <Activity className="w-3.5 h-3.5 animate-pulse" />
+        Connecting...
       </div>
     );
   }
 
   const items = [
-    { label: 'CPU Usage', value: `${stats.cpuPercentage.toFixed(1)}%`, icon: Activity, color: 'text-indigo-500', bar: stats.cpuPercentage },
-    { label: 'Memory', value: `${stats.memoryUsageMB.toFixed(0)}MB / ${stats.memoryLimitMB.toFixed(0)}MB`, icon: Database, color: 'text-emerald-500', bar: stats.memoryPercentage },
-    { label: 'Network', value: `↓ ${stats.networkRxMB.toFixed(2)}MB / ↑ ${stats.networkTxMB.toFixed(2)}MB`, icon: Globe, color: 'text-brand', bar: 0 },
-    { label: 'Block I/O', value: `R ${stats.blockReadMB.toFixed(1)}MB / W ${stats.blockWriteMB.toFixed(1)}MB`, icon: Layers, color: 'text-amber-500', bar: 0 },
+    { label: 'CPU', value: `${stats.cpuPercentage.toFixed(1)}%`, bar: stats.cpuPercentage, icon: Activity, color: 'bg-brand', textColor: 'text-brand' },
+    { label: 'Memory', value: `${stats.memoryUsageMB.toFixed(0)} / ${stats.memoryLimitMB.toFixed(0)} MB`, bar: stats.memoryPercentage, icon: Database, color: 'bg-success', textColor: 'text-success' },
+    { label: 'Network', value: `↓ ${stats.networkRxMB.toFixed(1)}MB  ↑ ${stats.networkTxMB.toFixed(1)}MB`, bar: 0, icon: Globe, color: '', textColor: 'text-text-secondary' },
+    { label: 'Block I/O', value: `R ${stats.blockReadMB.toFixed(1)}MB  W ${stats.blockWriteMB.toFixed(1)}MB`, bar: 0, icon: Layers, color: '', textColor: 'text-text-secondary' },
   ];
 
   return (
-    <motion.div 
-      initial={{ height: 0, opacity: 0 }}
-      animate={{ height: 'auto', opacity: 1 }}
-      exit={{ height: 0, opacity: 0 }}
-      className="bg-ui-accent/50 border-t-2 border-brand/20 border-b border-ui-border overflow-hidden shadow-inner relative z-0 mb-4 rounded-b-xl mx-2"
-    >
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 divide-x divide-ui-border">
+    <div className="bg-surface2 border-l-2 border-brand mx-0 mb-2 px-0 py-3 rounded-r-lg transition-all duration-300">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 px-4">
         {items.map((item, i) => (
-          <div key={i} className="p-5 space-y-4 group border-b sm:border-b-0 border-ui-border/50">
-            <div className="flex items-center justify-between text-xs font-semibold text-text-sub uppercase tracking-wider group-hover:text-text-main transition-colors">
-              <div className="flex items-center gap-3">
-                <div className={`p-2 rounded bg-ui-bg border border-ui-border group-hover:${item.color.replace('text', 'bg')}/10 transition-colors`}>
-                  <item.icon className={`w-4 h-4 ${item.color}`} />
-                </div>
-                {item.label}
-              </div>
-              <span className="text-sm font-mono font-bold text-text-main">{item.value}</span>
+          <div key={i} className="flex items-start gap-3 min-w-0">
+            <div className={`w-7 h-7 rounded-md flex items-center justify-center shrink-0 bg-surface ${item.textColor}`}>
+              <item.icon className="w-3.5 h-3.5" />
             </div>
-            
-            {item.bar > 0 ? (
-              <div className="w-full h-1.5 bg-ui-bg rounded-full overflow-hidden border border-ui-border/50 p-0.5">
-                <motion.div 
-                  initial={{ width: 0 }}
-                  animate={{ width: `${Math.min(100, item.bar)}%` }}
-                  transition={{ duration: 1, ease: "easeOut" }}
-                  className={`h-full rounded-full ${item.color.replace('text', 'bg')}`}
-                />
-              </div>
-            ) : (
-              <div className="w-full h-1 bg-ui-border/50 rounded-full" />
-            )}
+            <div className="min-w-0 flex-1">
+              <div className="text-[11px] text-text-tertiary mb-0.5">{item.label}</div>
+              <div className="text-[13px] font-mono text-text-primary leading-tight truncate">{item.value}</div>
+              {item.bar > 0 && (
+                <div className="h-1 bg-border rounded-full mt-1.5 overflow-hidden">
+                  <div className={`h-full ${item.color} rounded-full transition-all duration-500`}
+                    style={{ width: `${Math.min(100, item.bar)}%` }} />
+                </div>
+              )}
+            </div>
           </div>
         ))}
       </div>
-      {/* Active Sidebar Indicator */}
-      <div className="absolute left-0 top-0 bottom-0 w-1 bg-brand" />
-    </motion.div>
+    </div>
   );
 };

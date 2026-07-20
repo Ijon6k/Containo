@@ -1,55 +1,50 @@
 'use client';
 
 import React from 'react';
-import { motion } from 'framer-motion';
 
 interface HealthScoreCardProps {
   systemInfo: any;
 }
 
 export function HealthScoreCard({ systemInfo }: HealthScoreCardProps) {
-  const healthScore = systemInfo?.healthScore ?? 0;
+  const score = systemInfo?.healthScore ?? 0;
+  const b = systemInfo?.healthBreakdown || { stability: 0, hygiene: 0, resources: 0 };
+  const color = score >= 80 ? 'text-success' : score >= 60 ? 'text-warning' : 'text-danger';
+  const strokeColor = score >= 80 ? '#34d399' : score >= 60 ? '#fbbf24' : '#f87171';
+  const offset = 264 * (1 - score / 100);
+
+  const items = [
+    { label: 'Stability', pct: 40, pts: b.stability },
+    { label: 'Hygiene', pct: 30, pts: b.hygiene },
+    { label: 'Resources', pct: 30, pts: b.resources },
+  ];
 
   return (
-    <div className="card p-6 flex flex-col items-center text-center">
-      <div className="relative w-32 h-32 flex items-center justify-center mb-4">
-         <svg className="w-full h-full -rotate-90">
-            <circle 
-              cx="64" cy="64" r="58" 
-              fill="none" 
-              stroke="currentColor" 
-              strokeWidth="8"
-              className="text-ui-accent"
-            />
-            <motion.circle 
-              cx="64" cy="64" r="58" 
-              fill="none" 
-              stroke="currentColor" 
-              strokeWidth="8"
-              strokeDasharray="364.4"
-              initial={{ strokeDashoffset: 364.4 }}
-              animate={{ strokeDashoffset: 364.4 * (1 - healthScore / 100) }}
-              className="text-brand"
-            />
-         </svg>
-         <span className="absolute text-3xl font-bold text-text-main">{healthScore}%</span>
+    <div className="bg-surface border border-border rounded-md p-5">
+      <div className="flex items-start justify-between mb-5">
+        <h3 className="text-[15px] font-semibold text-text-primary">System health</h3>
+        <span className={`text-2xl font-bold ${color} tabular-nums`}>{score}</span>
       </div>
-      <h3 className="text-lg font-bold text-text-main">System Health</h3>
-      <div className="w-full mt-6 space-y-3">
-         <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-widest">
-            <span className="text-text-sub">System Stability (40%)</span>
-            <span className="text-emerald-500">{systemInfo?.healthBreakdown?.stability || 0} pts</span>
-         </div>
-         <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-widest">
-            <span className="text-text-sub">Storage Hygiene (30%)</span>
-            <span className="text-indigo-500">{systemInfo?.healthBreakdown?.hygiene || 0} pts</span>
-         </div>
-         <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-widest">
-            <span className="text-text-sub">Resource Density (30%)</span>
-            <span className="text-amber-500">{systemInfo?.healthBreakdown?.resources || 0} pts</span>
-         </div>
+      <div className="flex items-center justify-center mb-5">
+        <div className="relative w-28 h-28">
+          <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="42" fill="none" stroke="currentColor" strokeWidth="7" className="text-hover" />
+            <circle cx="50" cy="50" r="42" fill="none" stroke={strokeColor} strokeWidth="7"
+              strokeDasharray={264} strokeLinecap="round"
+              strokeDashoffset={offset}
+              className="transition-[stroke-dashoffset] duration-700 ease-out" />
+          </svg>
+          <span className={`absolute inset-0 flex items-center justify-center text-xl font-bold ${color} tabular-nums`}>{score}</span>
+        </div>
       </div>
-      <p className="text-[10px] text-text-sub mt-6 italic">Stability only penalizes unexpected crashes (non-zero exit codes).</p>
+      <div className="space-y-2.5">
+        {items.map((item) => (
+          <div key={item.label} className="flex items-center justify-between text-[12px]">
+            <span className="text-text-tertiary">{item.label}</span>
+            <span className="text-text-secondary tabular-nums">{item.pts} / {item.pct}</span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

@@ -25,7 +25,7 @@ interface DirectoryPickerProps {
 export const DirectoryPicker = ({
   onSelect,
   onCancel,
-  title = "Select Target Directory",
+  title = "Select target directory",
   initialPath = "",
 }: DirectoryPickerProps) => {
   const [currentPath, setCurrentPath] = useState(initialPath);
@@ -59,9 +59,6 @@ export const DirectoryPicker = ({
     if (item.isDirectory) {
       fetchDirectory(item.path);
     } else {
-      // If it's a file, maybe select its parent directory or the file itself?
-      // Since it's a directory picker, we usually select the folder.
-      // But if they click docker-compose.yml, we select its parent.
       onSelect(currentPath);
     }
   };
@@ -72,44 +69,44 @@ export const DirectoryPicker = ({
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        className="bg-ui-bg border border-ui-border rounded-xl shadow-2xl w-full max-w-2xl flex flex-col overflow-hidden"
+        className="bg-surface border border-border rounded-md shadow-2xl w-full max-w-2xl flex flex-col overflow-hidden"
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-ui-border bg-ui-accent/30">
+        <div className="flex items-center justify-between p-5 border-b border-border bg-surface2/30">
           <div>
-            <h3 className="text-lg font-bold text-text-main">{title}</h3>
-            <p className="text-xs text-text-sub mt-1 font-mono">
+            <h3 className="text-xl font-bold text-text-primary">{title}</h3>
+            <p className="text-sm text-text-secondary mt-1 font-mono">
               {currentPath}
             </p>
           </div>
           <button
             onClick={onCancel}
-            className="p-2 text-text-sub hover:text-text-main hover:bg-ui-border/50 rounded-lg transition-colors"
+            className="p-2 text-text-secondary hover:text-text-primary hover:bg-hover rounded-sm transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Tip Info */}
-        <div className="mx-6 mt-4 p-3.5 bg-brand/5 border border-brand/10 rounded-lg flex gap-3 text-xs text-text-sub leading-relaxed">
+        <div className="mx-6 mt-4 p-3.5 bg-brand/5 border border-brand/10 rounded-sm flex gap-3 text-sm text-text-secondary leading-relaxed">
           <span className="shrink-0 text-brand">💡</span>
           <div>
-            <span className="font-bold text-text-main">Tip:</span> Docker
+            <span className="font-semibold text-text-primary">Tip:</span> Docker
             Compose stacks are commonly organized in a dedicated directory under
             your user home folder (e.g.,{" "}
-            <code className="bg-ui-accent px-1 py-0.5 rounded font-mono text-[10px]">
+            <code className="bg-surface2 px-1 py-0.5 rounded font-mono text-[12px]">
               ~/stacks/
             </code>{" "}
             or{" "}
-            <code className="bg-ui-accent px-1 py-0.5 rounded font-mono text-[10px]">
+            <code className="bg-surface2 px-1 py-0.5 rounded font-mono text-[12px]">
               ~/projects/
             </code>
             ). For production servers, system-wide directories like{" "}
-            <code className="bg-ui-accent px-1 py-0.5 rounded font-mono text-[10px]">
+            <code className="bg-surface2 px-1 py-0.5 rounded font-mono text-[12px]">
               /srv/docker/
             </code>{" "}
             or{" "}
-            <code className="bg-ui-accent px-1 py-0.5 rounded font-mono text-[10px]">
+            <code className="bg-surface2 px-1 py-0.5 rounded font-mono text-[12px]">
               /opt/
             </code>{" "}
             are also standard.
@@ -117,15 +114,15 @@ export const DirectoryPicker = ({
         </div>
 
         {/* Browser Body */}
-        <div className="h-96 overflow-y-auto p-2 bg-ui-bg relative">
+        <div className="h-96 overflow-y-auto p-2 bg-surface relative">
           {loading && (
-            <div className="absolute inset-0 z-10 flex items-center justify-center bg-ui-bg/50 backdrop-blur-[2px]">
+            <div className="absolute inset-0 z-10 flex items-center justify-center bg-surface/50 backdrop-blur-[2px]">
               <Loader2 className="w-8 h-8 text-brand animate-spin" />
             </div>
           )}
 
           {error && (
-            <div className="p-4 m-2 bg-rose-500/10 border border-rose-500/20 rounded-lg text-rose-500 text-sm">
+            <div className="p-4 m-2 bg-danger-bg border border-danger/20 rounded-sm text-danger text-base">
               {error}
             </div>
           )}
@@ -134,17 +131,17 @@ export const DirectoryPicker = ({
             {currentPath !== "/" && (
               <button
                 onClick={() => fetchDirectory(parentPath)}
-                className="w-full flex items-center gap-3 p-3 hover:bg-ui-accent rounded-lg transition-colors text-left"
+                className="w-full flex items-center gap-3 p-3 hover:bg-hover rounded-sm transition-colors text-left"
               >
-                <CornerLeftUp className="w-5 h-5 text-text-sub" />
-                <span className="text-sm font-semibold text-text-sub">
-                  .. (Go Up)
+                <CornerLeftUp className="w-5 h-5 text-text-secondary" />
+                <span className="text-base font-semibold text-text-secondary">
+                  .. (Go up)
                 </span>
               </button>
             )}
 
             {items.length === 0 && !loading && !error && (
-              <div className="text-center py-12 text-text-sub text-sm">
+              <div className="text-center py-12 text-text-secondary text-base">
                 Folder is empty
               </div>
             )}
@@ -153,14 +150,14 @@ export const DirectoryPicker = ({
               <button
                 key={idx}
                 onClick={() => handleItemClick(item)}
-                className="w-full flex items-center gap-3 p-3 hover:bg-ui-accent rounded-lg transition-colors text-left group"
+                className="w-full flex items-center gap-3 p-3 hover:bg-hover rounded-sm transition-colors text-left group"
               >
                 {item.isDirectory ? (
                   <Folder className="w-5 h-5 text-brand opacity-80 group-hover:opacity-100" />
                 ) : (
-                  <FileCode className="w-5 h-5 text-text-sub opacity-50" />
+                  <FileCode className="w-5 h-5 text-text-secondary opacity-50" />
                 )}
-                <span className="text-sm text-text-main truncate">
+                <span className="text-base text-text-primary truncate">
                   {item.name}
                 </span>
               </button>
@@ -169,23 +166,23 @@ export const DirectoryPicker = ({
         </div>
 
         {/* Footer */}
-        <div className="p-5 border-t border-ui-border bg-ui-accent/30 flex items-center justify-between">
-          <p className="text-xs text-text-sub">
+        <div className="p-5 border-t border-border bg-surface2/30 flex items-center justify-between">
+          <p className="text-sm text-text-secondary">
             Select the current directory to proceed.
           </p>
           <div className="flex gap-3">
             <button
               onClick={onCancel}
-              className="px-5 py-2.5 rounded-lg text-sm font-semibold text-text-sub hover:bg-ui-border transition-colors"
+              className="px-5 py-2.5 rounded-sm text-base font-semibold text-text-secondary hover:bg-hover transition-colors"
             >
               Cancel
             </button>
             <button
               onClick={() => onSelect(currentPath)}
-              className="flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-bold text-white bg-brand hover:bg-brand/90 transition-all shadow-md active:scale-95"
+              className="flex items-center gap-2 px-6 py-2.5 rounded-sm text-base font-semibold text-white bg-brand hover:bg-brand-hover transition-all shadow-md active:scale-95"
             >
               <CheckCircle2 className="w-4 h-4" />
-              Select Directory
+              Select directory
             </button>
           </div>
         </div>

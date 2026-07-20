@@ -7,7 +7,9 @@ import { useTheme } from '@/components/providers/ThemeProvider';
 
 export default function SettingsPage() {
   const { addToast } = useNotify();
-  const { theme, toggleTheme } = useTheme();
+  const { theme, cycleTheme } = useTheme();
+
+  const toggleTheme = () => cycleTheme();
 
   return (
     <SettingsView

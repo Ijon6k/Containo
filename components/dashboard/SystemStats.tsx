@@ -1,386 +1,157 @@
+"use client";
+
 import React, { useState } from "react";
-import { motion } from "framer-motion";
-import {
-  Server,
-  Package,
-  HardDrive,
-  Activity,
-  Cpu,
-  BarChart3,
-  AlignLeft,
-  Layers,
-  Zap,
-  EyeOff,
-} from "lucide-react";
+import { Cpu, Layers, HardDrive, Package, EyeOff, Eye } from "lucide-react";
+import { AreaChart, Area, YAxis, PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { Container } from "@/lib/types";
-import { useMetricHistory } from "@/hooks/useMetricHistory";
 
 interface SystemStatsProps {
   containers: Container[];
   systemInfo: any;
 }
 
-type ViewMode = "chart" | "bar" | "hidden";
-
-const LinearBar = ({ value, color }: { value: number; color: string }) => (
-  <div className="w-full h-1.5 bg-ui-accent rounded-full mt-3 overflow-hidden">
-    <motion.div
-      initial={{ width: 0 }}
-      animate={{ width: `${value}%` }}
-      className={`h-full ${color}`}
-    />
+const MiniArea = ({ data, color, dataKey }: { data: { v: number }[]; color: string; dataKey: string }) => (
+  <div className="flex-1 min-h-0">
+    <ResponsiveContainer width="100%" height="100%">
+      <AreaChart data={data} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+        <defs>
+          <linearGradient id={`grad-${dataKey}`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={color} stopOpacity={0.15} />
+            <stop offset="100%" stopColor={color} stopOpacity={0} />
+          </linearGradient>
+        </defs>
+        <YAxis domain={[0, 100]} hide />
+        <Area type="monotone" dataKey="v" stroke={color} strokeWidth={1.5}
+          fill={`url(#grad-${dataKey})`} isAnimationActive={false} dot={false} />
+      </AreaChart>
+    </ResponsiveContainer>
   </div>
 );
 
-const HostAreaChart = ({
-  value,
-  strokeColor,
-  fillColor,
-  trigger,
-}: {
-  value: number;
-  strokeColor: string;
-  fillColor: string;
-  trigger?: any;
-}) => {
-  const history = useMetricHistory(value, 30, trigger);
-  const width = 300,
-    height = 64,
-    padding = 2;
-  const points = history.map((val, index) => ({
-    x: (index / (history.length - 1)) * width,
-    y: height - padding - (val / 100) * (height - 2 * padding),
-  }));
-  const linePath =
-    points.length > 0
-      ? `M ${points[0].x} ${points[0].y} ` +
-        points
-          .slice(1)
-          .map((p) => `L ${p.x} ${p.y}`)
-          .join(" ")
-      : "";
-  const areaPath =
-    points.length > 0 ? `${linePath} L ${width} ${height} L 0 ${height} Z` : "";
-  const lastPoint = points[points.length - 1] || { x: width, y: height };
-  const gradId = `grad-${strokeColor.replace("#", "")}`;
-  return (
-    <div className="h-16 w-full overflow-hidden mt-2 rounded-md bg-ui-accent/30 border border-ui-border/50 relative">
-      <svg
-        className="w-full h-full"
-        viewBox={`0 0 ${width} ${height}`}
-        preserveAspectRatio="none"
-      >
-        <defs>
-          <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={fillColor} stopOpacity="0.4" />
-            <stop offset="100%" stopColor={fillColor} stopOpacity="0.0" />
-          </linearGradient>
-        </defs>
-        <line
-          x1="0"
-          y1={height * 0.33}
-          x2={width}
-          y2={height * 0.33}
-          stroke="var(--color-ui-border)"
-          strokeOpacity="0.1"
-          strokeDasharray="2 2"
-        />
-        <line
-          x1="0"
-          y1={height * 0.66}
-          x2={width}
-          y2={height * 0.66}
-          stroke="var(--color-ui-border)"
-          strokeOpacity="0.1"
-          strokeDasharray="2 2"
-        />
-        {areaPath && (
-          <path
-            d={areaPath}
-            fill={`url(#${gradId})`}
-            className="transition-all duration-300"
-          />
-        )}
-        {linePath && (
-          <path
-            d={linePath}
-            fill="none"
-            stroke={strokeColor}
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="transition-all duration-300"
-          />
-        )}
-        {points.length > 0 && (
-          <>
-            <circle
-              cx={lastPoint.x}
-              cy={lastPoint.y}
-              r="3"
-              fill={strokeColor}
-            />
-            <circle
-              cx={lastPoint.x}
-              cy={lastPoint.y}
-              r="6"
-              fill={strokeColor}
-              className="animate-ping"
-              opacity="0.3"
-            />
-          </>
-        )}
-      </svg>
-    </div>
-  );
-};
-
 export const SystemStats = ({ containers, systemInfo }: SystemStatsProps) => {
-  const [viewMode, setViewMode] = useState<ViewMode>("chart");
-
+  const [visible, setVisible] = useState(true);
   const sysCpu = systemInfo?.cpuUsage || 0;
   const sysMem = systemInfo?.memUsage || 0;
   const dockerCpu = systemInfo?.dockerCpu || 0;
   const dockerMem = systemInfo?.dockerMem || 0;
   const timestamp = systemInfo?.timestamp;
-  const storage = systemInfo?.storage || {
-    hostTotal: 1,
-    hostFree: 0,
-    hostUsed: 0,
-    systemBytes: 0,
-    dockerBytes: 0,
-  };
-  const systemGB = storage.systemBytes / 1024 ** 3 || 0;
-  const dockerGB = storage.dockerBytes / 1024 ** 3 || 0;
-  const freeGB = storage.hostFree / 1024 ** 3 || 0;
-  const systemPercent = (storage.systemBytes / storage.hostTotal) * 100;
-  const dockerPercent = (storage.dockerBytes / storage.hostTotal) * 100;
+  const running = containers.filter((c) => c.status === "running").length;
+  const total = containers.length;
+  const s = systemInfo?.storage || { hostTotal: 1, hostFree: 0, hostUsed: 0, systemBytes: 0, dockerBytes: 0 };
+  const systemGB = s.systemBytes / 1024 ** 3 || 0;
+  const dockerGB = s.dockerBytes / 1024 ** 3 || 0;
+  const hostTotalGB = s.hostTotal / 1024 ** 3 || 0;
+  const freeGB = s.hostFree / 1024 ** 3 || 0;
+  const usedPct = (s.hostUsed / s.hostTotal) * 100 || 0;
+  const freePct = (freeGB / hostTotalGB) * 100 || 0;
+  const dockerVersion = systemInfo?.dockerInfo?.serverVersion || "...";
 
-  const renderChart = (chartColor: string, barColor: string, value: number) => {
-    if (viewMode === "bar") return <LinearBar value={value} color={barColor} />;
-    return (
-      <HostAreaChart
-        value={value}
-        strokeColor={chartColor}
-        fillColor={chartColor}
-        trigger={timestamp}
-      />
-    );
-  };
+  const [cpuHistory, setCpuHistory] = useState<{ v: number }[]>(Array.from({ length: 30 }, () => ({ v: 0 })));
+  const [memHistory, setMemHistory] = useState<{ v: number }[]>(Array.from({ length: 30 }, () => ({ v: 0 })));
+
+  React.useEffect(() => {
+    setCpuHistory(prev => { const next = [...prev, { v: sysCpu }]; return next.length > 30 ? next.slice(next.length - 30) : next; });
+    setMemHistory(prev => { const next = [...prev, { v: sysMem }]; return next.length > 30 ? next.slice(next.length - 30) : next; });
+  }, [timestamp, sysCpu, sysMem]);
+
+  function storageFreeColor(pct: number): string {
+    if (pct <= 10) return '#f87171'; if (pct <= 25) return '#fbbf24'; if (pct <= 50) return '#a78bfa'; return '#34d399';
+  }
+
+  const storageData = [
+    { name: "System", value: systemGB, color: "#555555" },
+    { name: "Docker", value: dockerGB, color: "#a78bfa" },
+    { name: "Free", value: Math.max(0, hostTotalGB - systemGB - dockerGB), color: "transparent" },
+  ].filter(d => d.value > 0);
 
   return (
-    <div className="space-y-4 mb-10">
-      <div className="flex justify-between items-center px-1">
-        <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-brand animate-pulse" />
-          <span className="text-[10px] font-bold text-text-sub uppercase tracking-widest">
-            Real-time Metrics
-          </span>
-        </div>
-        <div className="flex bg-ui-accent/50 rounded-lg p-1 border border-ui-border shadow-inner">
-          <button
-            onClick={() => setViewMode("chart")}
-            className={`p-1.5 rounded-md transition-all ${viewMode === "chart" ? "bg-brand text-white shadow-md" : "text-text-sub hover:text-text-main"}`}
-            title="Area Chart"
-          >
-            <BarChart3 className="w-3.5 h-3.5" />
-          </button>
-          <button
-            onClick={() => setViewMode("bar")}
-            className={`p-1.5 rounded-md transition-all ${viewMode === "bar" ? "bg-brand text-white shadow-md" : "text-text-sub hover:text-text-main"}`}
-            title="Horizontal Bars"
-          >
-            <AlignLeft className="w-3.5 h-3.5" />
-          </button>
-          <button
-            onClick={() => setViewMode("hidden")}
-            className="p-1.5 rounded-md transition-all text-text-sub hover:text-text-main"
-            title="Hide Metrics"
-          >
-            <EyeOff className="w-3.5 h-3.5" />
-          </button>
-        </div>
+    <div className="mb-5">
+      <div className="flex items-center justify-between mb-2 px-0.5">
+        <span className="text-[12px] text-text-tertiary">System metrics</span>
+        <button onClick={() => setVisible(!visible)}
+          className="p-1 rounded-md hover:bg-hover text-text-tertiary hover:text-text-secondary transition-colors"
+          aria-label={visible ? "Hide system metrics" : "Show system metrics"}>
+          {visible ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+        </button>
       </div>
 
-      {viewMode !== "hidden" && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="card p-8 bg-ui-bg border-ui-border rounded-lg relative overflow-hidden group transition-all hover:bg-ui-accent/30">
-            <div className="absolute -right-2 -top-2 opacity-[0.03] group-hover:opacity-10 group-hover:text-brand transition-all duration-500 scale-110">
-              <Cpu className="w-28 h-28" />
+      <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 transition-all duration-300 ${visible ? 'opacity-100' : 'opacity-0 h-0 overflow-hidden'}`}>
+        {visible && <>
+          {/* CPU */}
+          <div className="bg-surface border border-border rounded-md p-4 flex flex-col">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-7 h-7 rounded-md bg-brand/10 text-brand flex items-center justify-center shrink-0"><Cpu className="w-3.5 h-3.5" /></div>
+              <div><div className="text-[13px] font-medium text-text-secondary leading-tight">CPU</div><div className="text-[11px] text-text-tertiary leading-tight">Host</div></div>
+              <span className="ml-auto text-lg font-semibold text-text-primary tabular-nums">{sysCpu}%</span>
             </div>
-            <div className="flex items-center gap-2 mb-8">
-              <Server className="w-5 h-5 text-brand" />
-              <span className="text-sm font-semibold text-text-sub uppercase tracking-wider">
-                Host Resources
-              </span>
-            </div>
-            <div className="grid grid-cols-1 gap-6">
-              <div>
-                <div className="flex justify-between text-sm font-medium text-text-sub mb-2">
-                  <span>CPU Load</span>
-                  <span className="text-text-main font-bold">{sysCpu}%</span>
-                </div>
-                {renderChart("#6366f1", "bg-indigo-500", sysCpu)}
-              </div>
-              <div>
-                <div className="flex justify-between text-sm font-medium text-text-sub mb-2">
-                  <span>Memory Use</span>
-                  <span className="text-text-main font-bold">{sysMem}%</span>
-                </div>
-                {renderChart("#818cf8", "bg-indigo-400", sysMem)}
-              </div>
-            </div>
+            <MiniArea data={cpuHistory} color="#a78bfa" dataKey="cpu" />
           </div>
-
-          <div className="card p-8 bg-ui-bg border-ui-border rounded-lg relative overflow-hidden group transition-all hover:bg-ui-accent/30">
-            <div className="absolute -right-2 -top-2 opacity-[0.02] group-hover:opacity-10 group-hover:text-emerald-500 transition-all duration-700 scale-125 rotate-12">
-              <Package className="w-36 h-36" />
+          {/* Memory */}
+          <div className="bg-surface border border-border rounded-md p-4 flex flex-col">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-7 h-7 rounded-md bg-brand/10 text-brand flex items-center justify-center shrink-0"><Layers className="w-3.5 h-3.5" /></div>
+              <div><div className="text-[13px] font-medium text-text-secondary leading-tight">Memory</div><div className="text-[11px] text-text-tertiary leading-tight">Host</div></div>
+              <span className="ml-auto text-lg font-semibold text-text-primary tabular-nums">{sysMem}%</span>
             </div>
-            <div className="flex items-center justify-between mb-8 relative z-10">
-              <div className="flex items-center gap-2">
-                <Layers className="w-5 h-5 text-emerald-500" />
-                <span className="text-sm font-semibold text-text-sub uppercase tracking-wider">
-                  Docker Engine
-                </span>
-              </div>
-              <span className="text-xs font-mono text-text-sub">
-                {systemInfo?.dockerInfo?.serverVersion || "..."}
-              </span>
-            </div>
-            <div className="grid grid-cols-1 gap-4 relative z-10">
-              <div className="flex justify-between items-center p-4 rounded-md bg-ui-accent border border-ui-border">
-                <span className="text-sm text-text-sub font-medium">
-                  Deployed Units
-                </span>
-                <span className="text-2xl font-bold text-text-main font-mono">
-                  {containers.length}
-                </span>
-              </div>
-              <div className="flex justify-between items-center p-4 rounded-md bg-ui-accent border border-ui-border">
-                <span className="text-sm text-text-sub font-medium">
-                  Running Now
-                </span>
-                <span className="text-2xl font-bold text-emerald-500 font-mono">
-                  {containers.filter((c) => c.status === "running").length}
-                </span>
-              </div>
-            </div>
-            <div className="mt-8 flex items-center justify-between text-xs font-semibold text-text-sub uppercase tracking-widest opacity-60 group-hover:opacity-100 transition-opacity">
-              <span className="font-mono">
-                v{systemInfo?.dockerInfo?.serverVersion || "..."}
-              </span>
-              <Activity className="w-4 h-4" />
-            </div>
+            <MiniArea data={memHistory} color="#818cf8" dataKey="mem" />
           </div>
-
-          <div className="card p-8 bg-ui-bg border-ui-border rounded-lg relative overflow-hidden group transition-all hover:bg-ui-accent/30">
-            <div className="absolute -right-2 -top-2 opacity-[0.03] group-hover:opacity-10 group-hover:text-amber-500 transition-all duration-500 scale-110">
-              <Zap className="w-28 h-28" />
+          {/* Docker Load */}
+          <div className="bg-surface border border-border rounded-md p-4 flex flex-col">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-7 h-7 rounded-md bg-brand/10 text-brand flex items-center justify-center shrink-0"><Package className="w-3.5 h-3.5" /></div>
+              <span className="text-[13px] font-medium text-text-secondary">Docker load</span>
+              <span className="ml-auto text-[11px] text-text-tertiary font-mono">v{dockerVersion}</span>
             </div>
-            <div className="flex items-center gap-2 mb-8">
-              <Activity className="w-5 h-5 text-amber-500" />
-              <span className="text-sm font-semibold text-text-sub uppercase tracking-wider">
-                Load Impact
-              </span>
-            </div>
-            <div className="grid grid-cols-1 gap-6">
+            <div className="space-y-3 flex-1">
               <div>
-                <div className="flex justify-between text-sm font-medium text-text-sub mb-2">
-                  <span>Docker CPU</span>
-                  <span className="text-amber-500 font-bold">{dockerCpu}%</span>
+                <div className="flex items-center justify-between mb-1"><span className="text-[12px] text-text-tertiary">CPU</span><span className="text-[13px] font-semibold text-text-primary tabular-nums">{dockerCpu}%</span></div>
+                <div className="h-1 bg-hover rounded-full overflow-hidden">
+                  <div className="h-full bg-brand rounded-full transition-all duration-500" style={{ width: `${Math.min(dockerCpu, 100)}%` }} />
                 </div>
-                {renderChart("#f59e0b", "bg-amber-500", dockerCpu)}
               </div>
               <div>
-                <div className="flex justify-between text-sm font-medium text-text-sub mb-2">
-                  <span>Docker RAM</span>
-                  <span className="text-amber-500 font-bold">{dockerMem}%</span>
+                <div className="flex items-center justify-between mb-1"><span className="text-[12px] text-text-tertiary">RAM</span><span className="text-[13px] font-semibold text-text-primary tabular-nums">{dockerMem}%</span></div>
+                <div className="h-1 bg-hover rounded-full overflow-hidden">
+                  <div className="h-full bg-brand rounded-full transition-all duration-500" style={{ width: `${Math.min(dockerMem, 100)}%` }} />
                 </div>
-                {renderChart("#d97706", "bg-amber-600", dockerMem)}
               </div>
+            </div>
+            <div className="mt-3 pt-3 border-t border-border flex items-center justify-between text-[12px]">
+              <span className="text-text-tertiary">Containers</span>
+              <span className="font-medium tabular-nums"><span className="text-success">{running}</span><span className="text-text-tertiary"> / {total}</span></span>
             </div>
           </div>
-
-          <div className="card p-8 bg-ui-bg border-ui-border rounded-lg relative overflow-hidden group transition-all hover:bg-ui-accent/30">
-            <div className="absolute -right-2 -top-2 opacity-[0.03] group-hover:opacity-10 group-hover:text-indigo-500 transition-all duration-500 scale-110">
-              <HardDrive className="w-28 h-28" />
+          {/* Storage */}
+          <div className="bg-surface border border-border rounded-md p-4 flex flex-col">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-7 h-7 rounded-md bg-brand/10 text-brand flex items-center justify-center shrink-0"><HardDrive className="w-3.5 h-3.5" /></div>
+              <span className="text-[13px] font-medium text-text-secondary">Storage</span>
+              <span className="ml-auto text-lg font-semibold text-text-primary tabular-nums">{usedPct.toFixed(0)}%</span>
             </div>
-            <div className="flex items-center gap-2 mb-8">
-              <HardDrive className="w-5 h-5 text-indigo-500" />
-              <span className="text-sm font-semibold text-text-sub uppercase tracking-wider">
-                Storage Health
-              </span>
+            <div className="flex items-center gap-2 flex-1">
+              <div className="w-[70px] h-[70px] shrink-0">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={storageData} cx="50%" cy="50%" innerRadius={20} outerRadius={32} dataKey="value" stroke="none" isAnimationActive={false}>
+                      {storageData.map((entry, i) => (<Cell key={i} fill={entry.color} />))}
+                    </Pie>
+                    <Tooltip contentStyle={{ background: "#111", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 6, fontSize: 12 }}
+                      formatter={(val, name) => [`${Number(val).toFixed(0)} GB`, String(name)]} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="flex-1 space-y-2 text-[12px]">
+                <div><div className="flex items-center gap-1.5 mb-0.5"><div className="w-2 h-2 rounded-sm bg-[#555] shrink-0" /><span className="text-text-tertiary">System</span></div><span className="text-[13px] font-semibold text-text-primary tabular-nums">{systemGB.toFixed(0)} GB</span></div>
+                <div><div className="flex items-center gap-1.5 mb-0.5"><div className="w-2 h-2 rounded-sm bg-brand shrink-0" /><span className="text-text-tertiary">Docker</span></div><span className="text-[13px] font-semibold text-text-primary tabular-nums">{dockerGB.toFixed(0)} GB</span></div>
+              </div>
             </div>
-            <div className="space-y-6">
-              <div className="flex items-end justify-between">
-                <div className="space-y-2">
-                  <p className="text-xs text-text-sub uppercase font-bold tracking-widest opacity-60">
-                    Free Capacity
-                  </p>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-3xl font-bold text-text-main font-mono leading-none">
-                      {freeGB.toFixed(1)}
-                    </span>
-                    <span className="text-sm text-text-sub font-bold uppercase font-mono">
-                      GB
-                    </span>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-lg font-bold text-indigo-500 font-mono leading-none">
-                    {((storage.hostUsed / storage.hostTotal) * 100).toFixed(0)}%
-                  </p>
-                  <p className="text-xs text-text-sub uppercase font-bold mt-2">
-                    Used
-                  </p>
-                </div>
-              </div>
-              <div className="w-full h-4 bg-ui-accent rounded-md overflow-hidden flex border border-ui-border p-0.5">
-                <motion.div
-                  title="System / OS"
-                  initial={{ width: 0 }}
-                  animate={{ width: `${systemPercent}%` }}
-                  className="h-full bg-slate-400 rounded-l-sm"
-                />
-                <motion.div
-                  title="Docker Data"
-                  initial={{ width: 0 }}
-                  animate={{ width: `${dockerPercent}%` }}
-                  className="h-full bg-brand"
-                />
-                <div
-                  className="flex-1 h-full bg-transparent"
-                  title="Free Space"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4 pt-2">
-                <div className="flex items-center gap-3">
-                  <div className="w-2 h-2 rounded-full bg-slate-400" />
-                  <div className="flex flex-col">
-                    <span className="text-[10px] text-text-sub uppercase font-bold leading-none">
-                      System
-                    </span>
-                    <span className="text-sm font-bold text-text-main font-mono leading-none mt-1.5">
-                      {systemGB.toFixed(1)} GB
-                    </span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-2 h-2 rounded-full bg-brand" />
-                  <div className="flex flex-col">
-                    <span className="text-[10px] text-text-sub uppercase font-bold leading-none">
-                      Docker
-                    </span>
-                    <span className="text-sm font-bold text-text-main font-mono leading-none mt-1.5">
-                      {dockerGB.toFixed(1)} GB
-                    </span>
-                  </div>
-                </div>
-              </div>
+            <div className="flex items-center justify-between text-[12px] mt-2 pt-2 border-t border-border">
+              <span className="text-text-tertiary">{hostTotalGB.toFixed(0)} GB total</span>
+              <span className="font-medium tabular-nums" style={{ color: storageFreeColor(freePct) }}>{freeGB.toFixed(0)} GB free</span>
             </div>
           </div>
-        </div>
-      )}
+        </>}
+      </div>
     </div>
   );
 };

@@ -24,16 +24,16 @@ export const YamlPreview = ({ yamlContent }: YamlPreviewProps) => {
     >
       <button
         onClick={handleCopy}
-        className="absolute top-4 right-4 z-10 flex items-center gap-1.5 px-3 py-1.5 bg-ui-accent hover:bg-ui-border text-text-sub hover:text-text-main rounded-md text-xs font-medium transition-all border border-ui-border"
+        className="absolute top-4 right-4 z-10 flex items-center gap-1.5 px-3 py-1.5 bg-surface2 hover:bg-hover text-text-secondary hover:text-text-primary rounded-sm text-sm font-medium transition-all border border-border"
       >
         {copied ? (
-          <Check className="w-3.5 h-3.5 text-emerald-500" />
+          <Check className="w-3.5 h-3.5 text-success" />
         ) : (
           <Copy className="w-3.5 h-3.5" />
         )}
         {copied ? "Copied" : "Copy"}
       </button>
-      <pre className="h-full bg-ui-accent/30 p-8 pt-14 rounded-lg font-mono text-sm text-text-main overflow-auto border border-ui-border leading-relaxed">
+      <pre className="h-full bg-surface2/30 p-8 pt-14 rounded-sm font-mono text-base text-text-primary overflow-auto border border-border leading-relaxed">
         {yamlContent}
       </pre>
     </motion.div>

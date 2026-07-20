@@ -54,7 +54,6 @@ export default function BackupRestore({
   const handleModalConfirm = (targetVolume: string) => {
     setActiveTarget(targetVolume);
     setIsModalOpen(false);
-    // Slight delay to ensure modal closes before file dialog opens
     setTimeout(() => {
       fileInputRef.current?.click();
     }, 100);
@@ -73,7 +72,6 @@ export default function BackupRestore({
             addToast("Volume deleted");
             fetchVolumes();
           } else {
-            // Handle specific Docker errors more gracefully
             let errorMessage = data.error || "Delete failed";
             if (res.status === 409) {
               errorMessage = `Volume is in use. You must REMOVE (delete) the containers using it, not just stop them.`;
@@ -90,24 +88,22 @@ export default function BackupRestore({
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div>
-        <h2 className="text-2xl font-bold text-text-main">Backups</h2>
-        <p className="text-text-sub text-sm">
+        <h2 className="text-2xl font-semibold text-text-primary">Backups</h2>
+        <p className="text-text-secondary text-base">
           Manage persistent volume snapshots and data recovery.
         </p>
       </div>
 
       <InfoBox title="Critical Awareness" variant="warn">
         Volume data is indexed by its{" "}
-        <span className="text-amber-500 font-bold">Unique Name</span>. If you
+        <span className="text-warning font-semibold">Unique Name</span>. If you
         change the volume name in your Docker configuration, existing backups
         will no longer be automatically mapped. Keep your volume naming
         consistent to ensure seamless one-click restoration.
       </InfoBox>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main List */}
         <div className="lg:col-span-2 space-y-4">
           <VolumeList
             volumes={volumes}
@@ -117,7 +113,6 @@ export default function BackupRestore({
           />
         </div>
 
-        {/* Actions Sidebar */}
         <div className="space-y-6">
           <input
             type="file"

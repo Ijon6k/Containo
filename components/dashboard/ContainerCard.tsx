@@ -1,14 +1,14 @@
 import React from 'react';
 import { cva } from 'class-variance-authority';
-import { 
-  ExternalLink, 
-  RotateCcw, 
-  Play, 
-  Square, 
-  Activity, 
-  Terminal as TerminalIcon,
+import {
+  ExternalLink,
+  RotateCcw,
+  Play,
+  Square,
+  Activity,
+  Terminal,
   ScrollText,
-  Trash2
+  Trash2,
 } from 'lucide-react';
 import { Container } from '@/lib/types';
 
@@ -25,120 +25,128 @@ interface ContainerCardProps {
 }
 
 const statusBadge = cva(
-  "px-2 py-0.5 rounded-sm text-[10px] font-black uppercase border tracking-widest",
+  "px-2 py-0.5 rounded text-[11px] font-medium border",
   {
     variants: {
       status: {
-        running: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
-        exited: "bg-rose-500/10 text-rose-500 border-rose-500/20",
-      }
+        running: "bg-success/10 text-success border-success/15",
+        exited: "bg-text-tertiary/10 text-text-tertiary border-text-tertiary/15",
+      },
     },
-    defaultVariants: {
-      status: "exited",
-    }
+    defaultVariants: { status: "exited" },
   }
 );
 
-export const ContainerCard = ({ 
-  container: c, 
-  isExpanded, 
-  onToggleExpand, 
-  onToggleStatus, 
-  onRestart, 
+const actionBtn =
+  "p-1.5 rounded-md transition-colors text-text-tertiary hover:text-text-primary hover:bg-hover";
+
+export const ContainerCard = ({
+  container: c,
+  isExpanded,
+  onToggleExpand,
+  onToggleStatus,
+  onRestart,
   onOpenLogs,
   onOpenTerminal,
   onDelete,
-  onOpenWebUI
+  onOpenWebUI,
 }: ContainerCardProps) => {
+  const isRunning = c.status === 'running';
+
   return (
-    <div className={`transition-all ${isExpanded ? 'bg-ui-accent/30' : 'hover:bg-ui-accent/10'}`}>
-      <div className="grid grid-cols-12 gap-4 px-6 py-4 items-center group border-b border-ui-border">
-        {/* Status Column */}
-        <div className="col-span-1">
-          <span className={statusBadge({ status: c.status as 'running' | 'exited' })}>
-            {c.status}
+    <div
+      className={`bg-surface border border-border rounded-sm px-4 py-3 group transition-colors ${
+        isExpanded ? 'border-brand/30' : 'hover:border-border-hover'
+      }`}
+    >
+      <div className="flex items-center gap-4">
+        {/* Status */}
+        <span className={statusBadge({ status: c.status as 'running' | 'exited' })}>
+          {c.status}
+        </span>
+
+        {/* Name */}
+        <div className="flex-1 min-w-0 flex items-center gap-3">
+          <h3 className="text-base font-semibold text-text-primary truncate group-hover:text-brand transition-colors">
+            {c.name}
+          </h3>
+          <span className="text-[13px] font-mono text-text-tertiary truncate hidden sm:inline">
+            {c.image}
           </span>
         </div>
 
-        {/* Name Column */}
-        <div className="col-span-3 min-w-0">
-          <h3 className="text-sm font-semibold text-text-main truncate group-hover:text-brand transition-colors uppercase tracking-tight">{c.name}</h3>
-        </div>
+        {/* Ports */}
+        <span className="text-[13px] font-mono text-text-secondary hidden md:block tabular-nums">
+          {c.ports || '—'}
+        </span>
 
-        {/* Image Column */}
-        <div className="col-span-3 min-w-0">
-          <p className="text-sm text-text-sub font-mono truncate opacity-60 group-hover:opacity-100 transition-opacity">{c.image}</p>
-        </div>
-
-        {/* Ports Column */}
-        <div className="col-span-2 min-w-0">
-          <span className="text-xs font-semibold text-text-main font-mono opacity-80">{c.ports}</span>
-        </div>
-
-        {/* Actions Column */}
-        <div className="col-span-3 flex items-center justify-end gap-1.5 opacity-60 group-hover:opacity-100 transition-opacity">
-          <button 
-            onClick={onToggleExpand}
-            className={`p-2 rounded-md transition-all ${
-              isExpanded
-                ? 'bg-brand text-white shadow-sm'
-                : 'hover:bg-ui-accent text-text-sub hover:text-brand'
+        {/* Actions */}
+        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+          <button
+            onClick={isRunning ? onToggleExpand : undefined}
+            disabled={!isRunning}
+            className={`p-1.5 rounded-md transition-colors ${
+              !isRunning
+                ? 'text-text-tertiary/20 cursor-not-allowed'
+                : isExpanded
+                  ? 'bg-brand/10 text-brand'
+                  : 'text-text-tertiary hover:text-brand hover:bg-hover'
             }`}
-            title="Telemetry"
+            aria-label="Toggle stats"
           >
             <Activity className="w-4 h-4" />
           </button>
-          
-          <button 
+
+          <button
             onClick={() => onToggleStatus(c.id)}
-            className={`p-2 rounded-md transition-colors ${
-              c.status === 'running' 
-                ? 'hover:bg-amber-500/10 text-text-sub hover:text-amber-500' 
-                : 'hover:bg-emerald-500/10 text-text-sub hover:text-emerald-500'
+            className={`p-1.5 rounded-md transition-colors ${
+              isRunning
+                ? 'text-text-tertiary hover:text-warning hover:bg-hover'
+                : 'text-text-tertiary hover:text-success hover:bg-hover'
             }`}
-            title={c.status === 'running' ? 'Shutdown' : 'Initialize'}
+            aria-label={isRunning ? 'Stop container' : 'Start container'}
           >
-            {c.status === 'running' ? <Square className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+            {isRunning ? <Square className="w-4 h-4" /> : <Play className="w-4 h-4" />}
           </button>
 
-          <button 
+          <button
             onClick={() => onRestart(c.id, c.name)}
-            className="p-2 rounded-md hover:bg-ui-accent text-text-sub hover:text-brand transition-colors"
-            title="Restart"
+            className={actionBtn}
+            aria-label="Restart container"
           >
             <RotateCcw className="w-4 h-4" />
           </button>
 
-          {c.status === 'running' && c.hostPorts.length > 0 && (
-            <button 
+          {isRunning && c.hostPorts.length > 0 && (
+            <button
               onClick={() => onOpenWebUI(c)}
-              className="p-2 rounded-md hover:bg-emerald-500/10 text-emerald-500 transition-colors"
-              title="Web Access"
+              className="p-1.5 rounded-md text-success hover:bg-success-bg transition-colors"
+              aria-label="Open web interface"
             >
               <ExternalLink className="w-4 h-4" />
             </button>
           )}
 
-          <button 
+          <button
             onClick={() => onOpenLogs(c)}
-            className="p-2 rounded-md hover:bg-ui-accent text-text-sub hover:text-text-main transition-colors"
-            title="Logs"
+            className={actionBtn}
+            aria-label="View logs"
           >
             <ScrollText className="w-4 h-4" />
           </button>
 
-          <button 
+          <button
             onClick={() => onOpenTerminal(c)}
-            className="p-2 rounded-md hover:bg-brand/10 text-text-sub hover:text-brand transition-colors"
-            title="Terminal"
+            className={actionBtn}
+            aria-label="Open terminal"
           >
-            <TerminalIcon className="w-4 h-4" />
+            <Terminal className="w-4 h-4" />
           </button>
 
-          <button 
+          <button
             onClick={() => onDelete(c)}
-            className="p-2 rounded-md hover:bg-rose-500/10 text-text-sub hover:text-rose-500 transition-colors"
-            title="Decommission"
+            className="p-1.5 rounded-md text-text-tertiary hover:text-danger hover:bg-danger-bg transition-colors"
+            aria-label="Delete container"
           >
             <Trash2 className="w-4 h-4" />
           </button>

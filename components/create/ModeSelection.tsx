@@ -13,7 +13,7 @@ export const ModeSelection = ({ onSelect }: ModeSelectionProps) => {
       title: 'Container',
       desc: 'Deploy a single container using a guided configuration form.',
       icon: Box,
-      color: 'text-indigo-500'
+      color: 'text-brand'
     },
     {
       id: 'compose',
@@ -27,7 +27,7 @@ export const ModeSelection = ({ onSelect }: ModeSelectionProps) => {
       title: 'Command Line',
       desc: 'Directly execute raw docker run commands with automatic parsing.',
       icon: Terminal,
-      color: 'text-emerald-500'
+      color: 'text-success'
     }
   ];
 
@@ -40,20 +40,20 @@ export const ModeSelection = ({ onSelect }: ModeSelectionProps) => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: i * 0.05 }}
           onClick={() => onSelect(mode.id as any)}
-          className="group relative bg-ui-bg border border-ui-border p-8 rounded-md text-left hover:bg-ui-accent hover:border-brand/30 transition-all flex flex-col h-full shadow-sm hover:shadow-md"
+          className="group relative bg-surface border border-border rounded-md p-8 text-left hover:bg-hover hover:border-brand/30 transition-all flex flex-col h-full shadow-sm hover:shadow-md"
         >
-          <div className="w-12 h-12 bg-ui-accent rounded-md flex items-center justify-center mb-6">
+          <div className="w-12 h-12 bg-surface2 rounded-sm flex items-center justify-center mb-6">
             <mode.icon className={`w-6 h-6 ${mode.color}`} />
           </div>
           
-          <h3 className="text-base font-semibold text-text-main mb-3">
+          <h3 className="text-lg font-semibold text-text-primary mb-3">
             {mode.title}
           </h3>
-          <p className="text-sm text-text-sub leading-relaxed mb-10 flex-grow">
+          <p className="text-base text-text-secondary leading-relaxed mb-10 flex-grow">
             {mode.desc}
           </p>
           
-          <div className="flex items-center gap-2 text-sm font-semibold text-brand opacity-0 group-hover:opacity-100 transition-all">
+          <div className="flex items-center gap-2 text-base font-semibold text-brand opacity-0 group-hover:opacity-100 transition-all">
              Continue
              <ChevronRight className="w-4 h-4" />
           </div>

@@ -24,7 +24,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${archivo.variable} h-full antialiased dark`}>
+    <html lang="en" className={`${archivo.variable} h-full antialiased`} data-theme="dark">
       <body className="min-h-full font-sans">
         <ThemeProvider>
           <QueryProvider>

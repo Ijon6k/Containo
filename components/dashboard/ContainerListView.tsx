@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import { AnimatePresence } from 'framer-motion';
 import { Container } from '@/lib/types';
 import { ContainerCard } from './ContainerCard';
 import { StatsPanel } from './StatsPanel';
@@ -29,43 +28,45 @@ export function ContainerListView({
   onOpenLogs,
   onOpenTerminal,
   onDelete,
-  onOpenWebUI
+  onOpenWebUI,
 }: ContainerListViewProps) {
+  const toggleExpand = (id: string) => {
+    setExpandedStatsIds(prev =>
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    );
+  };
+
+  if (containers.length === 0) {
+    return (
+      <div className="bg-surface border border-border rounded-md p-12 text-center">
+        <p className="text-base text-text-tertiary">No containers found</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="card overflow-hidden border-white/5 bg-ui-bg rounded-md shadow-2xl">
-      <div className="grid grid-cols-12 gap-4 px-6 py-3 border-b border-white/5 bg-white/[0.02]">
-        <div className="col-span-1 text-xs font-semibold text-text-sub uppercase tracking-wide">Status</div>
-        <div className="col-span-3 text-xs font-semibold text-text-sub uppercase tracking-wide">Container Name</div>
-        <div className="col-span-3 text-xs font-semibold text-text-sub uppercase tracking-wide">Image</div>
-        <div className="col-span-2 text-xs font-semibold text-text-sub uppercase tracking-wide">Ports</div>
-        <div className="col-span-3 text-xs font-semibold text-text-sub uppercase tracking-wide text-right">Operations</div>
-      </div>
-      <div className="divide-y divide-ui-border">
-        {containers.length === 0 ? (
-          <div className="p-12 text-center text-text-sub font-mono text-[10px] uppercase tracking-widest italic">No operational units detected.</div>
-        ) : (
-          containers.map((c) => (
-            <React.Fragment key={c.id}>
-              <ContainerCard 
-                container={c}
-                isExpanded={expandedStatsIds.includes(c.id)}
-                onToggleExpand={() => setExpandedStatsIds(prev => prev.includes(c.id) ? prev.filter(id => id !== c.id) : [...prev, c.id])}
-                onToggleStatus={onToggleStatus}
-                onRestart={onRestart}
-                onOpenLogs={onOpenLogs}
-                onOpenTerminal={onOpenTerminal}
-                onDelete={onDelete}
-                onOpenWebUI={onOpenWebUI}
-              />
-              <AnimatePresence>
-                {expandedStatsIds.includes(c.id) && (
-                  <StatsPanel stats={stats[c.id]} />
-                )}
-              </AnimatePresence>
-            </React.Fragment>
-          ))
-        )}
-      </div>
+    <div className="space-y-[2px]">
+      {containers.map(c => {
+        const isExpanded = expandedStatsIds.includes(c.id);
+        return (
+          <div key={c.id}>
+            <ContainerCard
+              container={c}
+              isExpanded={isExpanded}
+              onToggleExpand={() => toggleExpand(c.id)}
+              onToggleStatus={onToggleStatus}
+              onRestart={onRestart}
+              onOpenLogs={onOpenLogs}
+              onOpenTerminal={onOpenTerminal}
+              onDelete={onDelete}
+              onOpenWebUI={onOpenWebUI}
+            />
+            {isExpanded && (
+              <StatsPanel stats={stats[c.id]} />
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }

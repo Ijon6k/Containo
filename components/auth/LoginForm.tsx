@@ -31,7 +31,7 @@ export default function LoginForm({ onComplete }: LoginFormProps) {
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-500 text-sm font-medium"
+          className="p-4 rounded-md bg-danger-bg border border-danger/20 text-danger text-base font-medium"
         >
           {error}
         </motion.div>
@@ -39,7 +39,7 @@ export default function LoginForm({ onComplete }: LoginFormProps) {
 
       <div className="space-y-4">
         <div className="space-y-2">
-          <label className="text-sm font-semibold text-text-main/80">
+          <label className="text-base font-semibold text-text-secondary">
             Username
           </label>
           <div className="relative group">
@@ -47,16 +47,16 @@ export default function LoginForm({ onComplete }: LoginFormProps) {
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="w-full py-4 pl-12 pr-4 text-base transition-all bg-transparent border rounded-xl focus:outline-none focus:ring-2 focus:ring-brand/20 border-ui-border text-text-main placeholder:text-text-sub focus:border-brand bg-ui-bg/10 backdrop-blur-sm"
+              className="w-full py-4 pl-12 pr-4 text-lg transition-all bg-surface2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-brand/20 text-text-primary placeholder:text-text-tertiary focus:border-brand"
               placeholder="Enter username"
               required
             />
-            <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 transition-colors text-zinc-500 group-focus-within:text-brand pointer-events-none" />
+            <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 transition-colors text-text-tertiary group-focus-within:text-brand pointer-events-none" />
           </div>
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm font-semibold text-text-main/80">
+          <label className="text-base font-semibold text-text-secondary">
             Password
           </label>
           <div className="relative group">
@@ -64,15 +64,15 @@ export default function LoginForm({ onComplete }: LoginFormProps) {
               type={showPassword ? "text" : "password"}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full py-4 pl-12 pr-12 text-base transition-all bg-transparent border rounded-xl focus:outline-none focus:ring-2 focus:ring-brand/20 border-ui-border text-text-main placeholder:text-text-sub focus:border-brand bg-ui-bg/10 backdrop-blur-sm"
+              className="w-full py-4 pl-12 pr-12 text-lg transition-all bg-surface2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-brand/20 text-text-primary placeholder:text-text-tertiary focus:border-brand"
               placeholder="Enter your password"
               required
             />
-            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 transition-colors text-zinc-500 group-focus-within:text-brand pointer-events-none" />
+            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 transition-colors text-text-tertiary group-focus-within:text-brand pointer-events-none" />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-4 top-1/2 -translate-y-1/2 p-1 hover:text-brand transition-colors text-zinc-500"
+              className="absolute right-4 top-1/2 -translate-y-1/2 p-1 hover:text-brand transition-colors text-text-tertiary"
             >
               {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
             </button>
@@ -83,7 +83,7 @@ export default function LoginForm({ onComplete }: LoginFormProps) {
       <button
         type="submit"
         disabled={isLoading}
-        className={`w-full bg-brand hover:bg-brand/90 text-white py-4 rounded-xl flex items-center justify-center gap-2 text-base font-bold shadow-xl shadow-brand/20 transition-all active:scale-[0.98] ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
+        className={`w-full bg-brand hover:bg-brand-hover text-white py-4 rounded-sm flex items-center justify-center gap-2 text-lg font-semibold shadow-xl shadow-brand/20 transition-all active:scale-[0.98] ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
       >
         {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
           <>

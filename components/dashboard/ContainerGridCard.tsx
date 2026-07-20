@@ -1,5 +1,4 @@
 import React from "react";
-import { motion } from "framer-motion";
 import {
   Play,
   Square,
@@ -7,12 +6,11 @@ import {
   Terminal,
   Trash2,
   ExternalLink,
-  Activity,
-  Database,
-  Cpu,
-  Box,
-  Network,
   ScrollText,
+  Cpu,
+  Layers,
+  Network,
+  Box,
 } from "lucide-react";
 import { Container, ContainerStats } from "@/lib/types";
 
@@ -42,194 +40,150 @@ export const ContainerGridCard = ({
   const memVal = stats?.memoryPercentage || 0;
 
   return (
-    <motion.div
-      layout
-      initial={{ opacity: 0, scale: 0.98 }}
-      animate={{ opacity: 1, scale: 1 }}
-      className="group relative bg-ui-bg border border-ui-border rounded-lg overflow-hidden hover:border-brand/40 transition-all duration-300 flex flex-col h-full shadow-sm"
-    >
-      {/* Top Status Line Indicator */}
-      <div className="absolute top-0 left-0 right-0 h-[2px] bg-ui-accent overflow-hidden">
-        {isRunning && (
-          <motion.div
-            initial={{ width: 0 }}
-            animate={{ width: `${cpuVal}%` }}
-            className="h-full bg-brand shadow-[0_0_10px_rgba(99,102,241,0.3)]"
-          />
-        )}
-      </div>
-
-      {/* Header Section */}
-      <div className="p-5 flex items-start justify-between bg-ui-accent/30 border-b border-ui-border">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2 mb-2">
+    <div className="group bg-surface border border-border rounded-md hover:border-border-hover transition-colors overflow-hidden flex flex-col">
+      {/* Header */}
+      <div className="p-4 flex items-start justify-between">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 mb-1.5">
             <div
-              className={`w-2 h-2 rounded-full ${isRunning ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]" : "bg-rose-500"}`}
+              className={`w-2 h-2 rounded-full ${
+                isRunning ? "bg-success" : "bg-text-tertiary"
+              }`}
             />
             <span
-              className={`text-[10px] font-bold uppercase tracking-widest ${isRunning ? "text-emerald-500" : "text-rose-500"}`}
+              className={`text-[11px] font-medium ${
+                isRunning ? "text-success" : "text-text-tertiary"
+              }`}
             >
               {c.status}
             </span>
           </div>
-          <h3 className="text-sm font-semibold text-text-main truncate leading-tight mb-1.5 group-hover:text-brand transition-colors uppercase">
+          <h3 className="text-base font-semibold text-text-primary truncate group-hover:text-brand transition-colors">
             {c.name}
           </h3>
-          <div className="flex items-center gap-2 opacity-60">
-            <Box className="w-3.5 h-3.5 text-text-sub" />
-            <span className="text-xs font-mono truncate max-w-[150px] text-text-sub">
+          <div className="flex items-center gap-1.5 mt-1">
+            <Box className="w-3 h-3 text-text-tertiary" />
+            <span className="text-[12px] font-mono text-text-tertiary truncate">
               {c.image}
             </span>
           </div>
         </div>
-
-        <div className="flex flex-col items-end gap-1.5">
-          <span className="text-[10px] font-mono text-text-sub opacity-50 uppercase tracking-tighter">
-            ID: {c.id.substring(0, 8)}
-          </span>
-        </div>
+        <span className="text-[11px] font-mono text-text-tertiary shrink-0">
+          {c.id.substring(0, 8)}
+        </span>
       </div>
 
-      {/* Real-time Diagnostics Section */}
-      <div className="p-5 flex-grow space-y-5">
+      {/* Stats */}
+      <div className="px-4 pb-4 flex-1">
         {isRunning ? (
-          <>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <div className="flex justify-between items-center text-xs font-bold text-text-sub uppercase tracking-wider">
-                  <div className="flex items-center gap-1.5">
-                    <Cpu className="w-4 h-4 text-brand" /> CPU
-                  </div>
-                  <span className="text-sm text-text-main font-mono font-bold">
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <div className="flex items-center gap-1.5 mb-1">
+                  <Cpu className="w-3 h-3 text-brand" />
+                  <span className="text-[11px] text-text-tertiary">CPU</span>
+                  <span className="text-[12px] font-mono font-medium text-text-primary ml-auto">
                     {cpuVal.toFixed(1)}%
                   </span>
                 </div>
-                <div className="h-1.5 bg-ui-accent rounded-full overflow-hidden">
-                  <motion.div
-                    animate={{ width: `${cpuVal}%` }}
-                    className="h-full bg-brand"
+                <div className="h-1 bg-hover rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-brand rounded-full transition-all duration-500"
+                    style={{ width: `${Math.min(cpuVal, 100)}%` }}
                   />
                 </div>
               </div>
-              <div className="space-y-2">
-                <div className="flex justify-between items-center text-xs font-bold text-text-sub uppercase tracking-wider">
-                  <div className="flex items-center gap-1.5">
-                    <Database className="w-4 h-4 text-emerald-500" /> RAM
-                  </div>
-                  <span className="text-sm text-text-main font-mono font-bold">
+              <div>
+                <div className="flex items-center gap-1.5 mb-1">
+                  <Layers className="w-3 h-3 text-success" />
+                  <span className="text-[11px] text-text-tertiary">MEM</span>
+                  <span className="text-[12px] font-mono font-medium text-text-primary ml-auto">
                     {memVal.toFixed(1)}%
                   </span>
                 </div>
-                <div className="h-1.5 bg-ui-accent rounded-full overflow-hidden">
-                  <motion.div
-                    animate={{ width: `${memVal}%` }}
-                    className="h-full bg-emerald-500"
+                <div className="h-1 bg-hover rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-success rounded-full transition-all duration-500"
+                    style={{ width: `${Math.min(memVal, 100)}%` }}
                   />
                 </div>
               </div>
             </div>
 
-            <div className="pt-4 border-t border-ui-border grid grid-cols-2 gap-4">
-              <div className="flex items-center gap-3">
-                <Network className="w-4 h-4 text-text-sub opacity-50" />
-                <div className="flex flex-col">
-                  <span className="text-[10px] text-text-sub uppercase font-bold leading-none tracking-wider">
-                    Net IO
-                  </span>
-                  <span className="text-sm font-mono font-bold text-text-main mt-1.5">
-                    {(stats?.networkRxMB || 0).toFixed(1)}MB
-                  </span>
-                </div>
+            <div className="flex items-center gap-4 text-[11px]">
+              <div className="flex items-center gap-1 text-text-tertiary">
+                <Network className="w-3 h-3" />
+                <span className="font-mono">
+                  {(stats?.networkRxMB || 0).toFixed(0)}MB
+                </span>
               </div>
-              <div className="flex items-center gap-3 min-w-0">
-                <Network className="w-4 h-4 text-brand opacity-50" />
-                <div className="flex flex-col min-w-0">
-                  <span className="text-[10px] text-text-sub uppercase font-bold leading-none tracking-wider">
-                    Ports
-                  </span>
-                  <span
-                    className="text-xs font-mono font-bold text-text-main mt-1.5 truncate max-w-[100px]"
-                    title={c.ports}
-                  >
-                    {c.ports}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </>
-        ) : (
-          <div className="h-28 flex items-center justify-center border border-dashed border-ui-border rounded-md bg-ui-accent/30">
-            <div className="flex flex-col items-center gap-3 opacity-30 text-text-sub">
-              <Activity className="w-5 h-5" />
-              <span className="text-xs font-bold uppercase tracking-[0.2em]">
-                Module Offline
+              <span className="text-[11px] font-mono text-text-tertiary truncate">
+                {c.ports || "—"}
               </span>
             </div>
+          </div>
+        ) : (
+          <div className="h-[88px] flex items-center justify-center rounded-sm bg-hover">
+            <span className="text-[12px] text-text-tertiary">Stopped</span>
           </div>
         )}
       </div>
 
-      {/* Advanced Action Dock */}
-      <div className="p-2.5 bg-ui-accent border-t border-ui-border flex items-center justify-around">
-        <button
-          onClick={() => onToggleStatus(c.id)}
-          className={`p-2.5 rounded-md transition-all ${
-            isRunning
-              ? "hover:bg-amber-500/10 text-text-sub hover:text-amber-500"
-              : "hover:bg-emerald-500/10 text-text-sub hover:text-emerald-500"
-          }`}
-          title={isRunning ? "Shutdown" : "Initialize"}
-        >
-          {isRunning ? (
-            <Square className="w-4 h-4" />
-          ) : (
-            <Play className="w-4 h-4" />
+      {/* Actions */}
+      <div className="border-t border-border px-2 py-2 flex items-center justify-between">
+        <div className="flex items-center gap-0.5">
+          <button
+            onClick={() => onToggleStatus(c.id)}
+            className={`p-1.5 rounded-md transition-colors ${
+              isRunning
+                ? "text-text-tertiary hover:text-warning hover:bg-hover"
+                : "text-text-tertiary hover:text-success hover:bg-hover"
+            }`}
+            aria-label={isRunning ? "Stop" : "Start"}
+          >
+            {isRunning ? <Square className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
+          </button>
+          <button
+            onClick={() => onRestart(c.id, c.name)}
+            className="p-1.5 rounded-md text-text-tertiary hover:text-text-primary hover:bg-hover transition-colors"
+            aria-label="Restart"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+          </button>
+          {isRunning && c.hostPorts.length > 0 && (
+            <button
+              onClick={() => onOpenWebUI(c)}
+              className="p-1.5 rounded-md text-success hover:bg-success-bg transition-colors"
+              aria-label="Open web UI"
+            >
+              <ExternalLink className="w-3.5 h-3.5" />
+            </button>
           )}
-        </button>
-
-        <div className="w-[1px] h-5 bg-ui-border" />
-
-        <button
-          onClick={() => onRestart(c.id, c.name)}
-          className="p-2.5 rounded-md hover:bg-brand/10 text-text-sub hover:text-brand transition-all"
-          title="Restart Module"
-        >
-          <RotateCcw className="w-4 h-4" />
-        </button>
-
-        <button
-          onClick={() => onOpenWebUI(c)}
-          disabled={!isRunning || c.hostPorts.length === 0}
-          className="p-2.5 rounded-md hover:bg-emerald-500/10 text-text-sub hover:text-emerald-500 transition-all disabled:opacity-20"
-          title="Access UI"
-        >
-          <ExternalLink className="w-4 h-4" />
-        </button>
-
-        <button
-          onClick={() => onOpenLogs(c)}
-          className="p-2.5 rounded-md hover:bg-ui-accent-light text-text-sub hover:text-text-main transition-all"
-          title="Logs"
-        >
-          <ScrollText className="w-4 h-4" />
-        </button>
-
-        <button
-          onClick={() => onOpenTerminal(c)}
-          className="p-2.5 rounded-md hover:bg-brand/10 text-text-sub hover:text-brand transition-all"
-          title="Terminal"
-        >
-          <Terminal className="w-4 h-4" />
-        </button>
-
-        <button
-          onClick={() => onDelete(c)}
-          className="p-2.5 rounded-md hover:bg-rose-500/10 text-text-sub hover:text-rose-500 transition-all"
-          title="Decommission"
-        >
-          <Trash2 className="w-4 h-4" />
-        </button>
+        </div>
+        <div className="flex items-center gap-0.5">
+          <button
+            onClick={() => onOpenLogs(c)}
+            className="p-1.5 rounded-md text-text-tertiary hover:text-text-primary hover:bg-hover transition-colors"
+            aria-label="Logs"
+          >
+            <ScrollText className="w-3.5 h-3.5" />
+          </button>
+          <button
+            onClick={() => onOpenTerminal(c)}
+            className="p-1.5 rounded-md text-text-tertiary hover:text-text-primary hover:bg-hover transition-colors"
+            aria-label="Terminal"
+          >
+            <Terminal className="w-3.5 h-3.5" />
+          </button>
+          <button
+            onClick={() => onDelete(c)}
+            className="p-1.5 rounded-md text-text-tertiary hover:text-danger hover:bg-danger-bg transition-colors"
+            aria-label="Delete"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
+        </div>
       </div>
-    </motion.div>
+    </div>
   );
 };

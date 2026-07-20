@@ -23,27 +23,31 @@ export function ContainerGridView({
   onOpenLogs,
   onOpenTerminal,
   onDelete,
-  onOpenWebUI
+  onOpenWebUI,
 }: ContainerGridViewProps) {
+  if (containers.length === 0) {
+    return (
+      <div className="bg-surface border border-border rounded-md p-12 text-center col-span-full">
+        <p className="text-base text-text-tertiary">No containers found</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-      {containers.length === 0 ? (
-        <div className="col-span-full p-12 text-center text-text-sub font-mono text-[10px] uppercase tracking-widest card bg-ui-bg border-ui-border rounded-md">No operational units detected.</div>
-      ) : (
-        containers.map((c) => (
-          <ContainerGridCard 
-            key={c.id}
-            container={c}
-            stats={stats[c.id]}
-            onToggleStatus={onToggleStatus}
-            onRestart={onRestart}
-            onOpenLogs={onOpenLogs}
-            onOpenTerminal={onOpenTerminal}
-            onDelete={onDelete}
-            onOpenWebUI={onOpenWebUI}
-          />
-        ))
-      )}
+    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+      {containers.map((c) => (
+        <ContainerGridCard
+          key={c.id}
+          container={c}
+          stats={stats[c.id]}
+          onToggleStatus={onToggleStatus}
+          onRestart={onRestart}
+          onOpenLogs={onOpenLogs}
+          onOpenTerminal={onOpenTerminal}
+          onDelete={onDelete}
+          onOpenWebUI={onOpenWebUI}
+        />
+      ))}
     </div>
   );
 }

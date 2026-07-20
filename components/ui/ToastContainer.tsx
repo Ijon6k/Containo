@@ -9,22 +9,25 @@ interface ToastContainerProps {
 
 export const ToastContainer = ({ toasts }: ToastContainerProps) => {
   return (
-    <div className="fixed bottom-6 right-6 z-[2000] flex flex-col gap-3">
+    <div className="fixed bottom-5 right-5 z-[2000] flex flex-col gap-2">
       <AnimatePresence>
         {toasts.map(toast => (
           <motion.div
             key={toast.id}
-            initial={{ opacity: 0, x: 20, scale: 0.9 }}
+            initial={{ opacity: 0, x: 16, scale: 0.96 }}
             animate={{ opacity: 1, x: 0, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
-            className={`flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg border ${
-              toast.type === 'success' 
-                ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' 
-                : 'bg-rose-500/10 border-rose-500/20 text-rose-500'
-            } backdrop-blur-md min-w-[240px]`}
+            exit={{ opacity: 0, scale: 0.96, transition: { duration: 0.15 } }}
+            className={`flex items-center gap-2.5 px-4 py-2.5 rounded-sm shadow-lg border text-base font-medium min-w-[240px] ${
+              toast.type === 'success'
+                ? 'bg-surface border-success/20 text-success'
+                : 'bg-surface border-danger/20 text-danger'
+            } backdrop-blur-md`}
           >
-            {toast.type === 'success' ? <CheckCircle2 className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
-            <span className="text-sm font-medium">{toast.message}</span>
+            {toast.type === 'success'
+              ? <CheckCircle2 className="w-4 h-4 shrink-0" />
+              : <AlertCircle className="w-4 h-4 shrink-0" />
+            }
+            <span>{toast.message}</span>
           </motion.div>
         ))}
       </AnimatePresence>

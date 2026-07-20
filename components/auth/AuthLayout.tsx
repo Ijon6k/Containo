@@ -56,7 +56,7 @@ export default function AuthLayout({ title, subtitle, badge, children }: AuthLay
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="text-brand font-semibold text-sm mb-4 tracking-wide"
+            className="text-brand font-semibold text-base mb-4 tracking-wide"
           >
             {badge}
           </motion.span>
@@ -65,7 +65,7 @@ export default function AuthLayout({ title, subtitle, badge, children }: AuthLay
             {title}
           </h1>
 
-          <p className="text-sm md:text-base leading-relaxed text-text-sub">
+          <p className="text-base md:text-lg leading-relaxed text-text-sub">
             {subtitle}
           </p>
         </div>

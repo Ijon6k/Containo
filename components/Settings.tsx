@@ -8,7 +8,7 @@ import { DockerEngineCard } from './settings/DockerEngineCard';
 import { WIPWrapper } from '@/components/ui/WIPWrapper';
 
 interface SettingsProps {
-  theme: 'light' | 'dark' | 'wholesome';
+  theme: 'light' | 'dark' | 'dim';
   toggleTheme: () => void;
   addToast: (msg: string, type?: 'success' | 'error') => void;
 }
@@ -30,16 +30,14 @@ export default function SettingsView({ theme, toggleTheme, addToast }: SettingsP
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div>
-        <h2 className="text-2xl font-bold text-text-main">Settings</h2>
-        <p className="text-text-sub text-sm">Configure notifications, security, and connection endpoints.</p>
+        <h2 className="text-2xl font-semibold text-text-primary">Settings</h2>
+        <p className="text-text-secondary text-base">Configure notifications, security, and connection endpoints.</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         <SettingsNav />
 
-        {/* Content */}
         <div className="lg:col-span-3 space-y-6">
           <WIPWrapper label="MVP WIP">
             <TelegramAlerts onSave={handleSaveTelegram} isLoading={isLoading} />

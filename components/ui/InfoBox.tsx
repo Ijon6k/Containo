@@ -2,7 +2,6 @@
 
 import React from 'react';
 import { Info, AlertTriangle, ShieldCheck } from 'lucide-react';
-import { motion } from 'framer-motion';
 
 interface InfoBoxProps {
   variant?: 'info' | 'warn' | 'success';
@@ -12,51 +11,42 @@ interface InfoBoxProps {
 }
 
 export function InfoBox({ variant = 'info', title, children, className = '' }: InfoBoxProps) {
-  const configs = {
+  const configs: Record<string, { icon: React.ReactNode; borderClass: string; textClass: string; iconBg: string }> = {
     info: {
-      bg: 'bg-brand/5',
-      border: 'border-brand/10',
-      icon: <Info className="w-5 h-5 text-brand" />,
-      titleColor: 'text-brand',
-      accent: 'bg-brand/10'
+      icon: <Info className="w-4 h-4" />,
+      borderClass: 'border-brand/15',
+      textClass: 'text-text-secondary',
+      iconBg: 'bg-brand/10 text-brand',
     },
     warn: {
-      bg: 'bg-amber-500/5',
-      border: 'border-amber-500/20',
-      icon: <AlertTriangle className="w-5 h-5 text-amber-500" />,
-      titleColor: 'text-amber-500',
-      accent: 'bg-amber-500/10'
+      icon: <AlertTriangle className="w-4 h-4" />,
+      borderClass: 'border-warning/20',
+      textClass: 'text-text-secondary',
+      iconBg: 'bg-warning-bg text-warning',
     },
     success: {
-      bg: 'bg-emerald-500/5',
-      border: 'border-emerald-500/20',
-      icon: <ShieldCheck className="w-5 h-5 text-emerald-500" />,
-      titleColor: 'text-emerald-500',
-      accent: 'bg-emerald-500/10'
-    }
+      icon: <ShieldCheck className="w-4 h-4" />,
+      borderClass: 'border-success/20',
+      textClass: 'text-text-secondary',
+      iconBg: 'bg-success-bg text-success',
+    },
   };
 
   const config = configs[variant];
 
   return (
-    <motion.div 
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      className={`${config.bg} ${config.border} border rounded-2xl p-5 flex gap-5 ${className}`}
-    >
-      <div className={`${config.accent} p-2.5 h-fit rounded-xl shrink-0`}>
+    <div className={`bg-surface border ${config.borderClass} rounded-md p-4 flex gap-3 ${className}`}>
+      <div className={`w-8 h-8 rounded-sm flex items-center justify-center shrink-0 ${config.iconBg}`}>
         {config.icon}
       </div>
-      <div className="flex-1 space-y-1">
+      <div className="flex-1 min-w-0">
         {title && (
-          <h4 className={`text-[10px] font-bold uppercase tracking-[0.2em] ${config.titleColor}`}>
-            {title}
-          </h4>
+          <p className="text-base font-semibold text-text-primary mb-0.5">{title}</p>
         )}
-        <div className="text-sm text-text-sub leading-relaxed font-medium">
+        <div className={`text-base leading-relaxed ${title ? config.textClass : config.textClass}`}>
           {children}
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }

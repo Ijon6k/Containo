@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Search, LayoutGrid, List as ListIcon, Trash2, Layers, Box, FolderOpen } from 'lucide-react';
+import { Search, LayoutGrid, List, Trash2, Layers, Box, FolderOpen } from 'lucide-react';
 
 interface DashboardToolbarProps {
   viewMode: 'containers' | 'stacks' | 'images';
@@ -24,80 +24,101 @@ export function DashboardToolbar({
   setSearchQuery,
   selectedImagesCount,
   onBulkDeleteImages,
-  onClearImageSelection
+  onClearImageSelection,
 }: DashboardToolbarProps) {
   return (
-    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-ui-bg p-3 rounded-md border border-ui-border shadow-sm">
-      <div className="flex items-center gap-4">
-        {/* Layout Toggle (List vs Grid) - Only for Containers */}
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-surface border border-border rounded-md p-2.5">
+      <div className="flex items-center gap-3 w-full sm:w-auto">
+        {/* Layout Toggle */}
         {viewMode === 'containers' && (
-          <div className="flex items-center gap-1 bg-white/5 p-1 rounded-md border border-white/5">
-            <button 
+          <div className="flex items-center gap-0.5 bg-surface2 rounded-sm p-0.5">
+            <button
               onClick={() => setLayoutMode('list')}
-              className={`p-1.5 rounded-sm transition-all ${layoutMode === 'list' ? 'bg-brand text-white shadow-md' : 'text-text-sub hover:text-brand'}`}
-              title="Table View"
+              className={`p-1.5 rounded-md transition-colors ${
+                layoutMode === 'list'
+                  ? 'bg-brand text-white'
+                  : 'text-text-tertiary hover:text-text-secondary'
+              }`}
+              aria-label="List view"
             >
-              <ListIcon className="w-4 h-4" />
+              <List className="w-3.5 h-3.5" />
             </button>
-            <button 
+            <button
               onClick={() => setLayoutMode('grid')}
-              className={`p-1.5 rounded-sm transition-all ${layoutMode === 'grid' ? 'bg-brand text-white shadow-md' : 'text-text-sub hover:text-brand'}`}
-              title="Module View"
+              className={`p-1.5 rounded-md transition-colors ${
+                layoutMode === 'grid'
+                  ? 'bg-brand text-white'
+                  : 'text-text-tertiary hover:text-text-secondary'
+              }`}
+              aria-label="Grid view"
             >
-              <LayoutGrid className="w-4 h-4" />
+              <LayoutGrid className="w-3.5 h-3.5" />
             </button>
           </div>
         )}
 
-        {/* Bulk Delete Button for Images */}
+        {/* Bulk Delete */}
         {viewMode === 'images' && selectedImagesCount > 0 && (
           <button
             onClick={onBulkDeleteImages}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-rose-500 hover:bg-rose-600 text-white text-xs font-bold transition-colors"
+            className="relative flex items-center justify-center h-8 w-8 rounded-sm bg-danger hover:bg-danger/80 text-white transition-colors"
+            aria-label={`Delete ${selectedImagesCount} images`}
           >
-            <Trash2 className="w-3.5 h-3.5" />
-            Delete ({selectedImagesCount})
+            <Trash2 className="w-4 h-4" />
+            <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-white text-danger text-[10px] font-bold flex items-center justify-center">
+              {selectedImagesCount}
+            </span>
           </button>
         )}
 
         {/* Search */}
-        <div className="relative w-full sm:max-w-xs">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-sub" />
-          <input 
+        <div className="relative w-full sm:max-w-[220px]">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-tertiary" />
+          <input
             type="text"
-            placeholder={viewMode === 'containers' ? "Search containers..." : "Search images..."}
+            placeholder={viewMode === 'containers' ? 'Search containers...' : 'Search images...'}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-ui-accent border border-ui-border rounded-md py-2 pl-10 pr-4 text-xs font-medium tracking-wide focus:outline-none focus:border-brand/50 transition-all text-text-main"
+            className="w-full bg-surface2 border border-border rounded-sm h-8 pl-8 pr-3 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-brand/40 transition-colors"
           />
         </div>
       </div>
 
-      <div className="flex items-center gap-6">
-        {/* View Mode Toggle (Containers vs Stacks vs Images) */}
-        <div className="flex bg-ui-accent p-1 rounded-md border border-ui-border shadow-inner">
-           <button 
-             onClick={() => { setViewMode('containers'); onClearImageSelection(); }}
-             className={`flex items-center gap-2 px-4 py-1.5 rounded-sm text-xs font-bold tracking-wide transition-all ${viewMode === 'containers' ? 'bg-brand text-white shadow-lg' : 'text-text-sub hover:text-text-main'}`}
-           >
-             <Layers className="w-3.5 h-3.5" />
-             Containers
-           </button>
-           <button 
-             onClick={() => { setViewMode('stacks'); onClearImageSelection(); }}
-             className={`flex items-center gap-2 px-4 py-1.5 rounded-sm text-xs font-bold tracking-wide transition-all ${viewMode === 'stacks' ? 'bg-brand text-white shadow-lg' : 'text-text-sub hover:text-text-main'}`}
-           >
-             <FolderOpen className="w-3.5 h-3.5" />
-             Stacks
-           </button>
-           <button 
-             onClick={() => setViewMode('images')}
-             className={`flex items-center gap-2 px-4 py-1.5 rounded-sm text-xs font-bold tracking-wide transition-all ${viewMode === 'images' ? 'bg-brand text-white shadow-lg' : 'text-text-sub hover:text-text-main'}`}
-           >
-             <Box className="w-3.5 h-3.5" />
-             Images
-           </button>
-        </div>
+      {/* View Mode Tabs */}
+      <div className="flex items-center gap-0.5 bg-surface2 rounded-sm p-0.5">
+        <button
+          onClick={() => { setViewMode('containers'); onClearImageSelection(); }}
+          className={`flex items-center gap-1.5 px-3 h-7 rounded-md text-sm font-medium transition-colors ${
+            viewMode === 'containers'
+              ? 'bg-brand text-white'
+              : 'text-text-tertiary hover:text-text-secondary'
+          }`}
+        >
+          <Layers className="w-3.5 h-3.5" />
+          Containers
+        </button>
+        <button
+          onClick={() => { setViewMode('stacks'); onClearImageSelection(); }}
+          className={`flex items-center gap-1.5 px-3 h-7 rounded-md text-sm font-medium transition-colors ${
+            viewMode === 'stacks'
+              ? 'bg-brand text-white'
+              : 'text-text-tertiary hover:text-text-secondary'
+          }`}
+        >
+          <FolderOpen className="w-3.5 h-3.5" />
+          Stacks
+        </button>
+        <button
+          onClick={() => setViewMode('images')}
+          className={`flex items-center gap-1.5 px-3 h-7 rounded-md text-sm font-medium transition-colors ${
+            viewMode === 'images'
+              ? 'bg-brand text-white'
+              : 'text-text-tertiary hover:text-text-secondary'
+          }`}
+        >
+          <Box className="w-3.5 h-3.5" />
+          Images
+        </button>
       </div>
     </div>
   );

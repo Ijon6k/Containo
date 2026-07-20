@@ -169,22 +169,22 @@ export const ComposeBuilder = ({
     <div className="flex flex-col h-full gap-8">
       <div className="flex flex-col lg:flex-row gap-8 min-h-[600px] flex-1">
         <div className="w-full lg:w-[40%] flex flex-col gap-6 pr-2">
-          <div className="flex items-center justify-between border-b border-ui-border pb-4">
-            <h3 className="text-lg font-semibold text-text-main flex items-center gap-3">
-              <Layers className="w-5 h-5 text-brand" /> Service Units
+          <div className="flex items-center justify-between border-b border-border pb-4">
+            <h3 className="text-xl font-semibold text-text-primary flex items-center gap-3">
+              <Layers className="w-5 h-5 text-brand" /> Service units
             </h3>
             <div className="flex items-center gap-2">
               <button
                 onClick={demoStack}
-                className="text-sm font-semibold text-amber-500 hover:text-amber-400 transition-all flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/5 border border-amber-500/20 rounded-md"
+                className="text-base font-semibold text-warning transition-all flex items-center gap-1.5 px-3 py-1.5 bg-warning-bg border border-warning/20 rounded-sm"
               >
                 <Sparkles className="w-3.5 h-3.5" /> Demo
               </button>
               <button
                 onClick={addService}
-                className="text-sm font-semibold text-brand hover:text-brand/80 transition-all flex items-center gap-2 px-3 py-1.5 bg-brand/5 border border-brand/20 rounded-md"
+                className="text-base font-semibold text-brand transition-all flex items-center gap-2 px-3 py-1.5 bg-brand/10 border border-brand/20 rounded-sm"
               >
-                <Plus className="w-4 h-4" /> Add Service
+                <Plus className="w-4 h-4" /> Add service
               </button>
             </div>
           </div>
@@ -200,17 +200,17 @@ export const ComposeBuilder = ({
           </div>
         </div>
 
-        <div className="flex-1 bg-ui-bg border border-ui-border rounded-lg overflow-hidden flex flex-col shadow-sm">
-          <div className="flex bg-ui-accent/50 border-b border-ui-border">
+        <div className="flex-1 bg-surface border border-border rounded-md overflow-hidden flex flex-col shadow-sm">
+          <div className="flex bg-surface2/50 border-b border-border">
             {[
-              { id: "visualizer", label: "Network View", icon: Box },
-              { id: "yaml", label: "YAML Source", icon: FileCode },
-              { id: "existing", label: "Deploy Existing", icon: FolderOpen },
+              { id: "visualizer", label: "Network view", icon: Box },
+              { id: "yaml", label: "YAML source", icon: FileCode },
+              { id: "existing", label: "Deploy existing", icon: FolderOpen },
             ].map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`flex-1 flex items-center justify-center gap-3 py-4 text-sm font-semibold transition-all ${activeTab === tab.id ? "bg-ui-bg text-brand border-b-2 border-brand" : "text-text-sub hover:bg-ui-accent"}`}
+                className={`flex-1 flex items-center justify-center gap-3 py-4 text-base font-semibold transition-all ${activeTab === tab.id ? "bg-surface text-brand border-b-2 border-brand" : "text-text-secondary hover:bg-hover"}`}
               >
                 <tab.icon className="w-4 h-4" /> {tab.label}
               </button>
@@ -235,23 +235,23 @@ export const ComposeBuilder = ({
         </div>
       </div>
 
-      <div className="flex flex-col md:flex-row items-center justify-between p-6 bg-ui-accent/30 border border-ui-border rounded-xl mt-auto shadow-sm gap-4">
+      <div className="flex flex-col md:flex-row items-center justify-between p-6 bg-surface2/30 border border-border rounded-md mt-auto shadow-sm gap-4">
         <div className="flex items-center gap-5 w-full md:w-auto">
-          <div className="p-3 bg-ui-bg rounded-lg border border-ui-border shrink-0">
+          <div className="p-3 bg-surface rounded-sm border border-border shrink-0">
             <Settings2 className="w-6 h-6 text-brand" />
           </div>
           <div>
-            <p className="text-base font-semibold text-text-main">
+            <p className="text-lg font-semibold text-text-primary">
               Stack verified ({services.length} services)
             </p>
-            <div className="text-xs text-text-sub mt-1 flex items-center gap-2">
-              <span>Save Location:</span>
+            <div className="text-sm text-text-secondary mt-1 flex items-center gap-2">
+              <span>Save location:</span>
               {targetDir ? (
                 <span className="font-mono text-brand truncate max-w-[200px]">
                   {targetDir}
                 </span>
               ) : (
-                <span className="text-rose-400">Not selected</span>
+                <span className="text-danger">Not selected</span>
               )}
             </div>
           </div>
@@ -261,28 +261,28 @@ export const ComposeBuilder = ({
             type="text"
             value={stackName}
             onChange={(e) => setStackName(e.target.value)}
-            placeholder="Stack Name"
-            className="bg-ui-bg border border-ui-border rounded-lg px-4 py-3 text-sm text-text-main focus:border-brand/50 outline-none w-40 transition-colors"
+            placeholder="Stack name"
+            className="bg-surface border border-border rounded-sm px-4 py-3 text-base text-text-primary focus:border-brand/50 outline-none w-40 transition-colors"
           />
           <button
             onClick={() => setShowPicker(true)}
-            className="bg-ui-bg border border-ui-border hover:border-brand/50 text-text-main px-4 py-3 rounded-lg text-sm font-semibold transition-all shadow-sm flex items-center gap-2"
+            className="bg-surface border border-border hover:border-brand/50 text-text-primary px-4 py-3 rounded-sm text-base font-semibold transition-all shadow-sm flex items-center gap-2"
           >
             <FolderOpen className="w-4 h-4" /> Browse
           </button>
           <button
             onClick={() => onDeploy(services, stackName, targetDir)}
             disabled={isDeploying || !stackName || !targetDir}
-            className="bg-brand hover:bg-brand/90 text-white px-8 py-3 rounded-lg text-sm font-semibold transition-all shadow-md active:scale-95 disabled:opacity-50"
+            className="bg-brand hover:bg-brand-hover text-white px-8 py-3 rounded-sm text-base font-semibold transition-all shadow-md active:scale-95 disabled:opacity-50"
           >
-            {isDeploying ? "Deploying..." : "Deploy Stack"}
+            {isDeploying ? "Deploying..." : "Deploy stack"}
           </button>
         </div>
       </div>
 
       {showPicker && (
         <DirectoryPicker
-          title="Select Save Location"
+          title="Select save location"
           onSelect={(path) => {
             setTargetDir(path);
             setShowPicker(false);

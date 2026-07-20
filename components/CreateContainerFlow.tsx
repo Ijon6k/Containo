@@ -157,23 +157,23 @@ export default function CreateContainerFlow({
 
   return (
     <div className="flex flex-col min-h-[calc(100vh-80px)] animate-in fade-in duration-500">
-      <div className="flex justify-between items-center mb-10 pb-6 border-b border-ui-border">
+      <div className="flex justify-between items-center mb-10 pb-6 border-b border-border">
         <div className="flex items-center gap-6">
           <button
             onClick={step === "mode" ? onBack : () => setStep("mode")}
-            className="p-2 hover:bg-ui-accent rounded-md transition-all text-text-sub hover:text-text-main"
+            className="p-2 hover:bg-hover rounded-sm transition-all text-text-secondary hover:text-text-primary"
           >
             <ChevronLeft className="w-6 h-6" />
           </button>
           <div>
-            <h1 className="text-xl font-semibold text-text-main">
+            <h1 className="text-xl font-semibold text-text-primary">
               {step === "mode"
-                ? "New Deployment"
+                ? "New deployment"
                 : step === "form"
-                  ? `Configure ${mode === "compose" ? "Stack" : "Container"}`
-                  : "Deployment Progress"}
+                  ? `Configure ${mode === "compose" ? "stack" : "container"}`
+                  : "Deployment progress"}
             </h1>
-            <p className="text-sm text-text-sub mt-1">
+            <p className="text-base text-text-secondary mt-1">
               {step === "mode"
                 ? "Select your preferred deployment method"
                 : step === "form"
@@ -184,12 +184,12 @@ export default function CreateContainerFlow({
         </div>
         <button
           onClick={onBack}
-          className="px-4 py-2 text-sm font-semibold text-text-sub hover:text-text-main transition-all"
+          className="px-4 py-2 text-base font-semibold text-text-secondary hover:text-text-primary transition-all"
         >
           Cancel
         </button>
       </div>
-      <div className="flex-1 bg-ui-bg border border-ui-border rounded-md shadow-sm flex flex-col overflow-hidden">
+      <div className="flex-1 bg-surface border border-border rounded-md shadow-sm flex flex-col overflow-hidden">
         <div className="flex-1 overflow-y-auto custom-scrollbar p-10">
           <AnimatePresence mode="wait">
             {step === "mode" && (
@@ -252,11 +252,6 @@ export default function CreateContainerFlow({
             )}
           </AnimatePresence>
         </div>
-      </div>
-      <div className="mt-6 flex justify-end">
-        <span className="text-xs text-text-sub opacity-30 font-medium">
-          Containo
-        </span>
       </div>
     </div>
   );

@@ -1,34 +1,70 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+
+export type Theme = 'dark' | 'dim' | 'light';
 
 interface ThemeContextType {
-  theme: 'light' | 'dark';
-  toggleTheme: () => void;
+  theme: Theme;
+  setTheme: (t: Theme) => void;
+  cycleTheme: () => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | null>(null);
 
+const STORAGE_KEY = 'containo_theme';
+const THEMES: Theme[] = ['dark', 'dim', 'light'];
+
+function getSystemTheme(): Theme {
+  if (typeof window === 'undefined') return 'dark';
+  return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+}
+
+function getInitialTheme(): Theme {
+  if (typeof window === 'undefined') return 'dark';
+  const saved = localStorage.getItem(STORAGE_KEY) as Theme | null;
+  if (saved && THEMES.includes(saved)) return saved;
+  return getSystemTheme();
+}
+
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
+  const [theme, setThemeState] = useState<Theme>('dark');
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    const savedTheme = localStorage.getItem('containo_theme') as 'light' | 'dark';
-    if (savedTheme) setTheme(savedTheme);
+    setThemeState(getInitialTheme());
+    setMounted(true);
   }, []);
 
   useEffect(() => {
-    document.documentElement.className = theme;
+    if (!mounted) return;
     document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('containo_theme', theme);
-  }, [theme]);
+    localStorage.setItem(STORAGE_KEY, theme);
+  }, [theme, mounted]);
 
-  const toggleTheme = () => {
-    setTheme(prev => prev === 'light' ? 'dark' : 'light');
-  };
+  const setTheme = useCallback((t: Theme) => setThemeState(t), []);
+
+  const cycleTheme = useCallback(() => {
+    setThemeState(prev => {
+      const idx = THEMES.indexOf(prev);
+      return THEMES[(idx + 1) % THEMES.length];
+    });
+  }, []);
+
+  // Listen for system theme changes
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-color-scheme: light)');
+    const handler = () => {
+      if (!localStorage.getItem(STORAGE_KEY)) {
+        setThemeState(mq.matches ? 'light' : 'dark');
+      }
+    };
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
 
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme }}>
+    <ThemeContext.Provider value={{ theme, setTheme, cycleTheme }}>
       {children}
     </ThemeContext.Provider>
   );

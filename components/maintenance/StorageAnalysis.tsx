@@ -1,130 +1,124 @@
 'use client';
 
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { HardDrive } from 'lucide-react';
 
 interface StorageAnalysisProps {
   systemInfo: any;
 }
 
+function freeColor(pct: number): string {
+  if (pct <= 10) return '#f87171';
+  if (pct <= 25) return '#fbbf24';
+  if (pct <= 50) return '#a78bfa';
+  return '#34d399';
+}
+
 export function StorageAnalysis({ systemInfo }: StorageAnalysisProps) {
-  const [storageView, setStorageView] = useState<'bar' | 'donut'>('bar');
+  const [view, setView] = useState<'bar' | 'donut'>('bar');
+  const s = systemInfo?.storage || { hostTotal: 1, hostFree: 0, hostUsed: 0, systemBytes: 0, dockerBytes: 0 };
+  const systemGB = s.systemBytes / 1024 ** 3 || 0;
+  const dockerGB = s.dockerBytes / 1024 ** 3 || 0;
+  const freeGB = s.hostFree / 1024 ** 3 || 0;
+  const hostTotalGB = s.hostTotal / 1024 ** 3 || 0;
+  const usedPct = (s.hostUsed / s.hostTotal) * 100 || 0;
+  const freePct = (freeGB / hostTotalGB) * 100 || 0;
+  const systemPct = (s.systemBytes / s.hostTotal) * 100 || 0;
+  const dockerPct = (s.dockerBytes / s.hostTotal) * 100 || 0;
+
+  const pieData = [
+    { name: 'System', value: systemGB, color: '#555555' },
+    { name: 'Docker', value: dockerGB, color: '#a78bfa' },
+    { name: 'Free', value: Math.max(0, hostTotalGB - systemGB - dockerGB), color: 'transparent' },
+  ].filter(d => d.value > 0);
 
   return (
-    <div className="card p-6">
-      <div className="flex items-center justify-between mb-6">
-         <div className="flex items-center gap-3">
-            <div className="p-2 rounded-md bg-blue-50 dark:bg-blue-500/10 text-blue-500">
-               <HardDrive className="w-5 h-5" />
-            </div>
-            <h3 className="text-lg font-bold text-text-main">Global Storage Analysis</h3>
-         </div>
-         <div className="flex items-center gap-2">
-            <div className="flex bg-ui-accent rounded-md p-0.5">
-               <button 
-                 onClick={() => setStorageView('bar')}
-                 className={`px-2 py-1 text-[10px] font-bold rounded-sm transition-all ${storageView === 'bar' ? 'bg-ui-bg shadow-sm text-brand' : 'text-text-sub'}`}
-               >
-                  Bar
-               </button>
-               <button 
-                 onClick={() => setStorageView('donut')}
-                 className={`px-2 py-1 text-[10px] font-bold rounded-sm transition-all ${storageView === 'donut' ? 'bg-ui-bg shadow-sm text-brand' : 'text-text-sub'}`}
-               >
-                  Donut
-               </button>
-            </div>
-            <span className="text-[10px] font-bold text-text-sub ml-2">Total: {((systemInfo?.storage?.hostTotal || 0) / (1024**3)).toFixed(1)} GB</span>
-         </div>
+    <div className="bg-surface border border-border rounded-md p-5">
+      <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-md bg-brand/10 text-brand flex items-center justify-center">
+            <HardDrive className="w-4 h-4" />
+          </div>
+          <h3 className="text-[15px] font-semibold text-text-primary">Storage analysis</h3>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="flex bg-surface2 rounded-sm p-0.5">
+            <button
+              onClick={() => setView('bar')}
+              className={`px-2.5 py-1 text-[12px] rounded-md transition-colors ${view === 'bar' ? 'bg-surface border border-border text-brand' : 'text-text-secondary'}`}
+            >Bar</button>
+            <button
+              onClick={() => setView('donut')}
+              className={`px-2.5 py-1 text-[12px] rounded-md transition-colors ${view === 'donut' ? 'bg-surface border border-border text-brand' : 'text-text-secondary'}`}
+            >Donut</button>
+          </div>
+          <span className="text-[12px] text-text-tertiary">{hostTotalGB.toFixed(1)} GB total</span>
+        </div>
       </div>
-      
-      <div className="space-y-8">
-         {storageView === 'bar' ? (
-           <div className="space-y-3">
-              <div className="w-full h-8 bg-ui-accent rounded-lg overflow-hidden flex shadow-inner">
-                 {/* OS / System */}
-                 <motion.div 
-                   title="System / OS"
-                   initial={{ width: 0 }}
-                   animate={{ width: `${((systemInfo?.storage?.systemBytes || 0) / (systemInfo?.storage?.hostTotal || 1)) * 100}%` }}
-                   className="h-full bg-slate-500 border-r border-white/10"
-                 />
-                 {/* Docker Data */}
-                 <motion.div 
-                   title="Docker Data"
-                   initial={{ width: 0 }}
-                   animate={{ width: `${((systemInfo?.storage?.dockerBytes || 0) / (systemInfo?.storage?.hostTotal || 1)) * 100}%` }}
-                   className="h-full bg-brand border-r border-white/10"
-                 />
-                 {/* Free Space */}
-                 <div className="flex-1 h-full bg-emerald-500/20" title="Free Space" />
-              </div>
-           </div>
-         ) : (
-           <div className="flex justify-center py-4">
-              <div className="relative w-48 h-48">
-                 <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
-                    {/* Free Space Base */}
-                    <circle cx="50" cy="50" r="40" fill="none" stroke="currentColor" strokeWidth="12" className="text-emerald-500/20" />
-                    
-                    {/* OS / System */}
-                    {(() => {
-                       const osPct = ((systemInfo?.storage?.systemBytes || 0) / (systemInfo?.storage?.hostTotal || 1)) * 100;
-                       const dockerPct = ((systemInfo?.storage?.dockerBytes || 0) / (systemInfo?.storage?.hostTotal || 1)) * 100;
-                       return (
-                         <>
-                           <motion.circle 
-                             cx="50" cy="50" r="40" fill="none" stroke="currentColor" strokeWidth="12"
-                             strokeDasharray={`${osPct * 2.51} 251`}
-                             initial={{ strokeDashoffset: 0 }}
-                             className="text-slate-500"
-                           />
-                           <motion.circle 
-                             cx="50" cy="50" r="40" fill="none" stroke="currentColor" strokeWidth="12"
-                             strokeDasharray={`${dockerPct * 2.51} 251`}
-                             strokeDashoffset={-osPct * 2.51}
-                             initial={{ opacity: 0 }}
-                             animate={{ opacity: 1 }}
-                             className="text-brand"
-                           />
-                         </>
-                       );
-                    })()}
-                 </svg>
-                 <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-[10px] font-bold text-text-sub uppercase tracking-tighter">Usage</span>
-                    <span className="text-xl font-bold text-text-main">{(((systemInfo?.storage?.hostUsed || 0) / (systemInfo?.storage?.hostTotal || 1)) * 100).toFixed(0)}%</span>
-                 </div>
-              </div>
-           </div>
-         )}
 
-         {/* Legend */}
-         <div className="grid grid-cols-3 gap-4">
-            <div className="flex items-center gap-2">
-               <div className="w-3 h-3 rounded-sm bg-slate-500" />
-               <div className="flex flex-col">
-                  <span className="text-[10px] font-bold text-text-sub uppercase tracking-tighter">System / OS</span>
-                  <span className="text-xs font-bold text-text-main">{((systemInfo?.storage?.systemBytes || 0) / (1024**3)).toFixed(1)} GB</span>
-               </div>
+      <div className="mb-5">
+        {view === 'bar' ? (
+          <div className="space-y-4">
+            <div className="h-8 bg-hover rounded-full overflow-hidden flex border border-border/30">
+              <div
+                className="h-full bg-[#555555] flex items-center justify-center text-[11px] text-white/70 font-medium min-w-[40px] transition-all duration-500"
+                style={{ width: `${systemPct}%` }}
+              >
+                {systemPct > 8 ? `${systemGB.toFixed(0)} GB` : ''}
+              </div>
+              <div
+                className="h-full bg-brand flex items-center justify-center text-[11px] text-white/70 font-medium min-w-[40px] transition-all duration-500"
+                style={{ width: `${dockerPct}%` }}
+              >
+                {dockerPct > 8 ? `${dockerGB.toFixed(0)} GB` : ''}
+              </div>
+              <div className="flex-1 h-full" />
             </div>
-            <div className="flex items-center gap-2">
-               <div className="w-3 h-3 rounded-sm bg-brand" />
-               <div className="flex flex-col">
-                  <span className="text-[10px] font-bold text-text-sub uppercase tracking-tighter">Docker Data</span>
-                  <span className="text-xs font-bold text-text-main">{((systemInfo?.storage?.dockerBytes || 0) / (1024**3)).toFixed(1)} GB</span>
-               </div>
+            <div className="flex items-center justify-between text-[12px]">
+              <span className="text-text-tertiary">System {systemPct.toFixed(0)}% · Docker {dockerPct.toFixed(0)}%</span>
+              <span className="text-text-primary font-medium">{freeGB.toFixed(0)} GB free</span>
             </div>
-            <div className="flex items-center gap-2">
-               <div className="w-3 h-3 rounded-sm bg-emerald-500/30" />
-               <div className="flex flex-col">
-                  <span className="text-[10px] font-bold text-text-sub uppercase tracking-tighter">Free Space</span>
-                  <span className="text-xs font-bold text-text-main">{((systemInfo?.storage?.hostFree || 0) / (1000**3)).toFixed(1)} GB</span>
-               </div>
+          </div>
+        ) : (
+          <div className="flex justify-center">
+            <div className="w-44 h-44">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie data={pieData} cx="50%" cy="50%" innerRadius={44} outerRadius={70}
+                    dataKey="value" stroke="none" isAnimationActive={false}>
+                    {pieData.map((entry, i) => (<Cell key={i} fill={entry.color} />))}
+                  </Pie>
+                  <Tooltip contentStyle={{ background: '#111', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 6, fontSize: 12 }}
+                    formatter={(val, name) => [`${Number(val).toFixed(0)} GB`, String(name)]} />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="text-center -mt-4">
+                <div className="text-[12px] text-text-tertiary">Used</div>
+                <div className="text-lg font-semibold text-text-primary" style={{ color: usedPct > 85 ? '#f87171' : usedPct > 65 ? '#fbbf24' : '#a78bfa' }}>
+                  {usedPct.toFixed(0)}%
+                </div>
+              </div>
             </div>
-         </div>
+          </div>
+        )}
       </div>
-   </div>
+
+      <div className="grid grid-cols-3 gap-4">
+        {[
+          { label: 'System', value: systemGB, color: 'bg-[#555555]' },
+          { label: 'Docker', value: dockerGB, color: 'bg-brand' },
+          { label: 'Free', value: freeGB, color: freePct <= 10 ? 'bg-danger' : freePct <= 25 ? 'bg-warning' : 'bg-success' },
+        ].map((item) => (
+          <div key={item.label} className="flex items-center gap-2">
+            <div className={`w-2.5 h-2.5 rounded-sm ${item.color} shrink-0`} />
+            <div>
+              <div className="text-[12px] text-text-tertiary">{item.label}</div>
+              <div className="text-[13px] font-semibold text-text-primary tabular-nums">{item.value.toFixed(1)} GB</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }

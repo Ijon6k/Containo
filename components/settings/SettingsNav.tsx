@@ -16,10 +16,10 @@ export function SettingsNav() {
       {items.map((item, i) => (
         <button 
           key={i}
-          className={`flex items-center gap-3 px-4 py-2 rounded-md text-sm font-medium transition-all ${
+          className={`flex items-center gap-3 px-4 py-2 rounded-sm text-base font-medium transition-all ${
             item.active 
-              ? 'bg-ui-accent text-text-main' 
-              : 'text-text-sub hover:text-text-main hover:bg-ui-accent/50'
+              ? 'bg-hover text-text-primary' 
+              : 'text-text-secondary hover:text-text-primary hover:bg-hover'
           }`}
         >
           <item.icon className="w-4 h-4" />

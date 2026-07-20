@@ -9,41 +9,41 @@ interface ConfirmModalProps {
 }
 
 export const ConfirmModal = ({ dialog, onClose }: ConfirmModalProps) => {
+  const colorMap: Record<string, { bg: string; text: string; btn: string }> = {
+    danger: { bg: 'bg-danger-bg text-danger', text: 'text-danger', btn: 'bg-danger hover:bg-danger/80' },
+    warning: { bg: 'bg-warning-bg text-warning', text: 'text-warning', btn: 'bg-warning hover:bg-warning/80' },
+    info: { bg: 'bg-brand/10 text-brand', text: 'text-brand', btn: 'bg-brand hover:bg-brand-hover' },
+  };
+
+  const c = colorMap[dialog.type] || colorMap.info;
+
   return (
     <AnimatePresence>
       {dialog.isOpen && (
-        <div className="fixed inset-0 z-[3000] flex items-center justify-center p-6 bg-zinc-950/60 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[3000] flex items-center justify-center p-6 bg-black/60 backdrop-blur-sm">
           <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
+            initial={{ opacity: 0, scale: 0.96 }}
             animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            className="card max-w-md w-full p-6 shadow-2xl"
+            exit={{ opacity: 0, scale: 0.96 }}
+            className="bg-surface border border-border rounded-md max-w-md w-full p-6 shadow-2xl"
           >
-            <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-4 ${
-              dialog.type === 'danger' ? 'bg-rose-500/10 text-rose-500' : 
-              dialog.type === 'warning' ? 'bg-amber-500/10 text-amber-500' : 
-              'bg-blue-500/10 text-blue-500'
-            }`}>
-              <AlertCircle className="w-6 h-6" />
+            <div className={`w-10 h-10 rounded-sm flex items-center justify-center mb-4 ${c.bg}`}>
+              <AlertCircle className="w-5 h-5" />
             </div>
-            <h3 className="text-xl font-bold text-text-main mb-2">{dialog.title}</h3>
-            <p className="text-text-sub text-sm leading-relaxed mb-6">
+            <h3 className="text-lg font-semibold text-text-primary mb-1.5">{dialog.title}</h3>
+            <p className="text-base text-text-secondary leading-relaxed mb-5">
               {dialog.message}
             </p>
-            <div className="flex gap-3">
+            <div className="flex gap-2.5">
               <button
                 onClick={onClose}
-                className="flex-1 px-4 py-2 rounded-md bg-ui-accent hover:bg-ui-accent/80 text-text-main font-bold transition-all"
+                className="flex-1 h-9 rounded-sm bg-surface2 hover:bg-hover text-text-secondary text-base font-medium transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={dialog.onConfirm}
-                className={`flex-1 px-4 py-2 rounded-md text-white font-bold transition-all ${
-                  dialog.type === 'danger' ? 'bg-rose-500 hover:bg-rose-600' : 
-                  dialog.type === 'warning' ? 'bg-amber-500 hover:bg-amber-600' : 
-                  'bg-brand hover:bg-brand/90'
-                }`}
+                className={`flex-1 h-9 rounded-sm text-white text-base font-medium transition-colors ${c.btn}`}
               >
                 Confirm
               </button>

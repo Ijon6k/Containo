@@ -10,22 +10,22 @@ interface ModeSwitcherProps {
 
 export const ModeSwitcher = ({ deploymentMode, setDeploymentMode }: ModeSwitcherProps) => {
   return (
-    <div className="flex bg-ui-accent p-1 rounded-md border border-ui-border self-start">
+    <div className="flex bg-surface2 p-1 rounded-sm border border-border self-start">
       <button 
         type="button"
         onClick={() => setDeploymentMode('form')}
-        className={`flex items-center gap-2 px-6 py-2 rounded-md text-sm font-semibold transition-all ${deploymentMode === 'form' ? 'bg-ui-bg text-text-main shadow-sm' : 'text-text-sub hover:text-text-main'}`}
+        className={`flex items-center gap-2 px-6 py-2 rounded-sm text-base font-semibold transition-all ${deploymentMode === 'form' ? 'bg-surface text-text-primary shadow-sm' : 'text-text-secondary hover:text-text-primary'}`}
       >
         <Layout className="w-4 h-4" />
-        Form Mode
+        Form mode
       </button>
       <button 
         type="button"
         onClick={() => setDeploymentMode('cli')}
-        className={`flex items-center gap-2 px-6 py-2 rounded-md text-sm font-semibold transition-all ${deploymentMode === 'cli' ? 'bg-ui-bg text-text-main shadow-sm' : 'text-text-sub hover:text-text-main'}`}
+        className={`flex items-center gap-2 px-6 py-2 rounded-sm text-base font-semibold transition-all ${deploymentMode === 'cli' ? 'bg-surface text-text-primary shadow-sm' : 'text-text-secondary hover:text-text-primary'}`}
       >
         <Terminal className="w-4 h-4" />
-        CLI Mode
+        CLI mode
       </button>
     </div>
   );

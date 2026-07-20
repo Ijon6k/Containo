@@ -122,13 +122,13 @@ export const SimpleForm = ({
             className="space-y-6 flex-1"
           >
             <div className="space-y-4 h-full flex flex-col">
-              <div className="flex items-center gap-3 border-b border-ui-border pb-4">
-                <Terminal className="w-5 h-5 text-text-sub" />
-                <h3 className="text-base font-semibold text-text-main">
-                  Command Line
+              <div className="flex items-center gap-3 border-b border-border pb-4">
+                <Terminal className="w-5 h-5 text-text-secondary" />
+                <h3 className="text-lg font-semibold text-text-primary">
+                  Command line
                 </h3>
               </div>
-              <p className="text-sm text-text-sub">
+              <p className="text-base text-text-secondary">
                 Paste your docker run command here. The system will parse it
                 automatically.
               </p>
@@ -136,38 +136,38 @@ export const SimpleForm = ({
                 value={cliCommand}
                 onChange={(e) => setCliCommand(e.target.value)}
                 placeholder="docker run -d --name app ..."
-                className="w-full h-48 lg:h-64 bg-ui-accent border border-ui-border rounded-md p-6 font-mono text-sm text-text-main focus:border-brand/50 outline-none leading-relaxed custom-scrollbar"
+                className="w-full h-48 lg:h-64 bg-surface2 border border-border rounded-sm p-6 font-mono text-base text-text-primary focus:border-brand/50 outline-none leading-relaxed custom-scrollbar"
               />
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Action */}
-      <div className="pt-8 border-t border-ui-border flex justify-end mt-auto gap-3">
+      {/* Actions */}
+      <div className="pt-8 border-t border-border flex justify-end mt-auto gap-3">
         {deploymentMode === "form" && (
           <button
             onClick={fillDemo}
             type="button"
-            className="text-amber-500 hover:text-amber-400 border border-amber-500/20 hover:border-amber-500/40 bg-amber-500/5 px-4 py-3 rounded-md text-sm font-semibold transition-all flex items-center gap-2"
+            className="border border-border text-text-secondary hover:text-text-primary hover:bg-hover px-4 py-3 rounded-sm text-base font-semibold transition-all flex items-center gap-2"
           >
             <Sparkles className="w-4 h-4" />
-            Try Demo
+            Try demo
           </button>
         )}
         {deploymentMode === "form" ? (
           <button
             onClick={handleSubmit(onSubmit)}
             disabled={isDeploying || !isValid}
-            className="bg-brand hover:bg-brand/90 text-white px-10 py-3 rounded-md text-sm font-semibold transition-all active:scale-95 disabled:opacity-30 disabled:grayscale shadow-sm"
+            className="bg-brand hover:bg-brand-hover text-white px-10 py-3 rounded-sm text-base font-semibold transition-all active:scale-95 disabled:opacity-30 disabled:grayscale shadow-sm"
           >
-            {isDeploying ? "Deploying..." : "Deploy Container"}
+            {isDeploying ? "Deploying..." : "Deploy container"}
           </button>
         ) : (
           <button
             onClick={() => onDeploy(undefined as any)}
             disabled={isDeploying || !cliCommand}
-            className="bg-brand hover:bg-brand/90 text-white px-10 py-3 rounded-md text-sm font-semibold transition-all active:scale-95 disabled:opacity-30 disabled:grayscale shadow-sm"
+            className="bg-brand hover:bg-brand-hover text-white px-10 py-3 rounded-sm text-base font-semibold transition-all active:scale-95 disabled:opacity-30 disabled:grayscale shadow-sm"
           >
             {isDeploying ? "Deploying..." : "Deploy from CLI"}
           </button>
