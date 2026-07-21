@@ -3,9 +3,7 @@ import { spawn, ChildProcess } from "child_process";
 import fs from "fs";
 import path from "path";
 import { logger } from "@/lib/core/logger";
-import { toContainerPath, toHostPath, fixVolumePaths } from "@/lib/utils/path-translation";
 
-// Graceful kill: SIGTERM first, SIGKILL after 3s if still alive
 function killProcess(child: ChildProcess) {
   if (child.killed) return;
   child.kill("SIGTERM");
@@ -14,13 +12,15 @@ function killProcess(child: ChildProcess) {
   }, 3000);
 }
 
-// Deploys a docker-compose stack with real-time SSE streaming output.
-// Accepts either a YAML string or a path to an existing compose file.
+// Resolve relative volume mounts (./data:/app) to absolute paths
+// so Docker Compose resolves them correctly from inside the container.
+function fixVolumeRelative(yaml: string, baseDir: string): string {
+  return yaml.replace(/^(\s*)-\s*\.\//gm, `$1- ${baseDir}/`);
+}
+
 export async function POST(req: NextRequest) {
   try {
-    const { targetPath: rawPath, yamlContent, composeFile } = await req.json();
-    const targetPath = toContainerPath(rawPath);
-    const hostDir = toHostPath(targetPath);
+    const { targetPath, yamlContent, composeFile } = await req.json();
 
     if (!targetPath) {
       return new Response(
@@ -36,17 +36,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Write compose file (with fixed volume paths) to target directory
     if (yamlContent) {
       if (!fs.existsSync(targetPath))
         fs.mkdirSync(targetPath, { recursive: true });
       fs.writeFileSync(
         path.join(targetPath, "docker-compose.yml"),
-        fixVolumePaths(yamlContent, hostDir),
+        fixVolumeRelative(yamlContent, targetPath),
         "utf8",
       );
     } else {
-      // Existing compose file: create a temp copy with fixed paths
       if (!fs.existsSync(targetPath)) {
         return new Response(
           JSON.stringify({ error: "Target directory does not exist" }),
@@ -62,7 +60,7 @@ export async function POST(req: NextRequest) {
         );
       }
       const raw = fs.readFileSync(yamlPath, "utf8");
-      const fixed = fixVolumePaths(raw, hostDir);
+      const fixed = fixVolumeRelative(raw, targetPath);
       if (fixed !== raw)
         fs.writeFileSync(
           path.join(targetPath, ".containo-temp-compose.yml"),
@@ -74,7 +72,6 @@ export async function POST(req: NextRequest) {
     const encoder = new TextEncoder();
     let child: ChildProcess | null = null;
 
-    // SSE stream: spawns `docker compose up -d` and streams output line-by-line
     const stream = new ReadableStream({
       start(controller) {
         const send = (msg: Record<string, unknown>) =>
@@ -95,7 +92,6 @@ export async function POST(req: NextRequest) {
         const proc = spawn("docker", args, { cwd: targetPath });
         child = proc;
 
-        // Reassemble partial lines from stdout/stderr chunks
         let buffer = "";
         const onData = (data: Buffer) => {
           buffer += data.toString();
@@ -103,7 +99,6 @@ export async function POST(req: NextRequest) {
           buffer = lines.pop() || "";
           for (const line of lines) {
             if (!line.trim()) continue;
-            // Collapse carriage-return progress spinners to the final frame
             const parts = line.split("\r");
             const final = parts[parts.length - 1].trim();
             if (final) send({ type: "log", message: final });
@@ -114,9 +109,7 @@ export async function POST(req: NextRequest) {
         proc.stderr.on("data", onData);
 
         proc.on("close", (code) => {
-          try {
-            fs.unlinkSync(tempFile);
-          } catch {}
+          try { fs.unlinkSync(tempFile); } catch {}
           if (buffer.trim()) {
             const parts = buffer.split("\r");
             const final = parts[parts.length - 1].trim();
@@ -126,28 +119,19 @@ export async function POST(req: NextRequest) {
             logger.success("API", `Compose deploy succeeded (${targetPath})`);
             send({ type: "success", message: "Stack deployed successfully" });
           } else {
-            logger.error(
-              "API",
-              `Compose deploy failed with exit code ${code} (${targetPath})`,
-            );
-            send({
-              type: "error",
-              message: `docker compose exited with code ${code}`,
-            });
+            logger.error("API", `Compose deploy failed with exit code ${code} (${targetPath})`);
+            send({ type: "error", message: `docker compose exited with code ${code}` });
           }
           controller.close();
         });
 
         proc.on("error", (err) => {
           logger.error("API", `Compose deploy error (${targetPath})`, err);
-          try {
-            fs.unlinkSync(tempFile);
-          } catch {}
+          try { fs.unlinkSync(tempFile); } catch {}
           send({ type: "error", message: err.message });
           controller.close();
         });
 
-        // Client abort (stop button / tab close) → kill the compose process
         req.signal.addEventListener("abort", () => {
           if (child) killProcess(child);
         });

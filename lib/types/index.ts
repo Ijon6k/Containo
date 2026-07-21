@@ -55,3 +55,23 @@ export interface ContainerStats {
   blockReadMB: number;
   blockWriteMB: number;
 }
+
+export interface ComposeNetwork {
+  id: string;
+  name: string;
+  driver: string;
+  subnet: string;
+  gateway: string;
+  external: boolean;
+  labels: string;
+}
+
+export interface ComposeVolume {
+  id: string;
+  name: string;
+  driver: string;
+  type: 'named' | 'bind';
+  source: string;
+  target: string;
+  labels: string;
+}

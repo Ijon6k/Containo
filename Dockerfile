@@ -44,18 +44,15 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3611
 ENV HOSTNAME=0.0.0.0
 
-# Install runtime deps + create user with docker.sock access
-# The 'docker' group must have GID 985 to match the host's /var/run/docker.sock
-RUN apk add --no-cache docker-cli docker-cli-compose shadow && \
+
+RUN apk add --no-cache docker-cli docker-cli-compose && \
     addgroup -g 985 docker && \
-    addgroup --system --gid 1001 bunjs && \
-    adduser --system --uid 1001 bunjs && \
-    addgroup bunjs docker
+    addgroup bun docker
 
 # Copy production artifacts
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/static ./.next/static
-COPY --from=builder --chown=bunjs:bunjs /app/.next/standalone ./
+COPY --from=builder --chown=bun:bun /app/.next/standalone ./
 
 # Clean junk files from standalone output (keep server.ts — entry point)
 RUN rm -rf graphify-out context docs Dockerfile docker-compose.yml \
@@ -64,12 +61,12 @@ RUN rm -rf graphify-out context docs Dockerfile docker-compose.yml \
     skills-lock.json .npmrc README.md
 
 # Copy slim production node_modules
-COPY --from=prod-deps --chown=bunjs:bunjs /app/node_modules ./node_modules
+COPY --from=prod-deps --chown=bun:bun /app/node_modules ./node_modules
 
 # Ensure data directory exists
-RUN mkdir -p /app/data && chown bunjs:bunjs /app/data
+RUN mkdir -p /app/data && chown bun:bun /app/data
 
-USER bunjs
+USER bun
 EXPOSE 3611
 
 # Run directly with Bun — no tsx, no esbuild, no node-gyp rebuilds
