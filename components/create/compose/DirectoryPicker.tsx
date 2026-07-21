@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { motion } from "framer-motion";
 import {
   Folder,
   FileCode,
@@ -8,11 +7,18 @@ import {
   CheckCircle2,
   X,
 } from "lucide-react";
+import { useNotify } from "@/components/providers/NotificationProvider";
 
 interface FileItem {
   name: string;
   path: string;
   isDirectory: boolean;
+}
+
+interface DirectoryResponse {
+  currentPath: string;
+  parentPath: string;
+  items: FileItem[];
 }
 
 interface DirectoryPickerProps {
@@ -22,66 +28,77 @@ interface DirectoryPickerProps {
   initialPath?: string;
 }
 
-export const DirectoryPicker = ({
+/**
+ * Browse and select a directory on the host filesystem.
+ *
+ * Uses the validated /api/fs endpoint, which restricts navigation
+ * to safe directories under /home, /srv, /opt, /var/lib.
+ */
+export function DirectoryPicker({
   onSelect,
   onCancel,
   title = "Select target directory",
   initialPath = "",
-}: DirectoryPickerProps) => {
-  const [currentPath, setCurrentPath] = useState(initialPath);
+}: DirectoryPickerProps) {
+  const { addToast } = useNotify();
+  const [currentPath, setCurrentPath] = useState(initialPath || "");
   const [parentPath, setParentPath] = useState("/");
   const [items, setItems] = useState<FileItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const fetchDirectory = async (path: string) => {
+  useEffect(() => {
+    fetchDirectory(currentPath);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function fetchDirectory(path: string) {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(`/api/fs?path=${encodeURIComponent(path)}`);
-      if (!res.ok) throw new Error("Failed to read directory");
-      const data = await res.json();
+      const url = path
+        ? `/api/fs?path=${encodeURIComponent(path)}`
+        : "/api/fs";
+      const res = await fetch(url);
+      const data: DirectoryResponse & { error?: string } = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to read directory");
+      }
       setCurrentPath(data.currentPath);
       setParentPath(data.parentPath);
       setItems(data.items);
     } catch (err: any) {
       setError(err.message);
+      addToast(`Cannot open directory: ${err.message}`, "error");
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    fetchDirectory(currentPath);
-  }, [currentPath]);
+  }
 
   const handleItemClick = (item: FileItem) => {
     if (item.isDirectory) {
       fetchDirectory(item.path);
     } else {
+      // Clicking a compose file selects the parent directory
       onSelect(currentPath);
     }
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.95 }}
-        className="bg-surface border border-border rounded-md shadow-2xl w-full max-w-2xl flex flex-col overflow-hidden"
-      >
+      <div className="bg-surface border border-border rounded-md shadow-2xl w-full max-w-2xl flex flex-col overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-border bg-surface2/30">
           <div>
             <h3 className="text-xl font-bold text-text-primary">{title}</h3>
             <p className="text-sm text-text-secondary mt-1 font-mono">
-              {currentPath}
+              {currentPath || "/"}
             </p>
           </div>
           <button
             onClick={onCancel}
             className="p-2 text-text-secondary hover:text-text-primary hover:bg-hover rounded-sm transition-colors"
+            aria-label="Close directory picker"
           >
             <X className="w-5 h-5" />
           </button>
@@ -128,14 +145,14 @@ export const DirectoryPicker = ({
           )}
 
           <div className="space-y-1">
-            {currentPath !== "/" && (
+            {currentPath && currentPath !== "/" && parentPath && parentPath !== currentPath && (
               <button
                 onClick={() => fetchDirectory(parentPath)}
                 className="w-full flex items-center gap-3 p-3 hover:bg-hover rounded-sm transition-colors text-left"
               >
                 <CornerLeftUp className="w-5 h-5 text-text-secondary" />
                 <span className="text-base font-semibold text-text-secondary">
-                  .. (Go up)
+                  .. (Go up to {parentPath})
                 </span>
               </button>
             )}
@@ -146,9 +163,9 @@ export const DirectoryPicker = ({
               </div>
             )}
 
-            {items.map((item, idx) => (
+            {items.map((item) => (
               <button
-                key={idx}
+                key={item.path}
                 onClick={() => handleItemClick(item)}
                 className="w-full flex items-center gap-3 p-3 hover:bg-hover rounded-sm transition-colors text-left group"
               >
@@ -186,7 +203,7 @@ export const DirectoryPicker = ({
             </button>
           </div>
         </div>
-      </motion.div>
+      </div>
     </div>
   );
-};
+}
