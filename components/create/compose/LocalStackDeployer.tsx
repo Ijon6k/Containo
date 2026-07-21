@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import { motion } from "framer-motion";
 import { FolderOpen, Play, Loader2, Search } from "lucide-react";
 import { DirectoryPicker } from "./DirectoryPicker";
+import { useNotify } from "@/components/providers/NotificationProvider";
 
 interface ComposeFile {
   name: string;
@@ -13,52 +13,59 @@ interface LocalStackDeployerProps {
   isDeploying: boolean;
 }
 
-export const LocalStackDeployer = ({
+const COMPOSE_FILE_PATTERN = /^docker-compose.*\.(yml|yaml)$/;
+
+/**
+ * Deploy an existing docker-compose project from the host filesystem.
+ *
+ * Two ways to target the project directory:
+ *   1. Paste the path directly into the input
+ *   2. Click "browse" to use the DirectoryPicker
+ *
+ * When the directory contains multiple compose files, the user picks one.
+ */
+export function LocalStackDeployer({
   onDeployExisting,
   isDeploying,
-}: LocalStackDeployerProps) => {
+}: LocalStackDeployerProps) {
+  const { addToast } = useNotify();
   const [showPicker, setShowPicker] = useState(false);
   const [selectedPath, setSelectedPath] = useState("");
   const [pathInput, setPathInput] = useState("");
   const [composeFiles, setComposeFiles] = useState<ComposeFile[]>([]);
   const [selectedFile, setSelectedFile] = useState("");
 
-  const applyPath = (p: string) => {
+  async function loadPath(p: string) {
     setSelectedPath(p);
     setPathInput(p);
     setSelectedFile("");
-    // Auto-detect compose files in this directory
-    fetch(`/api/fs?path=${encodeURIComponent(p)}`)
-      .then((r) => r.json())
-      .then((data) => {
-        const files: ComposeFile[] = (data.items || [])
-          .filter(
-            (item: any) =>
-              !item.isDirectory &&
-              /^docker-compose.*\.(yml|yaml)$/.test(item.name),
-          )
-          .map((item: any) => ({ name: item.name, path: item.path }));
-        setComposeFiles(files);
-        if (files.length === 1 && files[0].name === "docker-compose.yml") {
-          setSelectedFile(files[0].name);
-        } else if (files.length === 1) {
-          setSelectedFile(files[0].name);
-        }
-      })
-      .catch(() => setComposeFiles([]));
-  };
+    setComposeFiles([]);
+    try {
+      const url = `/api/fs?path=${encodeURIComponent(p)}`;
+      const res = await fetch(url);
+      if (!res.ok) {
+        addToast(`Cannot read directory: ${p}`, "error");
+        return;
+      }
+      const data = await res.json();
+      const files: ComposeFile[] = (data.items || [])
+        .filter(
+          (item: any) => !item.isDirectory && COMPOSE_FILE_PATTERN.test(item.name),
+        )
+        .map((item: any) => ({ name: item.name, path: item.path }));
+      setComposeFiles(files);
+      if (files.length > 0) setSelectedFile(files[0].name);
+    } catch {
+      addToast(`Failed to read directory: ${p}`, "error");
+    }
+  }
 
   const handleGo = () => {
-    if (pathInput.trim()) applyPath(pathInput.trim());
+    if (pathInput.trim()) loadPath(pathInput.trim());
   };
 
   return (
-    <motion.div
-      key="existing"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="h-full flex flex-col items-center justify-center p-8 text-center max-w-md mx-auto"
-    >
+    <div className="h-full flex flex-col items-center justify-center p-8 text-center max-w-md mx-auto">
       <div className="w-20 h-20 bg-brand/10 rounded-full flex items-center justify-center mb-6">
         <FolderOpen className="w-10 h-10 text-brand" />
       </div>
@@ -123,7 +130,7 @@ export const LocalStackDeployer = ({
           <div className="space-y-1">
             {composeFiles.map((f) => (
               <button
-                key={f.name}
+                key={f.path}
                 onClick={() => setSelectedFile(f.name)}
                 className={`w-full text-left px-3 py-2 rounded-sm text-base font-mono transition-all ${
                   selectedFile === f.name
@@ -148,9 +155,7 @@ export const LocalStackDeployer = ({
       )}
 
       <button
-        onClick={() =>
-          onDeployExisting(selectedPath, selectedFile || undefined)
-        }
+        onClick={() => onDeployExisting(selectedPath, selectedFile || undefined)}
         disabled={
           !selectedPath ||
           isDeploying ||
@@ -175,13 +180,13 @@ export const LocalStackDeployer = ({
         <DirectoryPicker
           title="Select project folder"
           onSelect={(path) => {
-            applyPath(path);
+            loadPath(path);
             setShowPicker(false);
           }}
           onCancel={() => setShowPicker(false)}
-          initialPath={selectedPath || ""}
+          initialPath={selectedPath}
         />
       )}
-    </motion.div>
+    </div>
   );
-};
+}

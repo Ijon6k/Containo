@@ -1,100 +1,109 @@
-'use client';
+"use client";
 
-import React, { useState, useRef } from 'react';
-import { useRouter } from 'next/navigation';
-import { ChevronLeft } from 'lucide-react';
-import { ComposeBuilder } from '@/components/create/ComposeBuilder';
-import { DeploymentLogs } from '@/components/create/DeploymentLogs';
-import { useNotify } from '@/components/providers/NotificationProvider';
-import { buildComposeYaml } from '@/lib/services/compose-yaml.service';
+import React, { useState, useRef } from "react";
+import { useRouter } from "next/navigation";
+import { ChevronLeft } from "lucide-react";
+import { ComposeBuilder } from "@/components/create/ComposeBuilder";
+import { DeploymentLogs } from "@/components/create/DeploymentLogs";
+import { useNotify } from "@/components/providers/NotificationProvider";
+import { buildComposeYaml } from "@/lib/services/compose-yaml.service";
+import { sanitizeStackName } from "@/lib/utils/path";
+import { consumeNDJSONChunk, flushNDJSONBuffer } from "@/lib/utils/sse";
+import {
+  ServiceData,
+  ComposeNetwork,
+  ComposeVolume,
+} from "@/lib/types";
 
 export default function ComposeDeployPage() {
   const router = useRouter();
   const { addToast } = useNotify();
-  const [step, setStep] = useState<'form' | 'logs'>('form');
+  const [step, setStep] = useState<"form" | "logs">("form");
   const [isDeploying, setIsDeploying] = useState(false);
   const [deploymentLogs, setDeploymentLogs] = useState<string[]>([]);
   const [deploymentComplete, setDeploymentComplete] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
 
-  const streamComposeDeploy = async (body: Record<string, string>) => {
-    setStep('logs');
+  async function streamComposeDeploy(body: Record<string, string>) {
+    setStep("logs");
     setDeploymentLogs([]);
     setDeploymentComplete(false);
     setIsDeploying(true);
     const controller = new AbortController();
     abortRef.current = controller;
-    const decoder = new TextDecoder();
 
     try {
-      const res = await fetch('/api/compose/deploy', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch("/api/compose/deploy", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
         signal: controller.signal,
       });
       if (!res.ok) throw new Error(`Server returned ${res.status}`);
-      const reader = res.body?.getReader();
-      if (!reader) throw new Error('No response stream');
 
-      let buffer = '';
-      while (true) {
+      const reader = res.body?.getReader();
+      if (!reader) throw new Error("No response stream");
+
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (!controller.signal.aborted) {
         const { done, value } = await reader.read();
         if (done) break;
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || '';
-        for (const line of lines) {
-          if (!line.trim()) continue;
-          try {
-            const p = JSON.parse(line);
-            if (p.type === 'log' || p.type === 'create')
-              setDeploymentLogs((prev) => [...prev, p.message]);
-            else if (p.type === 'success') {
-              setDeploymentLogs((prev) => [...prev, `[SUCCESS] ${p.message}`]);
-              setDeploymentComplete(true);
-            } else if (p.type === 'error') {
-              setDeploymentLogs((prev) => [...prev, `[ERROR] ${p.message}`]);
-              setDeploymentComplete(true);
-              addToast(p.message, 'error');
-            }
-          } catch {
-            setDeploymentLogs((prev) => [...prev, line]);
-          }
-        }
+        const chunk = decoder.decode(value, { stream: true });
+        buffer = consumeNDJSONChunk(buffer, chunk, handleServerEvent);
       }
-      if (buffer.trim()) {
-        try {
-          const p = JSON.parse(buffer);
-          if (p.type === 'success') {
-            setDeploymentLogs((prev) => [...prev, `[SUCCESS] ${p.message}`]);
-            setDeploymentComplete(true);
-          }
-        } catch {
-          setDeploymentLogs((prev) => [...prev, buffer.trim()]);
-        }
-      }
+      flushNDJSONBuffer(buffer, handleServerEvent);
     } catch (err: any) {
-      if (err.name === 'AbortError') {
-        setDeploymentLogs((prev) => [...prev, '[STOPPED] Deployment cancelled']);
+      if (err.name === "AbortError") {
+        appendLog("[STOPPED] Deployment cancelled");
         setDeploymentComplete(true);
-        addToast('Deployment stopped', 'error');
+        addToast("Deployment stopped", "error");
       } else {
-        setDeploymentLogs((prev) => [...prev, `[ERROR] ${err.message}`]);
+        appendLog(`[ERROR] ${err.message}`);
         setDeploymentComplete(true);
-        addToast(err.message, 'error');
+        addToast(err.message, "error");
       }
     } finally {
       setIsDeploying(false);
       abortRef.current = null;
     }
-  };
 
-  const handleDeploy = (services: any, stackName: string, targetDir: string) => {
-    const yaml = buildComposeYaml(services);
-    const clean = targetDir.endsWith('/') ? targetDir.slice(0, -1) : targetDir;
-    // ponytail: sanitize stackName — only allow safe path characters
-    const safeName = stackName.replace(/[^a-zA-Z0-9_\-.]/g, '-').slice(0, 64);
+    function handleServerEvent(parsed: any, raw: string) {
+      switch (parsed?.type) {
+        case "log":
+        case "create":
+          appendLog(parsed.message);
+          break;
+        case "success":
+          appendLog(`[SUCCESS] ${parsed.message}`);
+          setDeploymentComplete(true);
+          break;
+        case "error":
+          appendLog(`[ERROR] ${parsed.message}`);
+          setDeploymentComplete(true);
+          addToast(parsed.message, "error");
+          break;
+        default:
+          appendLog(raw);
+      }
+    }
+
+    function appendLog(message: string) {
+      setDeploymentLogs((prev) => [...prev, message]);
+    }
+  }
+
+  const handleDeploy = (
+    services: ServiceData[],
+    stackName: string,
+    targetDir: string,
+    networks: ComposeNetwork[] = [],
+    volumes: ComposeVolume[] = [],
+  ) => {
+    const yaml = buildComposeYaml(services, networks, volumes);
+    const clean = targetDir.endsWith("/") ? targetDir.slice(0, -1) : targetDir;
+    const safeName = sanitizeStackName(stackName);
     streamComposeDeploy({ targetPath: `${clean}/${safeName}`, yamlContent: yaml });
   };
 
@@ -106,7 +115,7 @@ export default function ComposeDeployPage() {
     <div className="h-full flex flex-col">
       <div className="flex items-center gap-3 mb-6">
         <button
-          onClick={() => router.push('/dashboard')}
+          onClick={() => router.push("/dashboard")}
           className="p-2 hover:bg-hover rounded-sm transition-all text-text-secondary hover:text-text-primary"
           aria-label="Back to dashboard"
         >
@@ -114,18 +123,18 @@ export default function ComposeDeployPage() {
         </button>
         <div>
           <h1 className="text-xl font-semibold text-text-primary">
-            {step === 'form' ? 'Configure stack' : 'Deployment progress'}
+            {step === "form" ? "Configure stack" : "Deployment progress"}
           </h1>
           <p className="text-sm text-text-secondary mt-0.5">
-            {step === 'form'
-              ? 'Build a multi-service Docker Compose stack with visual preview.'
-              : 'Monitoring deployment stream'}
+            {step === "form"
+              ? "Build a multi-service Docker Compose stack with visual preview."
+              : "Monitoring deployment stream"}
           </p>
         </div>
       </div>
 
       <div className="flex-1 min-h-0">
-        {step === 'form' ? (
+        {step === "form" ? (
           <ComposeBuilder
             onDeploy={handleDeploy}
             onDeployExisting={handleDeployExisting}
@@ -135,7 +144,7 @@ export default function ComposeDeployPage() {
           <DeploymentLogs
             logs={deploymentLogs}
             pullProgress={{}}
-            onClose={() => router.push('/dashboard')}
+            onClose={() => router.push("/dashboard")}
             isComplete={deploymentComplete}
             onStop={isDeploying ? () => abortRef.current?.abort() : undefined}
           />
