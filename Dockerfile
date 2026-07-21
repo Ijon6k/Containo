@@ -66,7 +66,12 @@ COPY --from=prod-deps --chown=bun:bun /app/node_modules ./node_modules
 # Ensure data directory exists
 RUN mkdir -p /app/data && chown bun:bun /app/data
 
-USER bun
+# Run as root by default so the filesystem operations in /api/fs work
+# regardless of host UID mapping (Docker Desktop on Windows/WSL2 maps
+# host file permissions via 9P and the bun user's UID=1000 may not
+# match the host user — running as root avoids EACCES on /home listings).
+# Path traversal is still blocked at the API layer via validateBrowsePath().
+USER root
 EXPOSE 3611
 
 # Run directly with Bun — no tsx, no esbuild, no node-gyp rebuilds
