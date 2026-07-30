@@ -95,7 +95,12 @@ export const SystemStats = ({ containers, systemInfo }: SystemStatsProps) => {
     Array.from({ length: 30 }, () => ({ v: 0 })),
   );
 
+  const prevTsRef = React.useRef(timestamp);
+
   useEffect(() => {
+    if (!timestamp || timestamp === prevTsRef.current) return;
+    prevTsRef.current = timestamp;
+
     setCpuHistory((prev) => {
       const next = [...prev, { v: sysCpu }];
       return next.length > 30 ? next.slice(next.length - 30) : next;

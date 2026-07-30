@@ -11,12 +11,12 @@ interface AuthLayoutProps {
 }
 
 export default function AuthLayout({ title, subtitle, badge, children }: AuthLayoutProps) {
-  const [isDarkMode, setIsDarkMode] = useState(true);
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(true);
 
   useEffect(() => {
-    // Check saved theme first, then document attribute, then system preference
     const savedTheme = localStorage.getItem('containo_theme');
     if (savedTheme) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsDarkMode(savedTheme === 'dark');
     } else {
       const docTheme = document.documentElement.getAttribute('data-theme');

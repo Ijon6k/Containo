@@ -3,11 +3,27 @@ import { transformDockerStats } from "../services/stats.service";
 import os from "os";
 import fs from "fs";
 
-// Measures host CPU usage over a 100ms interval for accuracy
+let prevCpuTicks: { idle: number; total: number } | null = null;
+
+// Measures host CPU usage using continuous tick deltas across broadcast intervals (100% accurate host matching)
 export const getCPUUsage = async () => {
-  const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-  const getTicks = () =>
-    os.cpus().reduce(
+  const getTicks = () => {
+    try {
+      const statPath = fs.existsSync("/proc/stat")
+        ? "/proc/stat"
+        : fs.existsSync("/host/proc/stat")
+          ? "/host/proc/stat"
+          : null;
+      if (statPath) {
+        const firstLine = fs.readFileSync(statPath, "utf8").split("\n")[0];
+        const parts = firstLine.trim().split(/\s+/).slice(1).map(Number);
+        const idle = parts[3] + (parts[4] || 0);
+        const total = parts.reduce((a, b) => a + b, 0);
+        return { idle, total };
+      }
+    } catch (e) {}
+
+    return os.cpus().reduce(
       (acc: any, cpu: any) => {
         acc.idle += cpu.times.idle;
         acc.total += Object.values(cpu.times).reduce(
@@ -18,13 +34,28 @@ export const getCPUUsage = async () => {
       },
       { idle: 0, total: 0 },
     );
+  };
 
-  const t1 = getTicks();
-  await sleep(100);
-  const t2 = getTicks();
-  const idleDiff = t2.idle - t1.idle;
-  const totalDiff = t2.total - t1.total;
-  return Math.round(100 * (1 - idleDiff / totalDiff));
+  const curr = getTicks();
+  if (!prevCpuTicks) {
+    prevCpuTicks = curr;
+    await new Promise((r) => setTimeout(r, 100));
+    const t2 = getTicks();
+    const idleDiff = t2.idle - curr.idle;
+    const totalDiff = t2.total - curr.total;
+    prevCpuTicks = t2;
+    return totalDiff > 0
+      ? Math.min(100, Math.max(0, Math.round(100 * (1 - idleDiff / totalDiff))))
+      : 0;
+  }
+
+  const idleDiff = curr.idle - prevCpuTicks.idle;
+  const totalDiff = curr.total - prevCpuTicks.total;
+  prevCpuTicks = curr;
+
+  if (totalDiff <= 0) return 0;
+  const usage = Math.round(100 * (1 - idleDiff / totalDiff));
+  return Math.min(100, Math.max(0, usage));
 };
 
 // Health score (0-100): stability (crashes), hygiene (dangling images), resources (container count)
@@ -71,8 +102,7 @@ export const getHostDiskInfo = () => {
   return hostDisk;
 };
 
-// Aggregate Docker CPU/RAM with a 2s cache to avoid overwhelming the daemon.
-// Falls back to individual container stats when latestStats hasn't populated yet.
+// Aggregate Docker CPU/RAM with an 800ms cache threshold for smooth 1s real-time updates.
 let cachedAggregateStats = {
   cpu: 0,
   mem: 0,
@@ -84,7 +114,7 @@ export const getAggregateDockerStats = async (
   latestStats: Record<string, any>,
 ) => {
   const now = Date.now();
-  if (now - cachedAggregateStats.lastFetch < 2000) {
+  if (now - cachedAggregateStats.lastFetch < 800) {
     return {
       dockerCpu: cachedAggregateStats.cpu,
       dockerMem: cachedAggregateStats.mem,
@@ -142,6 +172,22 @@ export const getAggregateDockerStats = async (
   };
 };
 
+// Cache docker.df() results for 30s as disk usage doesn't change every 2s
+let cachedDf = { data: null as any, lastFetch: 0 };
+const getCachedDf = async () => {
+  const now = Date.now();
+  if (cachedDf.data && now - cachedDf.lastFetch < 30000) {
+    return cachedDf.data;
+  }
+  try {
+    const data = await docker.df();
+    cachedDf = { data, lastFetch: now };
+    return data;
+  } catch (err) {
+    return cachedDf.data || { Images: [], Volumes: [] };
+  }
+};
+
 // Fetch all Docker system data: containers, images, health, CPU, RAM, storage.
 // Shared by WebSocket broadcaster (real-time) and REST /api/system (on-demand).
 export const getSystemInfo = async (latestStats?: Record<string, any>) => {
@@ -149,7 +195,7 @@ export const getSystemInfo = async (latestStats?: Record<string, any>) => {
     docker.listContainers({ all: true }),
     docker.listImages(),
     docker.info(),
-    docker.df(),
+    getCachedDf(),
   ]);
 
   const { healthScore, breakdown, crashCount } = await getSystemHealth(

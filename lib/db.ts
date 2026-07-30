@@ -15,7 +15,7 @@ function getDb(): Database {
   try {
     if (!fs.existsSync(dataDir)) {
       fs.mkdirSync(dataDir, { recursive: true });
-      fs.chmodSync(dataDir, 0o777);
+      fs.chmodSync(dataDir, 0o755);
     }
   } catch (err) {
     logger.error("DB", "Failed to create data directory", err);
@@ -50,16 +50,16 @@ function getDb(): Database {
   const flagPath = path.join(dataDir, ".setup_done");
   if (userCount.count > 0 && !fs.existsSync(flagPath)) {
     fs.writeFileSync(flagPath, "done");
-    fs.chmodSync(flagPath, 0o666);
+    fs.chmodSync(flagPath, 0o644);
     logger.info(
       "DB",
       `Self-healing: recreated setup flag (${userCount.count} user(s) exist)`,
     );
   }
 
-  // Ensure the DB file is accessible to the host user
+  // Ensure sensitive DB file permissions are restricted (rw-r--r--)
   try {
-    fs.chmodSync(dbPath, 0o666);
+    fs.chmodSync(dbPath, 0o644);
   } catch (e) {}
 
   return _db;

@@ -8,7 +8,7 @@ export const useStats = (expandedStatsIds: string[]) => {
   const [stats, setStats] = useState<Record<string, ContainerStats>>({});
   const { sendMessage, subscribe, isConnected } = useWS();
 
-  const idsKey = expandedStatsIds.join(",");
+  const idsKey = [...expandedStatsIds].sort().join(",");
 
   useEffect(() => {
     if (expandedStatsIds.length === 0) return;

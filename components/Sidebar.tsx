@@ -1,6 +1,4 @@
-"use client";
-
-import React, { useState } from "react";
+import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -16,7 +14,7 @@ import {
   Wrench,
   Settings,
 } from "lucide-react";
-import { useTheme, type Theme } from "@/components/providers/ThemeProvider";
+import { type Theme } from "@/components/providers/ThemeProvider";
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -49,15 +47,10 @@ const menuItems = [
   { id: "settings", label: "Settings", icon: Settings, href: "/settings" },
 ];
 
-const themeIcon = (t: Theme) => {
-  switch (t) {
-    case "dark":
-      return Moon;
-    case "dim":
-      return Monitor;
-    case "light":
-      return Sun;
-  }
+const THEME_ICONS = {
+  dark: Moon,
+  dim: Monitor,
+  light: Sun,
 };
 
 const themeLabel = (t: Theme) => {
@@ -79,14 +72,14 @@ export default function Sidebar({
   cycleTheme,
 }: SidebarProps) {
   const pathname = usePathname();
-  const ThemeIcon = themeIcon(theme);
+  const ThemeIcon = THEME_ICONS[theme];
 
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(href + "/");
 
   return (
     <aside
-      className={`h-screen flex flex-col bg-surface border-r border-border z-40 fixed left-0 top-0 transition-[width] duration-200 ${
+      className={`h-screen flex flex-col bg-sidebar border-r border-border z-40 fixed left-0 top-0 transition-[width] duration-200 ${
         isCollapsed ? "w-[64px]" : "w-[220px]"
       }`}
     >
@@ -133,13 +126,13 @@ export default function Sidebar({
             <Link
               key={item.id}
               href={item.href}
-              className={`flex items-center rounded-sm transition-colors text-base font-medium ${
+              className={`flex items-center rounded-md transition-colors text-sm font-medium ${
                 isCollapsed
                   ? "justify-center h-10 w-10 mx-auto"
                   : "gap-3 px-3 h-9"
               } ${
                 active
-                  ? "bg-brand/10 text-brand"
+                  ? "bg-brand-muted text-brand font-semibold shadow-xs"
                   : "text-text-secondary hover:bg-hover hover:text-text-primary"
               }`}
               title={isCollapsed ? item.label : undefined}

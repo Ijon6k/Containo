@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 /**
  * Hook to manage a sliding window of numeric metrics.
@@ -12,8 +12,12 @@ export const useMetricHistory = (
   trigger?: any,
 ) => {
   const [history, setHistory] = useState<number[]>(new Array(limit).fill(0));
+  const prevTriggerRef = useRef(trigger);
 
   useEffect(() => {
+    if (trigger !== undefined && trigger === prevTriggerRef.current) return;
+    prevTriggerRef.current = trigger;
+
     setHistory((prev) => {
       const newHistory = [...prev.slice(1), currentValue];
       return newHistory;

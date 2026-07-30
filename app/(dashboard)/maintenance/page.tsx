@@ -42,18 +42,6 @@ export default function MaintenancePage() {
   const [containers, setContainers] = useState<Container[]>(cached?.containers ?? []);
   const [systemInfo, setSystemInfo] = useState<any>(cached?.systemInfo ?? null);
 
-  const fetchContainers = useCallback(async () => {
-    try {
-      const res = await fetch('/api/containers');
-      if (res.ok) {
-        const data = await res.json();
-        setContainers(data);
-        return data;
-      }
-    } catch { /* ignore */ }
-    return null;
-  }, []);
-
   const fetchSystemInfo = useCallback(async () => {
     try {
       const res = await fetch('/api/system');
@@ -67,12 +55,31 @@ export default function MaintenancePage() {
   }, []);
 
   useEffect(() => {
-    // Langsung fetch di background walau sudah ada cache
-    fetchContainers();
-    fetchSystemInfo();
-    const interval = setInterval(fetchSystemInfo, 3000);
-    return () => clearInterval(interval);
-  }, [fetchContainers, fetchSystemInfo]);
+    let active = true;
+    Promise.all([
+      fetch('/api/containers').then((res) => (res.ok ? res.json() : null)),
+      fetch('/api/system').then((res) => (res.ok ? res.json() : null)),
+    ]).then(([cData, sData]) => {
+      if (!active) return;
+      if (cData) setContainers(cData);
+      if (sData) setSystemInfo(sData);
+    });
+
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch('/api/system');
+        if (res.ok && active) {
+          const data = await res.json();
+          setSystemInfo(data);
+        }
+      } catch {}
+    }, 3000);
+
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
+  }, []);
 
   // Update cache saat data berubah
   useEffect(() => {

@@ -41,10 +41,20 @@ export function useImageActions({
   }, [addToast]);
 
   useEffect(() => {
+    let active = true;
     if (viewMode === "images") {
-      fetchImages();
+      apiFetchImages()
+        .then((data) => {
+          if (active) setImages(data);
+        })
+        .catch(() => {
+          if (active) addToast("Failed to fetch images", "error");
+        });
     }
-  }, [viewMode, fetchImages]);
+    return () => {
+      active = false;
+    };
+  }, [viewMode, addToast]);
 
   const deleteImage = useCallback(
     async (id: string, force: boolean = false) => {

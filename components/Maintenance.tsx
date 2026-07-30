@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { Container } from "@/lib/types";
 import { PruneAction } from "./maintenance/PruneAction";
 import { Skeleton, SkeletonCard } from "./ui/Skeleton";
-import { Layers, Box, HardDrive, Network, Image, Server } from "lucide-react";
+import { Layers, HardDrive, Image, Server } from "lucide-react";
 
 interface MaintenanceProps {
   containers: Container[];

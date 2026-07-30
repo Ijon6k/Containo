@@ -45,7 +45,7 @@ export const POST = withErrorHandler(async (request: Request) => {
       pruneOps.set("networks", docker.pruneNetworks());
     }
     if (targets.includes("system")) {
-      pruneOps.set("system", new Promise((resolve, reject) => {
+      pruneOps.set("system", new Promise((resolve, _reject) => {
         try {
           const out = execSync("docker system prune -af 2>&1", { timeout: 60000 });
           resolve({ message: out.toString().trim() });
@@ -55,7 +55,7 @@ export const POST = withErrorHandler(async (request: Request) => {
       }));
     }
     if (targets.includes("builder")) {
-      pruneOps.set("builder", new Promise((resolve, reject) => {
+      pruneOps.set("builder", new Promise((resolve, _reject) => {
         try {
           const out = execSync("docker builder prune -af 2>&1", { timeout: 60000 });
           resolve({ message: out.toString().trim() });
@@ -65,7 +65,7 @@ export const POST = withErrorHandler(async (request: Request) => {
       }));
     }
     if (targets.includes("buildx")) {
-      pruneOps.set("buildx", new Promise((resolve, reject) => {
+      pruneOps.set("buildx", new Promise((resolve, _reject) => {
         try {
           const out = execSync("docker buildx prune -af 2>&1", { timeout: 60000 });
           resolve({ message: out.toString().trim() });

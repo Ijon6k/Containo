@@ -1,21 +1,32 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import SettingsView from '@/components/Settings';
-import { useNotify } from '@/components/providers/NotificationProvider';
 import { useTheme } from '@/components/providers/ThemeProvider';
 
 export default function SettingsPage() {
-  const { addToast } = useNotify();
-  const { theme, cycleTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
+  const [systemInfo, setSystemInfo] = useState<any>(null);
 
-  const toggleTheme = () => cycleTheme();
+  useEffect(() => {
+    let active = true;
+    fetch('/api/system')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (active && data) setSystemInfo(data);
+      })
+      .catch(console.error);
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   return (
     <SettingsView
       theme={theme}
-      toggleTheme={toggleTheme}
-      addToast={addToast}
+      onSetTheme={setTheme}
+      systemInfo={systemInfo}
     />
   );
 }

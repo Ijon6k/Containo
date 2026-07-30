@@ -59,6 +59,6 @@ export function startSystemBroadcaster(io: SocketIOServer) {
   broadcastSystemInfo(io);
   broadcastContainers(io);
 
-  setInterval(() => broadcastSystemInfo(io), 2000); // System: every 2s
+  setInterval(() => broadcastSystemInfo(io), 1000); // System: real-time every 1s
   setInterval(() => broadcastContainers(io), 5000); // Containers: every 5s
 }

@@ -5,14 +5,17 @@
   --color-foreground: var(--fg);
   --font-sans: 'Archivo', sans-serif;
 
+  --color-sidebar: var(--sidebar-bg);
   --color-surface: var(--surface);
   --color-surface2: var(--surface2);
+  --color-surface-elevated: var(--surface-elevated);
   --color-border: var(--border);
   --color-border-hover: var(--border-hover);
   --color-hover: var(--hover);
 
   --color-brand: var(--brand);
   --color-brand-hover: var(--brand-hover);
+  --color-brand-muted: var(--brand-muted);
 
   --color-text-primary: var(--text-primary);
   --color-text-secondary: var(--text-secondary);
@@ -37,14 +40,17 @@
   --bg: #000000;
   --fg: #ededed;
 
+  --sidebar-bg: #070707;
   --surface: #0a0a0a;
   --surface2: #111111;
+  --surface-elevated: #1a1a1a;
   --border: rgba(255, 255, 255, 0.08);
   --border-hover: rgba(255, 255, 255, 0.14);
   --hover: rgba(255, 255, 255, 0.04);
 
   --brand: #a78bfa;
   --brand-hover: #c4b5fd;
+  --brand-muted: rgba(167, 139, 250, 0.12);
 
   --text-primary: #ededed;
   --text-secondary: #888888;
@@ -56,54 +62,71 @@
   --danger-bg: rgba(248, 113, 113, 0.08);
   --warning: #fbbf24;
   --warning-bg: rgba(251, 191, 36, 0.08);
+
+  --card-shadow: 0 4px 16px -2px rgba(0, 0, 0, 0.6);
 }
 
-/* ── Dim Theme ── */
+/* ── Dim Theme (Brighter Crisp Gray Cards + Subtle Blue Tint Background) ── */
 [data-theme='dim'] {
-  --bg: #0f0f0f;
-  --fg: #e4e4e4;
+  /* Layer 0: Canvas / App Background (Dark with subtle blue hint) */
+  --bg: #11141a;
+  --fg: #f1f5f9;
 
-  --surface: #171717;
-  --surface2: #1e1e1e;
-  --border: rgba(255, 255, 255, 0.10);
-  --border-hover: rgba(255, 255, 255, 0.16);
-  --hover: rgba(255, 255, 255, 0.05);
+  /* Layer 1: Sidebar & Navigation */
+  --sidebar-bg: #161922;
 
+  /* Layer 2: Primary Surfaces (Brighter crisp gray cards with clear contrast) */
+  --surface: #222733;
+  --surface2: #2b3140;
+
+  /* Layer 3: Elevated Surfaces (Hovered Cards, Dropdowns, Modals) */
+  --surface-elevated: #343c4e;
+
+  /* Soft Tinted Borders */
+  --border: #30394a;
+  --border-hover: #445168;
+
+  /* Tinted Interactive Overlays */
+  --hover: rgba(167, 139, 250, 0.08);
+
+  /* Expanded Purple Accent Identity */
   --brand: #a78bfa;
   --brand-hover: #c4b5fd;
+  --brand-muted: rgba(167, 139, 250, 0.15);
 
-  --text-primary: #e4e4e4;
-  --text-secondary: #9ca3af;
-  --text-tertiary: #6b7280;
+  /* Typography Hierarchy */
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-tertiary: #64748b;
 
+  /* Status Colors */
   --success: #34d399;
-  --success-bg: rgba(52, 211, 153, 0.08);
+  --success-bg: rgba(52, 211, 153, 0.12);
   --danger: #f87171;
-  --danger-bg: rgba(248, 113, 113, 0.08);
+  --danger-bg: rgba(248, 113, 113, 0.12);
   --warning: #fbbf24;
-  --warning-bg: rgba(251, 191, 36, 0.08);
+  --warning-bg: rgba(251, 191, 36, 0.12);
+
+  /* Subtle Low-Opacity Layered Depth Shadows */
+  --card-shadow: 0 4px 20px -2px rgba(4, 6, 12, 0.5), 0 2px 6px -1px rgba(0, 0, 0, 0.35);
 }
 
-/* ── Light Theme ──
-   Tuned for clear separation between cards without relying on shadow.
-   Key changes vs. dark theme:
-   - Borders are ~2x stronger (0.06 -> 0.12) so card edges read clearly
-   - Surface/surface2 delta increased (5 -> 12 shades) for visible layering
-   - Secondary text darkened for AA contrast (4.5:1 -> 7:1 on white)
-   - Subtle card shadow restored for light theme only (was globally killed)
-*/
+/* ── Light Theme ── */
 [data-theme='light'] {
   --bg: #f6f7f9;
   --fg: #0a0a0a;
 
+  --sidebar-bg: #ffffff;
   --surface: #ffffff;
   --surface2: #eef0f3;
+  --surface-elevated: #e2e8f0;
   --border: rgba(15, 23, 42, 0.12);
   --border-hover: rgba(15, 23, 42, 0.22);
   --hover: rgba(15, 23, 42, 0.05);
 
   --brand: #7c3aed;
   --brand-hover: #6d28d9;
+  --brand-muted: rgba(124, 58, 237, 0.10);
 
   --text-primary: #0a0a0a;
   --text-secondary: #475569;
@@ -116,19 +139,19 @@
   --warning: #b45309;
   --warning-bg: rgba(180, 83, 9, 0.10);
 
-  /* Restore subtle card shadow under light theme for depth without noise */
   --card-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(15, 23, 42, 0.06);
-  --card-shadow-hover: 0 2px 4px rgba(15, 23, 42, 0.06), 0 4px 8px rgba(15, 23, 42, 0.08);
 }
 
-/* Light theme: allow subtle shadows on cards for clearer card separation.
-   The previous global `box-shadow: none !important` made everything feel flat
-   and washed-out. Dark themes keep flat because contrast is already high. */
-[data-theme='light'] .card-shadow {
-  box-shadow: var(--card-shadow);
+/* ── Floating Card Surface Utility (Soft Inset Top Highlight + Depth Shadow) ── */
+.card-floating {
+  background-color: var(--surface);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), var(--card-shadow);
+  transition: all 0.15s ease-in-out;
 }
-[data-theme='light'] .card-shadow:hover {
-  box-shadow: var(--card-shadow-hover);
+
+[data-theme='dim'] .card-floating:hover {
+  background-color: var(--surface2);
+  border-color: var(--border-hover);
 }
 
 /* ── Base ── */
@@ -147,14 +170,14 @@ body {
 .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
 .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: var(--text-tertiary); }
 
-/* ── Focus ring ── */
+/* ── Focus Ring ── */
 *:focus-visible {
   outline: 2px solid var(--brand);
   outline-offset: 2px;
   border-radius: 4px;
 }
 
-/* ── Reduced motion ── */
+/* ── Reduced Motion ── */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
@@ -165,6 +188,6 @@ body {
 
 /* ── Selection ── */
 ::selection {
-  background: rgba(167, 139, 250, 0.2);
+  background: rgba(167, 139, 250, 0.25);
   color: var(--fg);
 }

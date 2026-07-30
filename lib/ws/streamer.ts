@@ -41,6 +41,8 @@ export const startStatsStream = async (io: SocketIOServer, id: string) => {
       }
     };
 
+    let lineBuffer = "";
+
     // Dockerode stats stream delivers chunks in three forms:
     //   1. Plain object (pre-parsed by Dockerode) → process directly
     //   2. String (raw chunk) → split newline-delimited JSON
@@ -52,21 +54,19 @@ export const startStatsStream = async (io: SocketIOServer, id: string) => {
           return;
         }
 
-        const data = chunk.toString();
-        const lines = data.split("\n").filter((l: string) => l.trim());
+        lineBuffer += chunk.toString();
+        const parts = lineBuffer.split("\n");
+        // Keep the last part in buffer as it might be incomplete
+        lineBuffer = parts.pop() || "";
 
-        for (const line of lines) {
+        for (const line of parts) {
+          const trimmed = line.trim();
+          if (!trimmed) continue;
           try {
-            const parsed = JSON.parse(line);
+            const parsed = JSON.parse(trimmed);
             processStats(parsed);
           } catch (_e) {
-            // Single-line fallback: the entire chunk may be one JSON object
-            if (lines.length === 1) {
-              try {
-                const fallbackParsed = JSON.parse(data);
-                processStats(fallbackParsed);
-              } catch {}
-            }
+            /* ignore malformed lines */
           }
         }
       } catch (e) {

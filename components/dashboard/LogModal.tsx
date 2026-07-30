@@ -14,15 +14,11 @@ export const LogModal = ({ container, onClose }: LogModalProps) => {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!container) {
-      setLogs([]);
-      return;
-    }
+    if (!container) return;
 
-    setIsLoading(true);
-    setLogs([]);
-    
     const eventSource = new EventSource(`/api/containers/${container.id}/logs`);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setIsLoading(true);
     
     eventSource.onmessage = (event) => {
       try {

@@ -1,31 +1,40 @@
 'use client';
 
 import React from 'react';
-import { Settings, Bell, Shield, User } from 'lucide-react';
 
-export function SettingsNav() {
-  const items = [
-    { label: 'General', icon: Settings, active: true },
-    { label: 'Notifications', icon: Bell, active: false },
-    { label: 'Security', icon: Shield, active: false },
-    { label: 'Account', icon: User, active: false },
+export type SettingsTab = 'appearance' | 'engine' | 'account';
+
+interface SettingsNavProps {
+  activeTab: SettingsTab;
+  onTabChange: (tab: SettingsTab) => void;
+}
+
+export function SettingsNav({ activeTab, onTabChange }: SettingsNavProps) {
+  const tabs: { id: SettingsTab; label: string }[] = [
+    { id: 'appearance', label: 'Appearance' },
+    { id: 'engine', label: 'Docker Engine' },
+    { id: 'account', label: 'Account' },
   ];
 
   return (
-    <div className="lg:col-span-1 flex flex-col gap-1">
-      {items.map((item, i) => (
-        <button 
-          key={i}
-          className={`flex items-center gap-3 px-4 py-2 rounded-sm text-base font-medium transition-all ${
-            item.active 
-              ? 'bg-hover text-text-primary' 
-              : 'text-text-secondary hover:text-text-primary hover:bg-hover'
-          }`}
-        >
-          <item.icon className="w-4 h-4" />
-          {item.label}
-        </button>
-      ))}
-    </div>
+    <nav className="flex flex-col gap-0.5" aria-label="Settings navigation">
+      {tabs.map((tab) => {
+        const isActive = activeTab === tab.id;
+        return (
+          <button
+            key={tab.id}
+            type="button"
+            onClick={() => onTabChange(tab.id)}
+            className={`px-3 py-2 rounded-md text-sm font-medium text-left transition-colors ${
+              isActive
+                ? 'bg-hover text-text-primary font-semibold'
+                : 'text-text-secondary hover:text-text-primary hover:bg-hover/50'
+            }`}
+          >
+            {tab.label}
+          </button>
+        );
+      })}
+    </nav>
   );
 }

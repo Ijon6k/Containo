@@ -78,6 +78,12 @@ export async function GET(
           }
         });
 
+        logStream.on("end", () => {
+          try {
+            controller.close();
+          } catch (e) {}
+        });
+
         logStream.on("error", (err: any) => {
           logger.error("API", `Log stream error for container ${id}`, err);
           controller.error(err);

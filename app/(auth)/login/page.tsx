@@ -13,14 +13,18 @@ export default function LoginPage() {
     async function checkSetup() {
       try {
         const res = await fetch('/api/auth/setup');
-        const data = await res.json();
-        if (data.setupNeeded) {
-          router.replace('/setup');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.setupNeeded) {
+            router.replace('/setup');
+          } else {
+            setChecking(false);
+          }
         } else {
           setChecking(false);
         }
       } catch (err) {
-        console.error('Failed to check setup status');
+        console.error('Failed to check setup status', err);
         setChecking(false);
       }
     }

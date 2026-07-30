@@ -12,6 +12,8 @@ const PROTECTED_ROUTES = [
   "/deploy",
 ];
 
+let isSetupDoneCached = false;
+
 // Global middleware — runs on every request (see matcher config below).
 // Flow: setup check → protected route guard → API auth guard → login redirect.
 export async function proxy(request: NextRequest) {
@@ -19,8 +21,11 @@ export async function proxy(request: NextRequest) {
 
   // === Setup Gate ===
   // Redirect everything to /setup until the admin creates the first user.
-  const flagPath = path.join(process.cwd(), "data", ".setup_done");
-  const isSetupDone = fs.existsSync(flagPath);
+  if (!isSetupDoneCached) {
+    const flagPath = path.join(process.cwd(), "data", ".setup_done");
+    isSetupDoneCached = fs.existsSync(flagPath);
+  }
+  const isSetupDone = isSetupDoneCached;
 
   if (
     !isSetupDone &&

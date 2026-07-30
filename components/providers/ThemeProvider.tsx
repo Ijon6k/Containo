@@ -32,7 +32,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setThemeState(getInitialTheme());
+    const saved = getInitialTheme();
+    if (saved && saved !== 'dark') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setThemeState(saved);
+    }
     setMounted(true);
   }, []);
 

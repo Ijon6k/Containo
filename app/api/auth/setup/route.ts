@@ -6,10 +6,15 @@ import path from "path";
 import { logger } from "@/lib/core/logger";
 
 export async function GET() {
-  const userCount = db.query("SELECT COUNT(*) as count FROM users").get() as {
-    count: number;
-  };
-  return NextResponse.json({ setupNeeded: userCount.count === 0 });
+  try {
+    const userCount = db.query("SELECT COUNT(*) as count FROM users").get() as {
+      count: number;
+    };
+    return NextResponse.json({ setupNeeded: userCount.count === 0 });
+  } catch (err) {
+    logger.error("AUTH", "Failed to check setup GET", err);
+    return NextResponse.json({ setupNeeded: false, error: "Database error" }, { status: 500 });
+  }
 }
 
 export async function POST(request: Request) {
@@ -57,7 +62,7 @@ export async function POST(request: Request) {
     // Create setup flag file for middleware
     const flagPath = path.join(process.cwd(), "data", ".setup_done");
     fs.writeFileSync(flagPath, "done");
-    fs.chmodSync(flagPath, 0o666);
+    fs.chmodSync(flagPath, 0o644);
 
     logger.success(
       "AUTH",

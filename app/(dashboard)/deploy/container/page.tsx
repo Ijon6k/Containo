@@ -73,6 +73,7 @@ export default function ContainerDeployPage() {
             logs={deploymentLogs}
             pullProgress={pullProgress}
             onClose={() => router.push('/dashboard')}
+            onStop={resetToForm}
             isComplete={deploymentComplete}
           />
         )}

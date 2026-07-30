@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Dashboard from "@/components/Dashboard";
 import { useNotify } from "@/components/providers/NotificationProvider";
@@ -13,26 +13,24 @@ export default function DashboardPage() {
 
   const { subscribe } = useWS();
 
-  const fetchSystemInfo = useCallback(async () => {
-    try {
-      const res = await fetch("/api/system");
-      if (res.ok) setSystemInfo(await res.json());
-    } catch (e) {
-      console.error(e);
-    }
-  }, []);
-
   useEffect(() => {
-    fetchSystemInfo();
+    let active = true;
+    fetch("/api/system")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (active && data) setSystemInfo(data);
+      })
+      .catch(console.error);
 
     const unsubSystem = subscribe("system:update", (data) => {
       setSystemInfo(data);
     });
 
     return () => {
+      active = false;
       unsubSystem();
     };
-  }, [fetchSystemInfo, subscribe]);
+  }, [subscribe]);
 
   return (
     <Dashboard

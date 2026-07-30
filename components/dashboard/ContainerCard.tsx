@@ -11,6 +11,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import { Container } from '@/lib/types';
+import { parseContainerPorts } from '@/lib/utils/network';
 
 interface ContainerCardProps {
   container: Container;
@@ -25,7 +26,7 @@ interface ContainerCardProps {
 }
 
 const statusBadge = cva(
-  "px-2 py-0.5 rounded text-[11px] font-medium border",
+  "px-2 py-0.5 rounded text-[11px] font-medium border text-center shrink-0 w-[72px]",
   {
     variants: {
       status: {
@@ -38,7 +39,7 @@ const statusBadge = cva(
 );
 
 const actionBtn =
-  "p-1.5 rounded-md transition-colors text-text-tertiary hover:text-text-primary hover:bg-hover";
+  "p-1.5 rounded-md transition-colors text-text-tertiary hover:text-text-primary hover:bg-hover shrink-0";
 
 export const ContainerCard = ({
   container: c,
@@ -52,6 +53,7 @@ export const ContainerCard = ({
   onOpenWebUI,
 }: ContainerCardProps) => {
   const isRunning = c.status === 'running';
+  const portItems = parseContainerPorts(c);
 
   return (
     <div
@@ -60,12 +62,12 @@ export const ContainerCard = ({
       }`}
     >
       <div className="flex items-center gap-4">
-        {/* Status */}
+        {/* Status Badge (Fixed width 72px) */}
         <span className={statusBadge({ status: c.status as 'running' | 'exited' })}>
           {c.status}
         </span>
 
-        {/* Name */}
+        {/* Name & Image (Flexible width) */}
         <div className="flex-1 min-w-0 flex items-center gap-3">
           <h3 className="text-base font-semibold text-text-primary truncate group-hover:text-brand transition-colors">
             {c.name}
@@ -75,17 +77,42 @@ export const ContainerCard = ({
           </span>
         </div>
 
-        {/* Ports */}
-        <span className="text-[13px] font-mono text-text-secondary hidden md:block tabular-nums">
-          {c.ports || '—'}
-        </span>
+        {/* Network / Ports Column (Strict fixed width 280px, uniform right alignment) */}
+        <div className="w-[280px] shrink-0 hidden md:flex items-center justify-end gap-1 font-mono text-[13px] tabular-nums whitespace-nowrap overflow-hidden text-right">
+          {portItems.length === 0 ? (
+            <span className="text-text-tertiary">{c.ports || 'N/A'}</span>
+          ) : (
+            portItems.map((item, idx) => (
+              <React.Fragment key={idx}>
+                {idx > 0 && <span className="text-text-tertiary/40 mr-0.5">,</span>}
+                {item.isHostExposed && isRunning ? (
+                  <a
+                    href={item.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="text-brand hover:underline font-semibold transition-colors inline-flex items-center gap-1 shrink-0 leading-none"
+                    title={`Open ${item.url} in new tab`}
+                  >
+                    <span>{item.raw}</span>
+                    <ExternalLink className="w-3 h-3 text-brand/80 shrink-0 -translate-y-[1px]" />
+                  </a>
+                ) : (
+                  <span className="text-text-tertiary shrink-0">
+                    {item.raw}
+                  </span>
+                )}
+              </React.Fragment>
+            ))
+          )}
+        </div>
 
-        {/* Actions */}
-        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+        {/* Actions Column (Strict fixed width 220px so network column position never shifts) */}
+        <div className="w-[220px] shrink-0 flex items-center justify-end gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
           <button
             onClick={isRunning ? onToggleExpand : undefined}
             disabled={!isRunning}
-            className={`p-1.5 rounded-md transition-colors ${
+            className={`p-1.5 rounded-md transition-colors shrink-0 ${
               !isRunning
                 ? 'text-text-tertiary/20 cursor-not-allowed'
                 : isExpanded
@@ -99,7 +126,7 @@ export const ContainerCard = ({
 
           <button
             onClick={() => onToggleStatus(c.id)}
-            className={`p-1.5 rounded-md transition-colors ${
+            className={`p-1.5 rounded-md transition-colors shrink-0 ${
               isRunning
                 ? 'text-text-tertiary hover:text-warning hover:bg-hover'
                 : 'text-text-tertiary hover:text-success hover:bg-hover'
@@ -117,14 +144,17 @@ export const ContainerCard = ({
             <RotateCcw className="w-4 h-4" />
           </button>
 
-          {isRunning && c.hostPorts.length > 0 && (
+          {/* Reserved slot for ExternalLink button so action group width is 100% constant */}
+          {isRunning && c.hostPorts.length > 0 ? (
             <button
               onClick={() => onOpenWebUI(c)}
-              className="p-1.5 rounded-md text-success hover:bg-success-bg transition-colors"
+              className="p-1.5 rounded-md text-success hover:bg-success-bg transition-colors shrink-0"
               aria-label="Open web interface"
             >
               <ExternalLink className="w-4 h-4" />
             </button>
+          ) : (
+            <div className="w-7 h-7 shrink-0" />
           )}
 
           <button
@@ -145,7 +175,7 @@ export const ContainerCard = ({
 
           <button
             onClick={() => onDelete(c)}
-            className="p-1.5 rounded-md text-text-tertiary hover:text-danger hover:bg-danger-bg transition-colors"
+            className="p-1.5 rounded-md text-text-tertiary hover:text-danger hover:bg-danger-bg transition-colors shrink-0"
             aria-label="Delete container"
           >
             <Trash2 className="w-4 h-4" />

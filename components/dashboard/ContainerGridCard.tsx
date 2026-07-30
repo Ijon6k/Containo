@@ -13,6 +13,7 @@ import {
   Box,
 } from "lucide-react";
 import { Container, ContainerStats } from "@/lib/types";
+import { parseContainerPorts } from "@/lib/utils/network";
 
 interface ContainerGridCardProps {
   container: Container;
@@ -117,9 +118,32 @@ export const ContainerGridCard = ({
                   {(stats?.networkRxMB || 0).toFixed(0)}MB
                 </span>
               </div>
-              <span className="text-[11px] font-mono text-text-tertiary truncate">
-                {c.ports || "—"}
-              </span>
+              <div className="text-[11px] font-mono truncate flex items-center gap-1">
+                {parseContainerPorts(c).length === 0 ? (
+                  <span className="text-text-tertiary">{c.ports || "—"}</span>
+                ) : (
+                  parseContainerPorts(c).map((item, idx) => (
+                    <React.Fragment key={idx}>
+                      {idx > 0 && <span className="text-text-tertiary/40">,</span>}
+                      {item.isHostExposed && isRunning ? (
+                        <a
+                          href={item.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="text-brand hover:underline font-semibold transition-colors inline-flex items-center gap-0.5 leading-none"
+                          title={`Open ${item.url} in new tab`}
+                        >
+                          <span>{item.raw}</span>
+                          <ExternalLink className="w-2.5 h-2.5 text-brand/80 shrink-0 -translate-y-[1px]" />
+                        </a>
+                      ) : (
+                        <span className="text-text-tertiary">{item.raw}</span>
+                      )}
+                    </React.Fragment>
+                  ))
+                )}
+              </div>
             </div>
           </div>
         ) : (

@@ -19,19 +19,21 @@ export default function BackupsPage() {
     }
   }, []);
 
-  const fetchContainers = useCallback(async () => {
-    try {
-      const res = await fetch('/api/containers');
-      if (res.ok) setContainers(await res.json());
-    } catch (e) {
-      console.error(e);
-    }
-  }, []);
-
   useEffect(() => {
-    fetchVolumes();
-    fetchContainers();
-  }, [fetchVolumes, fetchContainers]);
+    let active = true;
+    Promise.all([
+      fetch('/api/volumes').then((r) => (r.ok ? r.json() : null)),
+      fetch('/api/containers').then((r) => (r.ok ? r.json() : null)),
+    ]).then(([vData, cData]) => {
+      if (!active) return;
+      if (vData) setVolumes(vData);
+      if (cData) setContainers(cData);
+    });
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   return (
     <BackupRestore

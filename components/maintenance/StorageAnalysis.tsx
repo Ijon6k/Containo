@@ -108,13 +108,13 @@ export function StorageAnalysis({ systemInfo }: StorageAnalysisProps) {
         {[
           { label: 'System', value: systemGB, color: 'bg-[#555555]' },
           { label: 'Docker', value: dockerGB, color: 'bg-brand' },
-          { label: 'Free', value: freeGB, color: freePct <= 10 ? 'bg-danger' : freePct <= 25 ? 'bg-warning' : 'bg-success' },
-        ].map((item) => (
+          { label: 'Free', value: freeGB, color: freePct <= 10 ? 'bg-danger' : freePct <= 25 ? 'bg-warning' : 'bg-success', textColor: freeColor(freePct) },
+        ].map((item: any) => (
           <div key={item.label} className="flex items-center gap-2">
             <div className={`w-2.5 h-2.5 rounded-sm ${item.color} shrink-0`} />
             <div>
               <div className="text-[12px] text-text-tertiary">{item.label}</div>
-              <div className="text-[13px] font-semibold text-text-primary tabular-nums">{item.value.toFixed(1)} GB</div>
+              <div className="text-[13px] font-semibold tabular-nums" style={item.textColor ? { color: item.textColor } : { color: 'var(--text-primary)' }}>{item.value.toFixed(1)} GB</div>
             </div>
           </div>
         ))}
